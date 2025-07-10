@@ -1,0 +1,128 @@
+/* 레시피 정보 컨테이너 */
+.recipe-info {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* YouTube 영상 컨테이너 */
+.youtube-container {
+  width: 100%;
+  background-color: #000;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.youtube-container iframe {
+  display: block;
+}
+
+/* 레시피 컨텐츠 */
+.recipe-content {
+  flex: 1;
+  padding: 20px;
+  padding-bottom: 20px;
+}
+
+/* 요리명과 설명 */
+.recipe-header {
+  margin-bottom: 24px;
+}
+
+.recipe-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.recipe-description {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* 섹션 타이틀 */
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* 소요시간 섹션 */
+.cooking-time-section {
+  margin-bottom: 24px;
+}
+
+.cooking-time {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* 재료 섹션 */
+.ingredients-section {
+  margin-bottom: 20px;
+}
+
+.ingredients-list {
+  list-style: none;
+  padding: 0;
+}
+
+.ingredient-item {
+  font-size: 16px;
+  color: #333;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ingredient-item:last-child {
+  border-bottom: none;
+}
+
+/* 버튼 컨테이너 */
+.button-container {
+  padding: 20px;
+  background-color: white;
+  border-top: 1px solid #f0f0f0;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.start-cooking-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.start-cooking-btn:hover {
+  background-color: #e63939;
+}
+
+.start-cooking-btn:active {
+  background-color: #cc2e2e;
+}
+
+/* 웹뷰 환경에서의 최적화 */
+@media (max-width: 480px) {
+  .recipe-content {
+    padding: 16px;
+    padding-bottom: 16px;
+  }
+  
+  .recipe-title {
+    font-size: 22px;
+  }
+} 

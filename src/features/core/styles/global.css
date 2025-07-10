@@ -1,0 +1,58 @@
+.app {
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  /* React Native WebView 스크롤 보장 */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 페이드 인 효과 */
+.app.fade-in {
+  opacity: 1;
+}
+
+/* 전환 중일 때 페이드 아웃 */
+.app.transitioning {
+  opacity: 0;
+}
+
+/* 조리 모드 스타일 */
+.app.cooking-mode {
+  background-color: #f8f9fa;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* YouTube 영상 컨테이너 - 공통 스타일 */
+.youtube-container {
+  width: 100%;
+  background-color: #000;
+  position: relative;
+}
+
+.youtube-container iframe {
+  display: block;
+}
+
+/* 웹뷰 환경에서의 최적화 */
+@media (max-width: 480px) {
+  .app {
+    max-width: 100%;
+  }
+  
+  .app.cooking-mode {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  .youtube-container iframe {
+    height: 200px;
+  }
+} 
