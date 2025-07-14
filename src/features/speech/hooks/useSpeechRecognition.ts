@@ -28,7 +28,7 @@ interface UseSpeechRecognitionResult {
 }
 
 // 서버 설정
-const STT_SERVER_URL = 'ws://localhost:8000/papi/v1/voice-command/ws';
+const STT_SERVER_URL = 'wss://cheftories.com/voice-command/api/v1/voice-command/wss';
 
 // 오디오 설정 상수 (서버 요구사항에 맞춤)
 const AUDIO_CONFIG = {
