@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { USE_MOCK } from '../../core/config';
-import { fetchRecipe } from '../api/fetchRecipe';
 import { getRecipeById } from '../services/data';
 import { RecipeData } from '../types/recipe';
 
@@ -33,13 +31,7 @@ export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
 					throw new Error('레시피 아이디를 찾을 수 없습니다.');
 				}
 
-        let recipeResponse: RecipeData | undefined = undefined;
-
-        if (USE_MOCK) {
-          recipeResponse = getRecipeById(targetRecipeId);
-        } else {
-          recipeResponse = await fetchRecipe(targetRecipeId);
-        }
+        const recipeResponse = getRecipeById(targetRecipeId);
 
         if (!recipeResponse) {
           throw new Error(`레시피가 존재하지 않습니다. Recipe ID: ${targetRecipeId}`);
