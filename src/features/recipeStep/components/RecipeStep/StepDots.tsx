@@ -1,4 +1,4 @@
-import { StepDotsProps } from '../../../core/types';
+import { StepDotsProps } from '../../../common/types';
 
 /**
  * 조리 단계 인디케이터 컴포넌트
@@ -19,4 +19,4 @@ const StepDots = ({ totalSteps, currentStep, onStepClick }: StepDotsProps): JSX.
   );
 };
 
-export default StepDots; 
+export default StepDots;

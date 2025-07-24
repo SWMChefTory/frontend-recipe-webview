@@ -25,7 +25,7 @@ export const useTransition = (): UseTransitionResult => {
     const handleTransition = async (): Promise<void> => {
       setFadeIn(false);
       setTransitioning(true);
-      
+
       await delay(150);
       callback();
       setTransitioning(false);
@@ -41,4 +41,4 @@ export const useTransition = (): UseTransitionResult => {
     fadeIn,
     smoothTransition,
   };
-}; 
+};

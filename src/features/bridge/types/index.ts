@@ -1,2 +1,2 @@
-// Webview utils exports
+// Bridge types exports
 export * from './webview';

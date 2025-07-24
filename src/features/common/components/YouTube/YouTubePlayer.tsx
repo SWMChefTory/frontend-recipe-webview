@@ -2,7 +2,7 @@ import { YouTubePlayerProps } from '../../types';
 import { getYouTubeUrl } from '../../utils/youtube';
 
 /**
- * 재사용 가능한 YouTube 플레이어 컴포넌트
+ * YouTube 플레이어 컴포넌트
  */
 const YouTubePlayer = ({ 
   youtubeEmbedId, 

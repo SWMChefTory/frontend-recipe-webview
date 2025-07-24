@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Slider from 'react-slick';
 import { RecipeData } from '../../recipeDetail/types/recipe';
-import { SlickSettings } from '../../webview/types/webview';
+
+interface SlickSettings {
+  [key: string]: unknown;
+}
 
 // 훅 반환 타입
 interface UseCarouselResult {
@@ -9,6 +12,9 @@ interface UseCarouselResult {
   currentStep: number;
   youtubeKey: number;
   handleStepClick: (stepIndex: number) => void;
+  goToNext: () => void;
+  goToPrevious: () => void;
+  goToStep: (stepIndex: number) => void;
   slickSettings: SlickSettings;
 }
 
@@ -30,6 +36,25 @@ export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult =>
   }, [currentStep, recipeData]);
 
   const handleStepClick = useCallback((stepIndex: number): void => {
+    setCurrentStep(stepIndex);
+    if (sliderRef.current) {
+      sliderRef.current.slickGoTo(stepIndex);
+    }
+  }, []);
+
+  const goToNext = useCallback(() => {
+    if (sliderRef.current) {
+      sliderRef.current.slickNext();
+    }
+  }, []);
+
+  const goToPrevious = useCallback(() => {
+    if (sliderRef.current) {
+      sliderRef.current.slickPrev();
+    }
+  }, []);
+
+  const goToStep = useCallback((stepIndex: number) => {
     setCurrentStep(stepIndex);
     if (sliderRef.current) {
       sliderRef.current.slickGoTo(stepIndex);
@@ -60,21 +85,21 @@ export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult =>
         breakpoint: 768,
         settings: {
           centerPadding: '70px', // 태블릿에서도 충분한 미리보기
-        }
+        },
       },
       {
         breakpoint: 480,
         settings: {
           centerPadding: '60px', // 모바일에서도 양 옆 미리보기가 잘 보이도록 증가
-        }
+        },
       },
       {
         breakpoint: 360,
         settings: {
           centerPadding: '50px', // 작은 모바일 화면에서도 미리보기 유지
-        }
-      }
-    ]
+        },
+      },
+    ],
   };
 
   return {
@@ -82,6 +107,9 @@ export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult =>
     currentStep,
     youtubeKey,
     handleStepClick,
-    slickSettings
+    slickSettings,
+    goToNext,
+    goToPrevious,
+    goToStep,
   };
-}; 
+};
