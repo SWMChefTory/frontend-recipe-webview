@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSpeechRecognition, VoiceCommand, VoiceCommandCallback } from './useSpeechRecognition';
+import { VoiceCommand, VoiceCommandCallback } from '../types/voice';
+import { useSpeechRecognition } from './useSpeechRecognition';
 
 // 단계별 음성 감지 기록 타입
 type StepVoiceDetections = Record<number, boolean>;
@@ -11,6 +12,7 @@ interface CarouselControls {
   goToStep: (step: number) => void;
   currentStep: number;
   totalSteps: number;
+  seekTo?: (seconds: number) => void; // 유튜브 동영상 이동 함수
 }
 
 // 훅 반환 타입
@@ -41,7 +43,7 @@ const delay = (ms: number): Promise<void> => {
  */
 export const useStepSpeechRecognition = (
   carouselControls: CarouselControls,
-  autoStart: boolean = true
+  autoStart: boolean = true,
 ): UseStepSpeechRecognitionResult => {
   const lastCommandRef = useRef<string>('');
   const commandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,61 +53,35 @@ export const useStepSpeechRecognition = (
    * 음성 명령 처리 함수
    */
   const handleVoiceCommand: VoiceCommandCallback = (command: VoiceCommand, stepNumber?: number) => {
-    console.log('=== 음성 명령 수신 ===');
-    console.log('명령:', command, '단계 번호:', stepNumber);
-    console.log('현재 carouselControls.currentStep:', carouselControls.currentStep);
-    console.log('현재 carouselControls.totalSteps:', carouselControls.totalSteps);
-
-    // 중복 명령 방지 (1초 내)
-    const commandKey = `${command}_${stepNumber || ''}`;
-    if (lastCommandRef.current === commandKey) {
-      console.log('중복 명령 무시:', commandKey);
-      return;
-    }
-
-    lastCommandRef.current = commandKey;
-
-    // 1초 후 중복 방지 해제
-    if (commandTimeoutRef.current) {
-      clearTimeout(commandTimeoutRef.current);
-    }
-    commandTimeoutRef.current = setTimeout(() => {
-      lastCommandRef.current = '';
-      console.log('중복 방지 해제');
-    }, 1000);
-
     switch (command) {
       case 'NEXT':
-        console.log(`NEXT 명령 처리: ${carouselControls.currentStep} < ${carouselControls.totalSteps}?`);
         if (carouselControls.currentStep < carouselControls.totalSteps) {
-          console.log('다음 단계로 이동 실행');
           carouselControls.goToNext();
-        } else {
-          console.log('마지막 단계입니다');
         }
         break;
 
       case 'PREV':
-        console.log(`PREV 명령 처리: ${carouselControls.currentStep} > 1?`);
-        if (carouselControls.currentStep > 1) {
-          console.log('이전 단계로 이동 실행');
+        if (carouselControls.currentStep > 0) {
           carouselControls.goToPrevious();
-        } else {
-          console.log('첫 번째 단계입니다');
+        }
+        break;
+
+      case 'TIMESTAMP':
+        // TIMESTAMP 명령 처리: stepNumber를 초(second)로 간주하여 유튜브 동영상 이동
+        if (typeof stepNumber === 'number' && stepNumber >= 0) {
+          if (typeof (carouselControls as any).seekTo === 'function') {
+            (carouselControls as any).seekTo(stepNumber);
+          }
         }
         break;
 
       default:
         // STEPn 명령 처리
         if (stepNumber && stepNumber >= 1 && stepNumber <= carouselControls.totalSteps) {
-          console.log(`${stepNumber}번째 단계로 이동 실행`);
           carouselControls.goToStep(stepNumber);
-        } else {
-          console.log('잘못된 단계 번호:', stepNumber, '(허용 범위: 1-' + carouselControls.totalSteps + ')');
         }
         break;
     }
-    console.log('=== 음성 명령 처리 완료 ===');
   };
 
   const {
@@ -116,7 +92,7 @@ export const useStepSpeechRecognition = (
     isSupported,
     startListening,
     stopListening,
-    resetDetection
+    resetDetection,
   } = useSpeechRecognition(handleVoiceCommand);
 
   const [stepVoiceDetections, setStepVoiceDetections] = useState<StepVoiceDetections>({});
@@ -126,13 +102,12 @@ export const useStepSpeechRecognition = (
   useEffect(() => {
     if (isSupported && autoStart && !hasStartedRef.current) {
       hasStartedRef.current = true; // 시작 플래그 설정
-      
+
       const startListeningDelayed = async (): Promise<void> => {
         await delay(1500); // YouTube가 완전히 로드된 후 음성 인식 시작
-        console.log('음성 인식 시작 시도 - 한 번만 실행');
         startListening();
       };
-      
+
       startListeningDelayed();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,7 +118,7 @@ export const useStepSpeechRecognition = (
     if (isVoiceDetected) {
       setStepVoiceDetections(prev => ({
         ...prev,
-        [carouselControls.currentStep]: true
+        [carouselControls.currentStep]: true,
       }));
     }
   }, [isVoiceDetected, carouselControls.currentStep]);
@@ -151,18 +126,15 @@ export const useStepSpeechRecognition = (
   // 단계가 변경될 때 감지 상태 리셋
   useEffect(() => {
     if (carouselControls.currentStep !== prevStep) {
-      console.log('=== 단계 변경 감지 ===');
-      console.log('이전 단계:', prevStep, '-> 현재 단계:', carouselControls.currentStep);
       setPrevStep(carouselControls.currentStep);
       resetDetection();
-      
+
       // 중복 방지도 리셋
       lastCommandRef.current = '';
       if (commandTimeoutRef.current) {
         clearTimeout(commandTimeoutRef.current);
         commandTimeoutRef.current = null;
       }
-      console.log('중복 방지 ref 리셋 완료');
     }
   }, [carouselControls.currentStep, prevStep, resetDetection]);
 
@@ -177,7 +149,8 @@ export const useStepSpeechRecognition = (
   }, []);
 
   // 현재 단계의 음성 감지 상태 가져오기
-  const currentStepVoiceDetected = stepVoiceDetections[carouselControls.currentStep] || isVoiceDetected;
+  const currentStepVoiceDetected =
+    stepVoiceDetections[carouselControls.currentStep] || isVoiceDetected;
 
   return {
     isListening,
@@ -188,6 +161,6 @@ export const useStepSpeechRecognition = (
     stepVoiceDetections,
     startListening,
     stopListening,
-    resetDetection
+    resetDetection,
   };
-}; 
+};

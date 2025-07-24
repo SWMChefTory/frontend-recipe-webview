@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { WEBVIEW_MESSAGE_TYPES } from '../../core/constants';
+import { WEBVIEW_MESSAGE_TYPES } from '../../common/constants';
 import { RecipeData } from '../../recipeDetail/types/recipe';
-import { sendWebViewMessage } from '../utils/webview';
+import { sendBridgeMessage } from '../utils/webview';
 
 interface UseWebViewActionsResult {
   handleStartCooking: () => void;
@@ -11,24 +11,23 @@ interface UseWebViewActionsResult {
 }
 
 /**
- * WebView 관련 액션들을 관리하는 커스텀 훅
+ * Bridge(네이티브 통신) 관련 액션들을 관리하는 커스텀 훅
  * @param recipeData - 레시피 데이터
  * @param onModeChange - 모드 변경 콜백 함수
  * @returns WebView 액션 핸들러들
  */
-export const useWebViewActions = (
+export const useBridgeActions = (
   recipeData: RecipeData | null,
-  onModeChange: (mode: boolean) => void
+  onModeChange?: (mode: boolean) => void,
 ): UseWebViewActionsResult => {
-  
   const handleStartCooking = useCallback((): void => {
     if (!recipeData) {
       return;
-    } 
-    onModeChange(true);
-    
+    }
+    onModeChange?.(true);
+
     if (window.ReactNativeWebView) {
-      sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
     }
   }, [recipeData, onModeChange]);
 
@@ -38,19 +37,19 @@ export const useWebViewActions = (
     }
 
     if (window.ReactNativeWebView) {
-      onModeChange(false);
-      sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
-    } 
+      onModeChange?.(false);
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
+    }
   }, [recipeData, onModeChange]);
 
   const handleBackToRecipe = useCallback((): void => {
     if (!recipeData) {
       return;
     }
-    onModeChange(false);
-    
+    onModeChange?.(false);
+
     if (window.ReactNativeWebView) {
-      sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
     }
   }, [recipeData, onModeChange]);
 
@@ -60,7 +59,7 @@ export const useWebViewActions = (
     }
 
     if (window.ReactNativeWebView) {
-      sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
     } else {
       // 웹 환경에서 테스트용
       window.history.back();
@@ -73,4 +72,4 @@ export const useWebViewActions = (
     handleBackToRecipe,
     handleBack,
   };
-}; 
+};
