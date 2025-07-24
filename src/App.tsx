@@ -1,7 +1,7 @@
 import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
-import './features/core/styles/global.css';
+import './features/common/styles/global.css';
 import RecipeDetailPage from './features/recipeDetail/RecipeDetailPage';
 import RecipeStepPage from './features/recipeStep/RecipeStepPage';
 
@@ -10,12 +10,12 @@ import RecipeStepPage from './features/recipeStep/RecipeStepPage';
  * @returns JSX 엘리먼트
  */
 const App = (): JSX.Element => {
-    return (
+  return (
     <Router>
       <Routes>
         {/* 레시피 정보 페이지 */}
         <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-        
+
         {/* 조리 모드 페이지 */}
         <Route path="/recipes/:id/steps" element={<RecipeStepPage />} />
       </Routes>
@@ -23,4 +23,4 @@ const App = (): JSX.Element => {
   );
 };
 
-export default App; 
+export default App;

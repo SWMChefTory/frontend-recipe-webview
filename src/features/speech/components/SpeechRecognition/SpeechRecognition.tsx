@@ -1,57 +1,61 @@
-import React from 'react';
-import { SpeechRecognitionProps } from '../../../core/types';
+import { SpeechRecognitionProps } from '../../../common/types';
 import './SpeechRecognition.css';
+
+interface ListeningStatusProps {
+  isListening: boolean;
+  isVoiceDetected: boolean;
+}
+
+const ListeningStatus = ({ isListening, isVoiceDetected }: ListeningStatusProps): JSX.Element => (
+  <div className="speech-status">
+    {isListening ? (
+      <div className="listening-indicator">
+        <span className={`listening-dot ${isVoiceDetected ? 'voice-detected' : ''}`}></span>
+        실시간 음성 인식 중
+      </div>
+    ) : (
+      <div className="not-listening">음성 인식 시작 중...</div>
+    )}
+  </div>
+);
+
+const TranscriptBox = ({ transcript }: { transcript: string }): JSX.Element => (
+  <div className="speech-transcript">
+    <div className="speech-text">
+      <div className="speech-label">인식된 음성:</div>
+      <div className="speech-content">{transcript}</div>
+    </div>
+  </div>
+);
+
+const ErrorBox = ({ error }: { error: string }): JSX.Element => (
+  <div className="speech-transcript">
+    <div className="speech-error">
+      <div className="speech-label">오류:</div>
+      <div className="speech-content">{error}</div>
+    </div>
+  </div>
+);
 
 /**
  * 실시간 음성 인식 상태를 표시하는 컴포넌트
- * @param props - 음성 인식 컴포넌트 props
- * @returns JSX 엘리먼트 또는 null
  */
-const SpeechRecognition: React.FC<SpeechRecognitionProps> = ({ 
-  isListening, 
-  isVoiceDetected, 
+const SpeechRecognition = ({
+  isListening,
+  isVoiceDetected,
   transcript,
-  error, 
-  isSupported 
-}) => {
-  if (!isSupported) {
-    return null;
-  }
+  error,
+  isSupported,
+}: SpeechRecognitionProps): JSX.Element | null => {
+  if (!isSupported) return null;
 
   return (
-    <div className="speech-recognition-section">
-      <div className="speech-status">
-        {isListening ? (
-          <div className="listening-indicator">
-            <span className={`listening-dot ${isVoiceDetected ? 'voice-detected' : ''}`}></span>
-            실시간 음성 인식 중
-          </div>
-        ) : (
-          <div className="not-listening">
-            음성 인식 시작 중...
-          </div>
-        )}
-      </div>
-      
-      {transcript && (
-        <div className="speech-transcript">
-          <div className="speech-text">
-            <div className="speech-label">인식된 음성:</div>
-            <div className="speech-content">{transcript}</div>
-          </div>
-        </div>
-      )}
-      
-      {error && (
-        <div className="speech-transcript">
-          <div className="speech-error">
-            <div className="speech-label">오류:</div>
-            <div className="speech-content">{error}</div>
-          </div>
-        </div>
-      )}
+    <div className="speech-recognition-section" role="status" aria-live="polite">
+      <ListeningStatus isListening={isListening} isVoiceDetected={isVoiceDetected} />
+      {transcript && <TranscriptBox transcript={transcript} />}
+      {error && <ErrorBox error={error} />}
     </div>
   );
 };
 
-export default SpeechRecognition; 
+export default SpeechRecognition;

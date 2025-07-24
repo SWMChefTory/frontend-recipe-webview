@@ -1,15 +1,15 @@
 import { RecipeData } from '../../recipeDetail/types/recipe';
 
-// WebView 메시지 타입들
-export type WebViewMessageType = 
+// Bridge 메시지 타입들
+export type BridgeMessageType = 
   | 'START_COOKING'
   | 'FINISH_COOKING'
   | 'BACK_TO_RECIPE'
   | 'BACK_PRESSED';
 
-// WebView 메시지 인터페이스
-export interface WebViewMessage {
-  type: WebViewMessageType;
+// Bridge 메시지 인터페이스
+export interface BridgeMessage {
+  type: BridgeMessageType;
   data: RecipeData | null;
 }
 
