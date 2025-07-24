@@ -1,8 +1,8 @@
-import { WEBVIEW_MESSAGE_TYPES } from '../../core/constants';
+import { WEBVIEW_MESSAGE_TYPES } from '../../common/constants';
 import { RecipeData } from '../../recipeDetail/types/recipe';
-import { WebViewMessage, WebViewMessageType } from '../types/webview';
+import { BridgeMessage, BridgeMessageType } from '../types/webview';
 
-// 전역 객체에 ReactNativeWebView 추가
+// 전역 객체에 ReactNativeBridge(WebView) 추가
 declare global {
   interface Window {
     ReactNativeWebView?: {
@@ -12,18 +12,18 @@ declare global {
 }
 
 /**
- * React Native WebView로 메시지를 전송하는 공통 함수
+ * React Native Bridge(WebView)로 메시지를 전송하는 공통 함수
  * @param type - 메시지 타입
  * @param data - 전송할 데이터
  * @param additionalData - 추가 데이터
  */
-export const sendWebViewMessage = (
-  type: WebViewMessageType, 
-  data: RecipeData | null, 
-  additionalData: Partial<WebViewMessage> = {}
+export const sendBridgeMessage = (
+  type: BridgeMessageType,
+  data: RecipeData | null,
+  additionalData: Partial<BridgeMessage> = {},
 ): void => {
   if (window.ReactNativeWebView) {
-    const message: WebViewMessage = {
+    const message: BridgeMessage = {
       type,
       data,
       ...additionalData,
@@ -37,7 +37,7 @@ export const sendWebViewMessage = (
  * @param recipeData - 레시피 데이터
  */
 export const sendStartCooking = (recipeData: RecipeData): void => {
-  sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
 };
 
 /**
@@ -45,7 +45,7 @@ export const sendStartCooking = (recipeData: RecipeData): void => {
  * @param recipeData - 레시피 데이터
  */
 export const sendFinishCooking = (recipeData: RecipeData): void => {
-  sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
 };
 
 /**
@@ -53,7 +53,7 @@ export const sendFinishCooking = (recipeData: RecipeData): void => {
  * @param recipeData - 레시피 데이터
  */
 export const sendBackToRecipe = (recipeData: RecipeData): void => {
-  sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
 };
 
 /**
@@ -61,5 +61,5 @@ export const sendBackToRecipe = (recipeData: RecipeData): void => {
  * @param recipeData - 레시피 데이터
  */
 export const sendBackPressed = (recipeData: RecipeData): void => {
-  sendWebViewMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
-}; 
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
+};
