@@ -9,8 +9,7 @@ export const fetchRecipe = async (id: string, accessToken: string | null): Promi
 
   const response = await fetch(`${BASE_API_URL}/api/v1/recipes/${id}`, {
     headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${accessToken}`,
     },
   });
 
