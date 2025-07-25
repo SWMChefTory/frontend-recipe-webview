@@ -27,27 +27,38 @@ const App = (): JSX.Element => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
+    // 웹뷰가 로드될 때 이 useEffect가 실행되는지 확인하는 로그
+    console.log('[[WEBVIEW_DEBUG]] App.tsx useEffect running, adding message listener.');
+
     const handleMessage = (event: MessageEvent) => {
-      console.log('Received message in App.tsx handleMessage:', event); // 추가
-      try {
-        const message = JSON.parse(event.data);
-        if (message.type === 'ACCESS_TOKEN' && message.token) {
-          console.log('웹뷰에서 받은 액세스 토큰:', message.token);
-          setAccessToken(message.token);
-          // 여기에 토큰을 localStorage에 저장하거나, API 클라이언트 설정에 사용하는 로직을 추가할 수 있습니다.
-        }
-      } catch (error) {
-        console.error('메시지 처리 중 오류:', error);
+      // 메시지가 웹뷰의 window에 도달했는지 확인하는 로그
+      console.log('[[WEBVIEW_DEBUG]] Raw Message Event:', event);
+      console.log('[[WEBVIEW_DEBUG]] Event Data (payload):', event.data);
+      console.log('[[WEBVIEW_DEBUG]] Event Origin:', event.origin);
+
+      // `event.data`가 이미 파싱된 객체이므로 JSON.parse를 제거합니다.
+      const message = event.data; // ✨ 수정된 부분: JSON.parse 제거
+      console.log('[[WEBVIEW_DEBUG]] Processed Message Object:', message);
+
+      if (
+        typeof message === 'object' &&
+        message !== null &&
+        message.type === 'ACCESS_TOKEN' &&
+        message.token
+      ) {
+        console.log('[[WEBVIEW_DEBUG]] 웹뷰에서 ACCESS_TOKEN 메시지 수신 확인:', message.token);
+        setAccessToken(message.token);
+      } else {
+        console.log('[[WEBVIEW_DEBUG]] 인식할 수 없는 메시지 타입 또는 토큰 없음:', message);
       }
     };
 
     window.addEventListener('message', handleMessage);
-
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
     return () => {
+      console.log('[[WEBVIEW_DEBUG]] App.tsx useEffect cleanup, removing message listener.');
       window.removeEventListener('message', handleMessage);
     };
-  }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행되도록 합니다.
+  }, []);
 
   return (
     <Router>
