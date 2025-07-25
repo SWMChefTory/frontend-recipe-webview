@@ -1,2 +1,2 @@
 // Recipe services exports
-export * from './data';
+export * from './index';

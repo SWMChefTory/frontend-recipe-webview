@@ -43,6 +43,8 @@ const delay = (ms: number): Promise<void> => {
  */
 export const useStepSpeechRecognition = (
   carouselControls: CarouselControls,
+  selectedSttModel: string,
+  accessToken: string | null, // 추가
   autoStart: boolean = true,
 ): UseStepSpeechRecognitionResult => {
   const lastCommandRef = useRef<string>('');
@@ -93,7 +95,7 @@ export const useStepSpeechRecognition = (
     startListening,
     stopListening,
     resetDetection,
-  } = useSpeechRecognition(handleVoiceCommand);
+  } = useSpeechRecognition(handleVoiceCommand, selectedSttModel, accessToken);
 
   const [stepVoiceDetections, setStepVoiceDetections] = useState<StepVoiceDetections>({});
   const [prevStep, setPrevStep] = useState<number>(carouselControls.currentStep);
