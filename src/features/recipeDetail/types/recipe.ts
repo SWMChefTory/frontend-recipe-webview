@@ -7,53 +7,46 @@ export interface Ingredient {
 
 // 조리 단계 타입
 export interface RecipeStep {
+  id: string | null;
+  step_order: number;
   subtitle: string;
   details: readonly string[];
-  start: number;
-  end: number;
+  start_time: number;
+  end_time: number;
 }
 
-// 레시피 데이터 타입
-export interface RecipeData {
-  id: number;
-  title: string;
-  description: string;
-  total_time_sec: number;
-  youtubeEmbedId: string;
+// 비디오 정보 타입
+export interface VideoInfo {
+  video_id: string;
+  video_title: string;
+  video_thumbnail_url: string;
+  video_seconds: number;
+}
+
+// 재료 정보 타입
+export interface IngredientsInfo {
+  id: string;
   ingredients: readonly Ingredient[];
-  steps: readonly RecipeStep[];
 }
 
-export interface RecipeResponse {
-    recipeStatus: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING' | string;
-    videoInfo: VideoInfo;
-    ingredientsInfo: IngredientsInfo;
-    recipeStepInfos: RecipeStepInfo[];
-  }
-  
-  export interface VideoInfo {
-    videoId: string;
-    title: string;
-    channelTitle: string;
-    thumbnailUrl: string;
-  }
-  
-  export interface IngredientsInfo {
-    ingredientsId: string;
-    ingredients: Ingredient[];
-  }
-  
-  export interface RecipeStepInfo {
-    id: string;
-    order: number;
-    subtitle: string;
-    details: string[];
-    start: number;
-    end: number;
-  }
-  
+// 시청 상태 정보 타입
+export interface ViewStatus {
+  id: string;
+  viewed_at: string;
+  last_play_seconds: number;
+  created_at: string;
+}
 
-// Mock 레시피 데이터베이스 타입
+// 레시피 데이터 타입 (API 응답과 맵핑)
+export interface RecipeData {
+  recipe_status: 'READY' | 'NOT_COOK_URL' | 'FAILED' | 'COMPLETED';
+  video_info: VideoInfo;
+  ingredients_info: IngredientsInfo;
+  recipe_steps: readonly RecipeStep[];
+  view_status: ViewStatus;
+}
+
+// Mock 레시피 데이터베이스 타입 (이제 사용되지 않을 수 있음)
 export interface MockRecipes {
   [key: string]: RecipeData;
-} 
+}

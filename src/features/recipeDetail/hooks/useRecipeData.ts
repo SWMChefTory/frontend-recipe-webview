@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getRecipeById } from '../services/data';
+import { fetchRecipe } from '../api/fetchRecipe'; // fetchRecipe 임포트
 import { RecipeData } from '../types/recipe';
 
 // 훅 반환 타입
@@ -11,36 +11,43 @@ interface UseRecipeDataResult {
 
 /**
  * 레시피 데이터 로딩을 담당하는 커스텀 훅
- * @param recipeId - 레시피 ID (선택적, 없으면 URL에서 추출)
+ * @param recipeId - 레시피 ID
+ * @param accessToken - 액세스 토큰
  * @returns 레시피 데이터, 로딩 상태, 에러 상태
  */
-export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
+export const useRecipeData = (
+  recipeId?: string,
+  accessToken?: string | null,
+): UseRecipeDataResult => {
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadRecipeData = async (): Promise<void> => {
+      if (!recipeId) {
+        setError('레시피 아이디를 찾을 수 없습니다.');
+        setLoading(false); // 로딩 완료
+        return;
+      }
+      if (!accessToken) {
+        setError('액세스 토큰이 없습니다.');
+        setLoading(false); // 로딩 완료
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        let targetRecipeId: string | null = recipeId || null;
-				
-				if (!targetRecipeId) {
-					throw new Error('레시피 아이디를 찾을 수 없습니다.');
-				}
-
-        const recipeResponse = getRecipeById(targetRecipeId);
-
-        if (!recipeResponse) {
-          throw new Error(`레시피가 존재하지 않습니다. Recipe ID: ${targetRecipeId}`);
-        }
+        const recipeResponse = await fetchRecipe(recipeId, accessToken);
 
         setRecipeData(recipeResponse);
       } catch (err) {
         console.error('Failed to load recipe data:', err);
-        setError(err instanceof Error ? err.message : `레시피 데이터 로딩 중 오류가 발생했습니다: ${err}`);
+        setError(
+          err instanceof Error ? err.message : `레시피 데이터 로딩 중 오류가 발생했습니다: ${err}`,
+        );
         setRecipeData(null);
       } finally {
         setLoading(false);
@@ -48,7 +55,7 @@ export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
     };
 
     loadRecipeData();
-  }, [recipeId]);
+  }, [recipeId, accessToken]);
 
   return { recipeData, loading, error };
-}; 
+};

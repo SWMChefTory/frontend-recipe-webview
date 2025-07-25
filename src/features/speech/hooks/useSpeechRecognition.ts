@@ -17,6 +17,8 @@ const BUFFER_SIZE = 8192;
 
 export const useSpeechRecognition = (
   onVoiceCommand?: VoiceCommandCallback,
+  selectedSttModel?: string,
+  accessToken?: string | null,
 ): UseSpeechRecognitionResult => {
   const [isListening, setIsListening] = useState(false);
   const [isVoiceDetected, setIsVoiceDetected] = useState(false);
@@ -112,8 +114,14 @@ export const useSpeechRecognition = (
     setError(null);
     setTranscript('');
 
+    const url = new URL(STT_SERVER_URL);
+    url.searchParams.append('provider', selectedSttModel || 'VITO');
+    if (accessToken) {
+      url.searchParams.append('token', accessToken);
+    }
+
     const connected = connect({
-      url: STT_SERVER_URL,
+      url: url.toString(),
       onIntentReceived: onVoiceCommandRef.current!,
       onTranscript: setTranscript,
       onVoiceDetected: () => setIsVoiceDetected(true),
@@ -123,13 +131,15 @@ export const useSpeechRecognition = (
       onClose: () => setIsListening(false),
     });
 
-    if (!connected) return;
+    if (!connected) {
+      return;
+    }
 
     const audioReady = await setupAudioProcessing();
     if (audioReady) {
       setIsListening(true);
     }
-  }, [isSupported, connect, setupAudioProcessing]);
+  }, [isSupported, connect, setupAudioProcessing, selectedSttModel, accessToken]);
 
   const stopListening = useCallback(() => {
     cleanup();

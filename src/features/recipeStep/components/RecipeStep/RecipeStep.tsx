@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Slider from 'react-slick';
 import Header from '../../../common/components/Header/Header';
 import YouTubePlayer from '../../../common/components/YouTube/YouTubePlayer';
-import { RecipeData } from '../../../recipeDetail/types/recipe';
+import { RecipeData, RecipeStep as RecipeStepType } from '../../../recipeDetail/types/recipe'; // RecipeStepType으로 변경
 import SpeechRecognition from '../../../speech/components/SpeechRecognition/SpeechRecognition';
 import { useStepSpeechRecognition } from '../../../speech/hooks/useStepSpeechRecognition';
 import { useCarousel } from '../../hooks/useCarousel';
@@ -14,13 +14,15 @@ interface RecipeStepProps {
   recipeData: RecipeData;
   onFinishCooking: () => void;
   onBackToRecipe: () => void;
+  selectedSttModel: string;
+  accessToken: string | null; // 추가
 }
 
 /**
  * 개별 조리 단계 카드 컴포넌트
  */
 const StepCard: React.FC<{
-  step: RecipeData['steps'][0];
+  step: RecipeData['recipe_steps'][0]; // 변경
   index: number;
   totalSteps: number;
 }> = ({ step, index, totalSteps }) => (
@@ -54,6 +56,8 @@ const RecipeStep = ({
   recipeData,
   onFinishCooking,
   onBackToRecipe,
+  selectedSttModel,
+  accessToken, // 추가
 }: RecipeStepProps): JSX.Element => {
   const {
     sliderRef,
@@ -66,7 +70,10 @@ const RecipeStep = ({
     goToStep,
   } = useCarousel(recipeData);
 
-  const totalSteps = useMemo(() => recipeData.steps.length, [recipeData.steps.length]);
+  const totalSteps = useMemo(
+    () => recipeData.recipe_steps.length,
+    [recipeData.recipe_steps.length],
+  ); // 변경
 
   // TIMESTAMP 명령을 위한 유튜브 시킹 상태
   const [seekTime, setSeekTime] = useState<{ stepIdx: number; seconds: number } | null>(null);
@@ -94,12 +101,15 @@ const RecipeStep = ({
       totalSteps,
       seekTo: (seconds: number) => {
         // step 찾기: step.start <= seconds < step.end
-        const stepIdx = recipeData.steps.findIndex((step, idx) => {
-          const isLast = idx === recipeData.steps.length - 1;
+        const stepIdx = recipeData.recipe_steps.findIndex((step: RecipeStepType, idx) => {
+          // 변경
+          const isLast = idx === recipeData.recipe_steps.length - 1; // 변경
           if (isLast) {
-            return seconds >= step.start;
+            return seconds >= step.start_time; // 변경
           }
-          return seconds >= step.start && seconds < recipeData.steps[idx + 1].start;
+          return (
+            seconds >= step.start_time && seconds < recipeData.recipe_steps[idx + 1].start_time
+          ); // 변경
         });
         if (stepIdx !== -1) {
           handleStepClick(stepIdx);
@@ -112,22 +122,25 @@ const RecipeStep = ({
     currentStep,
     totalSteps,
     handleStepClick,
-    recipeData.steps,
+    recipeData.recipe_steps, // 변경
     goToNext,
     goToPrevious,
     goToStep,
   ]);
 
-  const { isListening, isVoiceDetected, transcript, error, isSupported } =
-    useStepSpeechRecognition(carouselControls);
+  const { isListening, isVoiceDetected, transcript, error, isSupported } = useStepSpeechRecognition(
+    carouselControls,
+    selectedSttModel,
+    accessToken,
+  );
 
   // TIMESTAMP 명령이 있고, stepIdx와 currentStep이 일치하면 해당 초로, 아니면 현재 단계의 start
   const currentStepData = useMemo(() => {
     if (seekTime && seekTime.stepIdx === currentStep) {
-      return { ...recipeData.steps[currentStep], start: seekTime.seconds };
+      return { ...recipeData.recipe_steps[currentStep], start_time: seekTime.seconds }; // 변경
     }
-    return recipeData.steps[currentStep];
-  }, [recipeData.steps, currentStep, seekTime]);
+    return recipeData.recipe_steps[currentStep]; // 변경
+  }, [recipeData.recipe_steps, currentStep, seekTime]); // 변경
   const isLastStep = useMemo(() => currentStep === totalSteps - 1, [currentStep, totalSteps]);
 
   const handleBackPress = useCallback((): void => {
@@ -147,7 +160,7 @@ const RecipeStep = ({
     <div className="cooking-mode">
       {/* 헤더 */}
       <Header
-        title={recipeData.title}
+        title={recipeData.video_info.video_title} // 변경
         currentStep={currentStep + 1}
         totalSteps={totalSteps}
         onBack={handleBackPress}
@@ -156,9 +169,9 @@ const RecipeStep = ({
 
       {/* YouTube 영상 섹션 */}
       <YouTubePlayer
-        youtubeEmbedId={recipeData.youtubeEmbedId}
-        startTime={currentStepData.start}
-        title={`${recipeData.title} - Step ${currentStep + 1}`}
+        youtubeEmbedId={recipeData.video_info.video_id} // 변경
+        startTime={currentStepData.start_time} // 변경
+        title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`} // 변경
         autoplay={true}
         youtubeKey={seekTime !== null ? seekKey : youtubeKey}
       />
@@ -171,14 +184,19 @@ const RecipeStep = ({
         {/* React Slick 캐러셀 */}
         <div className="carousel-container">
           <Slider ref={sliderRef} {...slickSettings}>
-            {recipeData.steps.map((step, index) => (
-              <StepCard
-                key={`step-slide-${index}`}
-                step={step}
-                index={index}
-                totalSteps={totalSteps}
-              />
-            ))}
+            {recipeData.recipe_steps.map(
+              (
+                step: RecipeStepType,
+                index: number, // 변경
+              ) => (
+                <StepCard
+                  key={`step-slide-${index}`}
+                  step={step}
+                  index={index}
+                  totalSteps={totalSteps}
+                />
+              ),
+            )}
           </Slider>
         </div>
 
