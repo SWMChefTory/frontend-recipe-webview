@@ -8,19 +8,26 @@ import { Error, Loading, useBodyScrollLock, useTransition } from '../common';
  * 레시피 정보 페이지
  * URL: /recipes/:id
  */
-const RecipeDetailPage = (): JSX.Element => {
+interface RecipeDetailPageProps {
+  accessToken: string | null;
+}
+
+const RecipeDetailPage = ({ accessToken }: RecipeDetailPageProps): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData, loading, error } = useRecipeData(id);
+  const { recipeData, loading, error } = useRecipeData(id, accessToken);
 
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
 
   // 조리 시작 핸들러
-  const handleStartRecipeStep = useCallback((): void => {
-    navigate(`/recipes/${id}/steps`, { state: { recipeData } });
-  }, [navigate, id, recipeData]);
+  const handleStartRecipeStep = useCallback(
+    (selectedModel: string): void => {
+      navigate(`/recipes/${id}/steps`, { state: { recipeData, selectedModel } });
+    },
+    [navigate, id, recipeData],
+  );
 
   // 네이티브 앱과 통신
   const bridgeActions = useBridgeActions(recipeData);
