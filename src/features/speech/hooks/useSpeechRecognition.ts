@@ -117,7 +117,10 @@ export const useSpeechRecognition = (
     const url = new URL(STT_SERVER_URL);
     url.searchParams.append('provider', selectedSttModel || 'VITO');
     if (accessToken) {
-      url.searchParams.append('token', accessToken);
+      const tokenWithoutBearer = accessToken.startsWith('Bearer ')
+        ? accessToken.substring('Bearer '.length)
+        : accessToken;
+      url.searchParams.append('token', tokenWithoutBearer);
     }
 
     const connected = connect({
