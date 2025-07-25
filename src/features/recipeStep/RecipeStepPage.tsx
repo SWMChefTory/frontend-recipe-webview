@@ -3,17 +3,24 @@ import { useBridgeActions } from '../bridge';
 import { useBodyScrollLock, useTransition } from '../common';
 import RecipeStep from './components/RecipeStep/RecipeStep';
 
+interface RecipeStepPageProps {
+  accessToken: string | null;
+}
+
 /**
  * 조리 모드 페이지
- * URL: /recipes/:id/steps
+ * URL: /recipes/:id
  */
-const RecipeStepPage = (): JSX.Element => {
+const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
   const location = useLocation();
 
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData } = location.state;
+  const { recipeData, selectedModel } = location.state as {
+    recipeData: any;
+    selectedModel: string;
+  };
 
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
@@ -47,6 +54,8 @@ const RecipeStepPage = (): JSX.Element => {
         recipeData={recipeData}
         onFinishCooking={handleFinishCooking}
         onBackToRecipe={handleBackToRecipe}
+        selectedSttModel={selectedModel}
+        accessToken={accessToken}
       />
     </div>
   );
