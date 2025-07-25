@@ -45,9 +45,6 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
         {/* 요리명과 설명 */}
         <header className="recipe-header">
           <h1 className="recipe-title">{recipeData.video_info.video_title}</h1>
-          <p className="recipe-description">
-            {recipeData.video_info.video_title}에 대한 설명은 API에 없습니다. 임시 텍스트.
-          </p>
         </header>
 
         {/* 소요시간 */}
