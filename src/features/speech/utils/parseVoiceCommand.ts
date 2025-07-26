@@ -1,9 +1,6 @@
 import { VoiceCommand, VoiceCommandCallback } from '../types/voice';
 
-export const parseVoiceCommand = (
-  intent: string,
-  callback: VoiceCommandCallback
-): void => {
+export const parseVoiceCommand = (intent: string, callback: VoiceCommandCallback): void => {
   if (intent === 'NEXT' || intent === 'PREV') {
     callback(intent);
     return;
