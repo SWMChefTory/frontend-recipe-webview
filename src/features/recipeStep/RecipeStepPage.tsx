@@ -14,7 +14,7 @@ interface RecipeStepPageProps {
 const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
   const location = useLocation();
 
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>(); // recipeId로 사용
   const navigate = useNavigate();
 
   const { recipeData, selectedModel } = location.state as {
@@ -56,6 +56,7 @@ const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
         onBackToRecipe={handleBackToRecipe}
         selectedSttModel={selectedModel}
         accessToken={accessToken}
+        recipeId={id!} // recipeId 전달
       />
     </div>
   );

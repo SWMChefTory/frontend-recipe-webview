@@ -19,6 +19,7 @@ export const useSpeechRecognition = (
   onVoiceCommand?: VoiceCommandCallback,
   selectedSttModel?: string,
   accessToken?: string | null,
+  recipeId?: string, // 추가
 ): UseSpeechRecognitionResult => {
   const [isListening, setIsListening] = useState(false);
   const [isVoiceDetected, setIsVoiceDetected] = useState(false);
@@ -122,6 +123,10 @@ export const useSpeechRecognition = (
         : accessToken;
       url.searchParams.append('token', tokenWithoutBearer);
     }
+    if (recipeId) {
+      // 추가
+      url.searchParams.append('recipe_id', recipeId);
+    }
 
     const connected = connect({
       url: url.toString(),
@@ -142,7 +147,7 @@ export const useSpeechRecognition = (
     if (audioReady) {
       setIsListening(true);
     }
-  }, [isSupported, connect, setupAudioProcessing, selectedSttModel, accessToken]);
+  }, [isSupported, connect, setupAudioProcessing, selectedSttModel, accessToken, recipeId]); // recipeId 의존성 추가
 
   const stopListening = useCallback(() => {
     cleanup();
