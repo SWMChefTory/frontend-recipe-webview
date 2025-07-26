@@ -15,7 +15,8 @@ interface RecipeStepProps {
   onFinishCooking: () => void;
   onBackToRecipe: () => void;
   selectedSttModel: string;
-  accessToken: string | null; // 추가
+  accessToken: string | null;
+  recipeId: string; // 추가
 }
 
 /**
@@ -57,7 +58,8 @@ const RecipeStep = ({
   onFinishCooking,
   onBackToRecipe,
   selectedSttModel,
-  accessToken, // 추가
+  accessToken,
+  recipeId, // 추가
 }: RecipeStepProps): JSX.Element => {
   const {
     sliderRef,
@@ -132,6 +134,7 @@ const RecipeStep = ({
     carouselControls,
     selectedSttModel,
     accessToken,
+    recipeId, // 추가
   );
 
   // TIMESTAMP 명령이 있고, stepIdx와 currentStep이 일치하면 해당 초로, 아니면 현재 단계의 start

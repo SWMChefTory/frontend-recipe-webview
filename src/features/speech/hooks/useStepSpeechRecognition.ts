@@ -45,6 +45,7 @@ export const useStepSpeechRecognition = (
   carouselControls: CarouselControls,
   selectedSttModel: string,
   accessToken: string | null, // 추가
+  recipeId: string, // 추가
   autoStart: boolean = true,
 ): UseStepSpeechRecognitionResult => {
   const lastCommandRef = useRef<string>('');
@@ -95,7 +96,7 @@ export const useStepSpeechRecognition = (
     startListening,
     stopListening,
     resetDetection,
-  } = useSpeechRecognition(handleVoiceCommand, selectedSttModel, accessToken);
+  } = useSpeechRecognition(handleVoiceCommand, selectedSttModel, accessToken, recipeId);
 
   const [stepVoiceDetections, setStepVoiceDetections] = useState<StepVoiceDetections>({});
   const [prevStep, setPrevStep] = useState<number>(carouselControls.currentStep);
