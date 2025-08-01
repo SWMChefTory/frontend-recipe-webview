@@ -1,0 +1,41 @@
+.voice-indicator-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 4px; /* 캐러셀 아래·완료버튼 위 */
+}
+
+.voice-indicator {
+  display: flex;
+  gap: 3px;
+}
+
+.voice-indicator .bar {
+  width: 4px;
+  height: 14px;
+  background: var(--primary, #ff4d4f);
+  border-radius: 2px;
+  animation: pulse 1s linear infinite;
+}
+
+.voice-indicator .bar1 {
+  animation-delay: 0s;
+}
+.voice-indicator .bar2 {
+  animation-delay: 0.1s;
+}
+.voice-indicator .bar3 {
+  animation-delay: 0.2s;
+}
+.voice-indicator .bar4 {
+  animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}

@@ -1,7 +1,7 @@
-import { RecipeData } from '../../recipeDetail/types/recipe';
+import { RecipeData } from '../../recipe/detail/types/recipe';
 
 // Bridge 메시지 타입들
-export type BridgeMessageType = 
+export type BridgeMessageType =
   | 'START_COOKING'
   | 'FINISH_COOKING'
   | 'BACK_TO_RECIPE'
@@ -33,4 +33,4 @@ export interface SlickSettings {
     breakpoint: number;
     settings: Partial<SlickSettings>;
   }>;
-} 
+}

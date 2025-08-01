@@ -12,7 +12,7 @@ interface CarouselControls {
   goToStep: (step: number) => void;
   currentStep: number;
   totalSteps: number;
-  seekTo?: (seconds: number) => void; // 유튜브 동영상 이동 함수
+  seekTo?: (seconds: number) => void;
 }
 
 // 훅 반환 타입
@@ -29,13 +29,6 @@ interface UseStepSpeechRecognitionResult {
 }
 
 /**
- * 지연 함수 (async/await 사용)
- */
-const delay = (ms: number): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
-
-/**
  * 단계별 음성 감지를 관리하는 커스텀 훅 (실시간 STT 기반)
  * @param carouselControls - 캐러셀 제어 객체
  * @param autoStart - 자동 시작 여부
@@ -44,8 +37,8 @@ const delay = (ms: number): Promise<void> => {
 export const useStepSpeechRecognition = (
   carouselControls: CarouselControls,
   selectedSttModel: string,
-  accessToken: string | null, // 추가
-  recipeId: string, // 추가
+  accessToken: string | null,
+  recipeId: string,
   autoStart: boolean = true,
 ): UseStepSpeechRecognitionResult => {
   const lastCommandRef = useRef<string>('');
@@ -70,7 +63,6 @@ export const useStepSpeechRecognition = (
         break;
 
       case 'TIMESTAMP':
-        // TIMESTAMP 명령 처리: stepNumber를 초(second)로 간주하여 유튜브 동영상 이동
         if (typeof stepNumber === 'number' && stepNumber >= 0) {
           if (typeof (carouselControls as any).seekTo === 'function') {
             (carouselControls as any).seekTo(stepNumber);
@@ -79,7 +71,6 @@ export const useStepSpeechRecognition = (
         break;
 
       default:
-        // STEPn 명령 처리
         if (stepNumber && stepNumber >= 1 && stepNumber <= carouselControls.totalSteps) {
           carouselControls.goToStep(stepNumber);
         }
@@ -101,19 +92,17 @@ export const useStepSpeechRecognition = (
   const [stepVoiceDetections, setStepVoiceDetections] = useState<StepVoiceDetections>({});
   const [prevStep, setPrevStep] = useState<number>(carouselControls.currentStep);
 
-  // 컴포넌트 마운트 시 자동으로 음성 인식 시작 (YouTube 로딩 완료 후)
+  // 컴포넌트 마운트 시 자동으로 음성 인식 시작
   useEffect(() => {
     if (isSupported && autoStart && !hasStartedRef.current) {
-      hasStartedRef.current = true; // 시작 플래그 설정
+      hasStartedRef.current = true;
 
       const startListeningDelayed = async (): Promise<void> => {
-        await delay(1500); // YouTube가 완전히 로드된 후 음성 인식 시작
         startListening();
       };
 
       startListeningDelayed();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSupported, autoStart]); // startListening을 의도적으로 제외 (중복 연결 방지)
 
   // 음성 감지 시 해당 단계에 기록

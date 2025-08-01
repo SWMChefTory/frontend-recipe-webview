@@ -1,7 +1,7 @@
+import { useBridgeActions } from 'features/bridge';
+import { useBodyScrollLock, useTransition } from 'features/common';
+import RecipeStep from 'features/recipe/step/components/RecipeStep';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useBridgeActions } from '../bridge';
-import { useBodyScrollLock, useTransition } from '../common';
-import RecipeStep from './components/RecipeStep/RecipeStep';
 
 interface RecipeStepPageProps {
   accessToken: string | null;
@@ -14,7 +14,7 @@ interface RecipeStepPageProps {
 const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
   const location = useLocation();
 
-  const { id } = useParams<{ id: string }>(); // recipeId로 사용
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const { recipeData, selectedModel } = location.state as {
@@ -56,7 +56,7 @@ const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
         onBackToRecipe={handleBackToRecipe}
         selectedSttModel={selectedModel}
         accessToken={accessToken}
-        recipeId={id!} // recipeId 전달
+        recipeId={id!}
       />
     </div>
   );

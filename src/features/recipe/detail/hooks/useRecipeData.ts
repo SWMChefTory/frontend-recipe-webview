@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { fetchRecipe } from '../api/fetchRecipe'; // fetchRecipe 임포트
+import { fetchRecipe } from '../api/fetchRecipe';
 import { RecipeData } from '../types/recipe';
 
-// 훅 반환 타입
 interface UseRecipeDataResult {
   recipeData: RecipeData | null;
   loading: boolean;
@@ -24,31 +23,29 @@ export const useRecipeData = (
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadRecipeData = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    setRecipeData(null);
+
+    const loadRecipeData = async () => {
       if (!recipeId) {
-        setError('레시피 아이디를 찾을 수 없습니다.');
-        setLoading(false); // 로딩 완료
+        setError('레시피 ID가 없습니다.');
+        setLoading(false);
         return;
       }
-      if (!accessToken) {
-        setError('액세스 토큰이 없습니다.');
-        setLoading(false); // 로딩 완료
+
+      if (!accessToken || !accessToken.startsWith('Bearer ')) {
+        setError('유효하지 않은 액세스 토큰입니다.');
+        setLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
-
         const recipeResponse = await fetchRecipe(recipeId, accessToken);
-
         setRecipeData(recipeResponse);
       } catch (err) {
-        console.error('Failed to load recipe data:', err);
-        setError(
-          err instanceof Error ? err.message : `레시피 데이터 로딩 중 오류가 발생했습니다: ${err}`,
-        );
-        setRecipeData(null);
+        console.error('[useRecipeData] 로딩 실패:', err);
+        setError(err instanceof Error ? err.message : '레시피 데이터를 불러오는 중 오류 발생');
       } finally {
         setLoading(false);
       }
