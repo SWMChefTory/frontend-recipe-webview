@@ -1,22 +1,25 @@
-// App.tsx
-import { useEffect, useState } from 'react'; // React, useEffect, useState를 import 합니다.
+import 'features/common/styles/global.css';
+import RecipeDetailPage from 'features/recipe/detail/RecipeDetailPage';
+import RecipeStepPage from 'features/recipe/step/RecipeStepPage';
+import { useEffect, useState } from 'react';
 import { Route, HashRouter as Router, Routes } from 'react-router-dom';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
-import './features/common/styles/global.css';
-import RecipeDetailPage from './features/recipeDetail/RecipeDetailPage';
-import RecipeStepPage from './features/recipeStep/RecipeStepPage';
 
-interface PageProps {
-  accessToken: string | null;
-}
-
-const RecipeDetailRoute = ({ accessToken }: PageProps) => {
-  return <RecipeDetailPage accessToken={accessToken} />;
+type AccessTokenMessage = {
+  type: 'ACCESS_TOKEN';
+  token: string;
 };
 
-const RecipeStepRoute = ({ accessToken }: PageProps) => {
-  return <RecipeStepPage accessToken={accessToken} />;
+const isAccessTokenMessage = (message: unknown): message is AccessTokenMessage => {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    'type' in message &&
+    'token' in message &&
+    (message as AccessTokenMessage).type === 'ACCESS_TOKEN' &&
+    typeof (message as AccessTokenMessage).token === 'string'
+  );
 };
 
 /**
@@ -27,35 +30,30 @@ const App = (): JSX.Element => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // 웹뷰가 로드될 때 이 useEffect가 실행되는지 확인하는 로그
-    console.log('[[WEBVIEW_DEBUG]] App.tsx useEffect running, adding message listener.');
+    console.log('[웹뷰] 메시지 수신 대기 시작');
 
     const handleMessage = (event: MessageEvent) => {
-      // 메시지가 웹뷰의 window에 도달했는지 확인하는 로그
-      console.log('[[WEBVIEW_DEBUG]] Raw Message Event:', event);
-      console.log('[[WEBVIEW_DEBUG]] Event Data (payload):', event.data);
-      console.log('[[WEBVIEW_DEBUG]] Event Origin:', event.origin);
+      let message: unknown;
 
-      // `event.data`가 이미 파싱된 객체이므로 JSON.parse를 제거합니다.
-      const message = event.data; // ✨ 수정된 부분: JSON.parse 제거
-      console.log('[[WEBVIEW_DEBUG]] Processed Message Object:', message);
+      try {
+        message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      } catch (error) {
+        console.warn('[웹뷰] JSON 파싱 실패:', event.data);
+        return;
+      }
 
-      if (
-        typeof message === 'object' &&
-        message !== null &&
-        message.type === 'ACCESS_TOKEN' &&
-        message.token
-      ) {
-        console.log('[[WEBVIEW_DEBUG]] 웹뷰에서 ACCESS_TOKEN 메시지 수신 확인:', message.token);
+      if (isAccessTokenMessage(message)) {
+        console.log('[웹뷰] 액세스 토큰 수신:', message.token);
         setAccessToken(message.token);
       } else {
-        console.log('[[WEBVIEW_DEBUG]] 인식할 수 없는 메시지 타입 또는 토큰 없음:', message);
+        console.log('[웹뷰] 무시된 메시지:', message);
       }
     };
 
     window.addEventListener('message', handleMessage);
+
     return () => {
-      console.log('[[WEBVIEW_DEBUG]] App.tsx useEffect cleanup, removing message listener.');
+      console.log('[웹뷰] 메시지 리스너 해제');
       window.removeEventListener('message', handleMessage);
     };
   }, []);
@@ -63,11 +61,8 @@ const App = (): JSX.Element => {
   return (
     <Router>
       <Routes>
-        {/* 레시피 정보 페이지에 accessToken을 prop으로 전달 */}
-        <Route path="/recipes/:id" element={<RecipeDetailRoute accessToken={accessToken} />} />
-
-        {/* 조리 모드 페이지에 accessToken을 prop으로 전달 */}
-        <Route path="/recipes/:id/steps" element={<RecipeStepRoute accessToken={accessToken} />} />
+        <Route path="/recipes/:id" element={<RecipeDetailPage accessToken={accessToken} />} />
+        <Route path="/recipes/:id/steps" element={<RecipeStepPage accessToken={accessToken} />} />
       </Routes>
     </Router>
   );

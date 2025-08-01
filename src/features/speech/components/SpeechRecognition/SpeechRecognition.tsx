@@ -3,14 +3,13 @@ import './SpeechRecognition.css';
 
 interface ListeningStatusProps {
   isListening: boolean;
-  isVoiceDetected: boolean;
 }
 
-const ListeningStatus = ({ isListening, isVoiceDetected }: ListeningStatusProps): JSX.Element => (
+const ListeningStatus = ({ isListening }: ListeningStatusProps): JSX.Element => (
   <div className="speech-status">
     {isListening ? (
       <div className="listening-indicator">
-        <span className={`listening-dot ${isVoiceDetected ? 'voice-detected' : ''}`}></span>
+        <span className={`listening-dot`}></span>
         실시간 음성 인식 중
       </div>
     ) : (
@@ -42,16 +41,12 @@ const ErrorBox = ({ error }: { error: string }): JSX.Element => (
  */
 const SpeechRecognition = ({
   isListening,
-  isVoiceDetected,
   transcript,
   error,
-  isSupported,
 }: SpeechRecognitionProps): JSX.Element | null => {
-  if (!isSupported) return null;
-
   return (
     <div className="speech-recognition-section" role="status" aria-live="polite">
-      <ListeningStatus isListening={isListening} isVoiceDetected={isVoiceDetected} />
+      <ListeningStatus isListening={isListening} />
       {transcript && <TranscriptBox transcript={transcript} />}
       {error && <ErrorBox error={error} />}
     </div>

@@ -1,6 +1,6 @@
+import { UseSpeechRecognitionResult, VoiceCommandCallback } from 'features/speech/types/voice';
+import { float32ToInt16, resampleTo16kHz } from 'features/speech/utils/audioProcessor';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { UseSpeechRecognitionResult, VoiceCommandCallback } from '../types/voice';
-import { float32ToInt16, resampleTo16kHz } from '../utils/audioProcessor';
 import { useWebSocketClient } from './useWebSocketClient';
 
 const STT_SERVER_URL = 'wss://cheftories.com/api/v1/voice-command/ws';
@@ -8,18 +8,16 @@ const STT_SERVER_URL = 'wss://cheftories.com/api/v1/voice-command/ws';
 const AUDIO_CONFIG = {
   echoCancellation: true,
   noiseSuppression: true,
-  autoGainControl: true,
+  autoGainControl: false,
   sampleRate: 16000,
   channelCount: 1,
 } as const;
-
-const BUFFER_SIZE = 8192;
 
 export const useSpeechRecognition = (
   onVoiceCommand?: VoiceCommandCallback,
   selectedSttModel?: string,
   accessToken?: string | null,
-  recipeId?: string, // 추가
+  recipeId?: string,
 ): UseSpeechRecognitionResult => {
   const [isListening, setIsListening] = useState(false);
   const [isVoiceDetected, setIsVoiceDetected] = useState(false);
@@ -30,7 +28,7 @@ export const useSpeechRecognition = (
   const onVoiceCommandRef = useRef<VoiceCommandCallback | undefined>(onVoiceCommand);
   const audioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const processorRef = useRef<AudioWorkletNode | null>(null);
 
   const { connect, disconnect, send, isOpen } = useWebSocketClient();
 
@@ -58,21 +56,30 @@ export const useSpeechRecognition = (
       const stream = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONFIG });
       mediaStreamRef.current = stream;
 
-      audioContextRef.current = new AudioContext({ sampleRate: AUDIO_CONFIG.sampleRate });
-      const source = audioContextRef.current.createMediaStreamSource(stream);
+      const audioContext = new AudioContext({ sampleRate: AUDIO_CONFIG.sampleRate });
+      audioContextRef.current = audioContext;
 
-      processorRef.current = audioContextRef.current.createScriptProcessor(BUFFER_SIZE, 1, 1);
-      processorRef.current.onaudioprocess = event => {
+      // Worklet 모듈 로드
+      await audioContext.audioWorklet.addModule('/voice-processor.worklet.js');
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const workletNode = new AudioWorkletNode(audioContext, 'voice-processor');
+
+      // 메시지 수신 처리
+      workletNode.port.onmessage = event => {
         if (!isOpen()) return;
 
-        const inputData = event.inputBuffer.getChannelData(0);
-        const resampled = resampleTo16kHz(inputData, audioContextRef.current!.sampleRate);
+        const inputData = event.data as Float32Array;
+        const resampled = resampleTo16kHz(inputData, audioContext.sampleRate);
         const int16Data = float32ToInt16(resampled);
         send(int16Data.buffer);
       };
 
-      source.connect(processorRef.current);
-      processorRef.current.connect(audioContextRef.current.destination);
+      source.connect(workletNode);
+      workletNode.connect(audioContext.destination);
+
+      // ScriptProcessorNode가 아닌 AudioWorkletNode 저장
+      processorRef.current = workletNode;
 
       return true;
     } catch (err) {
@@ -124,7 +131,6 @@ export const useSpeechRecognition = (
       url.searchParams.append('token', tokenWithoutBearer);
     }
     if (recipeId) {
-      // 추가
       url.searchParams.append('recipe_id', recipeId);
     }
 
@@ -147,7 +153,7 @@ export const useSpeechRecognition = (
     if (audioReady) {
       setIsListening(true);
     }
-  }, [isSupported, connect, setupAudioProcessing, selectedSttModel, accessToken, recipeId]); // recipeId 의존성 추가
+  }, [isSupported, connect, setupAudioProcessing, selectedSttModel, accessToken, recipeId]);
 
   const stopListening = useCallback(() => {
     cleanup();

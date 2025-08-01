@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Slider from 'react-slick';
-import { RecipeData } from '../../recipeDetail/types/recipe';
+import { RecipeData } from '../../detail/types';
 
 interface SlickSettings {
   [key: string]: unknown;
