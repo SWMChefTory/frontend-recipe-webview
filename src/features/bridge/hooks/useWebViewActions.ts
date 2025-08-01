@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
 import { WEBVIEW_MESSAGE_TYPES } from '../../common/constants';
-import { RecipeData } from '../../recipeDetail/types/recipe';
+import { RecipeData } from '../../recipe/detail/types/recipe';
 import { sendBridgeMessage } from '../utils/webview';
 
 interface UseWebViewActionsResult {
@@ -20,51 +19,34 @@ export const useBridgeActions = (
   recipeData: RecipeData | null,
   onModeChange?: (mode: boolean) => void,
 ): UseWebViewActionsResult => {
-  const handleStartCooking = useCallback((): void => {
-    if (!recipeData) {
-      return;
-    }
+  const handleStartCooking = (): void => {
+    if (!recipeData) return;
     onModeChange?.(true);
+    window.ReactNativeWebView && sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
+  };
 
-    if (window.ReactNativeWebView) {
-      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
-    }
-  }, [recipeData, onModeChange]);
-
-  const handleFinishCooking = useCallback((): void => {
-    if (!recipeData) {
-      return;
-    }
-
-    if (window.ReactNativeWebView) {
-      onModeChange?.(false);
-      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
-    }
-  }, [recipeData, onModeChange]);
-
-  const handleBackToRecipe = useCallback((): void => {
-    if (!recipeData) {
-      return;
-    }
+  const handleFinishCooking = (): void => {
+    if (!recipeData) return;
     onModeChange?.(false);
+    window.ReactNativeWebView &&
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
+  };
 
-    if (window.ReactNativeWebView) {
+  const handleBackToRecipe = (): void => {
+    if (!recipeData) return;
+    onModeChange?.(false);
+    window.ReactNativeWebView &&
       sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
-    }
-  }, [recipeData, onModeChange]);
+  };
 
-  const handleBack = useCallback((): void => {
-    if (!recipeData) {
-      return;
-    }
-
+  const handleBack = (): void => {
+    if (!recipeData) return;
     if (window.ReactNativeWebView) {
       sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
     } else {
-      // 웹 환경에서 테스트용
-      window.history.back();
+      window.history.back(); // 웹 테스트용
     }
-  }, [recipeData]);
+  };
 
   return {
     handleStartCooking,

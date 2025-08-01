@@ -1,31 +1,50 @@
+import type { YouTubeProps } from 'react-youtube';
+import YouTube from 'react-youtube';
 import { YouTubePlayerProps } from '../../types';
-import { getYouTubeUrl } from '../../utils/youtube';
 
-/**
- * YouTube 플레이어 컴포넌트
- */
-const YouTubePlayer = ({ 
-  youtubeEmbedId, 
-  startTime, 
+type YTOpts = NonNullable<YouTubeProps['opts']>;
+
+interface Props extends YouTubePlayerProps {
+  /** 부모가 플레이어 인스턴스를 받을 때 호출 */
+  onPlayerReady?: (player: YT.Player) => void;
+}
+
+const YouTubePlayer = ({
+  youtubeEmbedId,
+  startTime,
   title,
   autoplay = false,
-  youtubeKey 
-}: YouTubePlayerProps): JSX.Element => {
+  youtubeKey,
+  onPlayerReady,
+}: Props): JSX.Element => {
+  /** iFrame API 파라미터 */
+  const opts: YTOpts = {
+    width: '100%',
+    height: '220',
+    playerVars: {
+      autoplay: autoplay ? 1 : 0,
+      start: startTime ?? 0,
+    },
+  };
+
+  /** 준비 이벤트 */
+  const handleReady: NonNullable<YouTubeProps['onReady']> = e => {
+    if (startTime) e.target.seekTo(startTime, true);
+    onPlayerReady?.(e.target);
+  };
+
   return (
     <section className="youtube-container">
-      <iframe
+      <YouTube
         key={youtubeKey ? `youtube-${youtubeKey}` : undefined}
-        width="100%"
-        height="220"
-        src={getYouTubeUrl(youtubeEmbedId, startTime, autoplay)}
+        videoId={youtubeEmbedId}
+        opts={opts}
+        onReady={handleReady}
         title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; microphone"
-        allowFullScreen
-        loading="eager"
-        style={{ border: 'none' }}
+        iframeClassName="border-none"
       />
     </section>
   );
 };
 
-export default YouTubePlayer; 
+export default YouTubePlayer;

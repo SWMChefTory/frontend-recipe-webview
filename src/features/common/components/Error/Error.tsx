@@ -1,6 +1,6 @@
+import 'features/common/components/Error/Error.css';
+import { ErrorProps } from 'features/common/types';
 import React from 'react';
-import { ErrorProps } from '../../types';
-import './Error.css';
 
 /**
  * 에러 상태를 표시하는 컴포넌트
@@ -16,15 +16,11 @@ const Error: React.FC<ErrorProps> = ({ error }) => {
     <div className="error-container">
       <h2>오류가 발생했습니다</h2>
       <p>{error}</p>
-      <button 
-        onClick={handleRetry}
-        type="button"
-        aria-label="다시 시도"
-      >
+      <button onClick={handleRetry} type="button" aria-label="다시 시도">
         다시 시도
       </button>
     </div>
   );
 };
 
-export default Error; 
+export default Error;

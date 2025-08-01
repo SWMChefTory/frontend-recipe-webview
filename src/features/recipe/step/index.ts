@@ -1,5 +1,5 @@
 // Cooking module exports
-import { RecipeData } from '../recipeDetail/types/recipe';
+import { RecipeData } from '../detail/types';
 
 export * from './components';
 export * from './hooks';
@@ -10,4 +10,3 @@ export interface CookingModeProps {
   onFinishCooking: () => void;
   onBackToRecipe: () => void;
 }
- 

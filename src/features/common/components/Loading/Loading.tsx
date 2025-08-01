@@ -1,5 +1,5 @@
-import { LoadingProps } from '../../types';
-import './Loading.css';
+import 'features/common/components/Loading/Loading.css';
+import { LoadingProps } from 'features/common/types';
 
 /**
  * 로딩 상태를 표시하는 컴포넌트
@@ -15,4 +15,4 @@ const Loading = ({ className }: LoadingProps): JSX.Element => {
   );
 };
 
-export default Loading; 
+export default Loading;

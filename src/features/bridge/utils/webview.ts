@@ -1,5 +1,5 @@
 import { WEBVIEW_MESSAGE_TYPES } from '../../common/constants';
-import { RecipeData } from '../../recipeDetail/types/recipe';
+import { RecipeData } from '../../recipe/detail/types/recipe';
 import { BridgeMessage, BridgeMessageType } from '../types/webview';
 
 // 전역 객체에 ReactNativeBridge(WebView) 추가
