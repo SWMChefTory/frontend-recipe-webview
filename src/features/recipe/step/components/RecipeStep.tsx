@@ -72,11 +72,11 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     accessToken,
     recipeId: recipeId!,
     onVoiceStart: () => {
-      ytRef.current?.mute();
+      // ytRef.current?.mute();
     },
     onVoiceEnd: () => {
-      ytRef.current?.unMute();
-      setVolume(0);
+      // ytRef.current?.unMute();
+      // setVolume(0);
     },
     onIntent: handleIntent,
     onVolume: v => setVolume(v),
