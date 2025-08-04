@@ -142,7 +142,8 @@ export const useSimpleSpeech = ({
           if (j.status === 200 && j.data?.intent) {
             onIntentRef.current?.(parseIntent(j.data.intent));
           }
-          console.log(j.data);
+          console.log(j.data.base_intent);
+          console.log(j.data.intent);
         } catch (e) {
           console.error('[WS] error', e);
         }
