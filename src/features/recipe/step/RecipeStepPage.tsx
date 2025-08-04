@@ -3,15 +3,11 @@ import { useBodyScrollLock, useTransition } from 'features/common';
 import RecipeStep from 'features/recipe/step/components/RecipeStep';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-interface RecipeStepPageProps {
-  accessToken: string | null;
-}
-
 /**
  * 조리 모드 페이지
  * URL: /recipes/:id
  */
-const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
+const RecipeStepPage = (): JSX.Element => {
   const location = useLocation();
 
   const { id } = useParams<{ id: string }>();
@@ -55,8 +51,6 @@ const RecipeStepPage = ({ accessToken }: RecipeStepPageProps): JSX.Element => {
         onFinishCooking={handleFinishCooking}
         onBackToRecipe={handleBackToRecipe}
         selectedSttModel={selectedModel}
-        accessToken={accessToken}
-        recipeId={id!}
       />
     </div>
   );

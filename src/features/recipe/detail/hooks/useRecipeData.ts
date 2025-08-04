@@ -1,3 +1,4 @@
+import { useAccessToken } from 'features/bridge/AccessTokenProvider';
 import { useEffect, useState } from 'react';
 import { fetchRecipe } from '../api/fetchRecipe';
 import { RecipeData } from '../types/recipe';
@@ -11,13 +12,11 @@ interface UseRecipeDataResult {
 /**
  * 레시피 데이터 로딩을 담당하는 커스텀 훅
  * @param recipeId - 레시피 ID
- * @param accessToken - 액세스 토큰
  * @returns 레시피 데이터, 로딩 상태, 에러 상태
  */
-export const useRecipeData = (
-  recipeId?: string,
-  accessToken?: string | null,
-): UseRecipeDataResult => {
+export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
+  const accessToken = useAccessToken();
+
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
