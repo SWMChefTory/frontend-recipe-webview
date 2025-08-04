@@ -1,7 +1,19 @@
+import { useMicVAD } from '@ricky0123/vad-react';
 import { BasicIntent, parseIntent } from 'features/speech/types/parseIntent';
 import { useEffect, useRef, useState } from 'react';
 
 const STT_URL = 'wss://cheftories.com/api/v1/voice-command/ws';
+const CHUNK_SIZE = 160; // 10ms @ 16kHz
+const BUFFER_CHUNKS = 3; // → 30ms 단위 전송
+const SEND_SIZE = CHUNK_SIZE * BUFFER_CHUNKS;
+
+const f32ToI16 = (f: Float32Array) => {
+  const i = new Int16Array(f.length);
+  for (let n = 0; n < f.length; n++) {
+    i[n] = Math.max(-1, Math.min(1, f[n])) * 0x7fff;
+  }
+  return i;
+};
 
 interface Params {
   selectedSttModel?: string;
@@ -9,7 +21,8 @@ interface Params {
   recipeId?: string;
   onVoiceStart?: () => void;
   onVoiceEnd?: () => void;
-  onIntent?: (intent: BasicIntent) => void;
+  onIntent?: (i: BasicIntent) => void;
+  onVolume?: (vol: number) => void;
 }
 
 export const useSimpleSpeech = ({
@@ -19,99 +32,120 @@ export const useSimpleSpeech = ({
   onVoiceStart,
   onVoiceEnd,
   onIntent,
+  onVolume,
 }: Params) => {
-  /* ───────── UI 상태 ───────── */
-  const [transcript, setTranscript] = useState('');
-  const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /* ───────── 내부 참조 ───────── */
-  const ctxRef = useRef<AudioContext | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isWSReady = useRef(false);
+  const leftoverRef = useRef<Float32Array | null>(null);
+  const sendTimeRef = useRef<number | null>(null);
 
-  /* ───────── 1) 시작 ───────── */
-  const start = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { noiseSuppression: true, echoCancellation: true, autoGainControl: false },
-      });
+  const openWS = () => {
+    const url = new URL(STT_URL);
+    url.searchParams.append('provider', selectedSttModel);
+    if (accessToken) url.searchParams.append('token', accessToken.replace(/^Bearer\s/i, ''));
+    if (recipeId) url.searchParams.append('recipe_id', recipeId);
+    const ws = new WebSocket(url.toString());
+    ws.binaryType = 'arraybuffer';
+    wsRef.current = ws;
+    isWSReady.current = false;
 
-      /* AudioContext + Worklet */
-      ctxRef.current = new AudioContext({ sampleRate: 16000 });
-      await ctxRef.current.audioWorklet.addModule('/voice-processor.worklet.js');
-      const node = new AudioWorkletNode(ctxRef.current, 'voice-processor', {
-        processorOptions: { frameSize: 3200 },
-      });
-      ctxRef.current.createMediaStreamSource(stream).connect(node);
+    ws.onopen = () => {
+      console.log('[WS] connected');
+      isWSReady.current = true;
+    };
 
-      /* WebSocket 연결 */
-      const url = new URL(STT_URL);
-      url.searchParams.append('provider', selectedSttModel);
-      if (accessToken) url.searchParams.append('token', accessToken.replace(/^Bearer\s/i, ''));
-      if (recipeId) url.searchParams.append('recipe_id', recipeId);
-      wsRef.current = new WebSocket(url.toString());
+    ws.onmessage = ({ data }) => {
+      const receiveTime = performance.now();
+      if (sendTimeRef.current !== null) {
+        console.log(`[WS] 응답 지연: ${(receiveTime - sendTimeRef.current).toFixed(1)}ms`);
+      }
 
-      /* Worklet → WS 전송 + VAD */
-      node.port.onmessage = ({ data }) => {
-        if (data.type === 'vad') {
-          if (data.voice) {
-            onVoiceStart?.();
-            if (idleRef.current) clearTimeout(idleRef.current);
-          } else {
-            idleRef.current = setTimeout(() => onVoiceEnd?.(), 400); // 0.4 s 무음 후 Un-Mute
-          }
-          return;
+      try {
+        const j = JSON.parse(data as string);
+        if (j.status === 200 && j.data?.intent) {
+          onIntent?.(parseIntent(j.data.intent));
         }
+        console.log(j.data);
+      } catch {
+        // ignore
+      }
+    };
 
-        if (data.type === 'pcm' && wsRef.current?.readyState === WebSocket.OPEN) {
-          const pcm16 = Int16Array.from(
-            data.data as Float32Array,
-            s => Math.max(-1, Math.min(1, s)) * 0x7fff,
-          );
-          wsRef.current.send(pcm16.buffer); // 전송만, 저장 X
-        }
-      };
+    ws.onerror = e => {
+      console.error('[WS] error', e);
+      setError('WebSocket 오류');
+    };
 
-      /* STT 응답 */
-      wsRef.current.onmessage = ({ data }) => {
-        try {
-          const j = JSON.parse(data as string);
-
-          if (j.status === 200 && j.data?.intent) {
-            onIntent?.(parseIntent(j.data.intent));
-          }
-
-          setTranscript(
-            j.status === 200 && j.data?.base_intent ? j.data.base_intent : (data as string),
-          );
-        } catch {
-          setTranscript(data as string);
-        }
-      };
-
-      wsRef.current.onopen = () => setListening(true);
-      wsRef.current.onerror = () => setError('WebSocket 오류');
-      wsRef.current.onclose = () => setListening(false);
-    } catch (e) {
-      console.error(e);
-      setError('초기화 실패');
-    }
+    ws.onclose = () => {
+      console.log('[WS] closed');
+      setTimeout(openWS, 500);
+    };
   };
 
-  /* ───────── 2) 정리 ───────── */
-  const stop = () => {
-    wsRef.current?.close();
-    ctxRef.current?.close();
-    if (idleRef.current) clearTimeout(idleRef.current);
-    setListening(false);
-  };
+  const vad = useMicVAD({
+    model: 'v5',
+    positiveSpeechThreshold: 0.25,
+    negativeSpeechThreshold: 0.1,
+    startOnLoad: true,
+    additionalAudioConstraints: {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: false,
+    } as any,
 
-  /* ───────── 3) 마운트 / 언마운트 ───────── */
+    onSpeechStart: () => {
+      console.log('[VAD] speech start');
+      onVoiceStart?.();
+    },
+    onSpeechEnd: () => {
+      console.log('[VAD] speech end');
+      onVoiceEnd?.();
+    },
+
+    onFrameProcessed: (_, frame) => {
+      const ws = wsRef.current;
+      if (!ws || ws.readyState !== WebSocket.OPEN || !isWSReady.current) return;
+
+      let sumSq = 0;
+      for (let i = 0; i < frame.length; i++) sumSq += frame[i] ** 2;
+      const rms = Math.sqrt(sumSq / frame.length);
+      onVolume?.(rms);
+
+      let samples: Float32Array;
+      if (leftoverRef.current) {
+        const merged = new Float32Array(leftoverRef.current.length + frame.length);
+        merged.set(leftoverRef.current);
+        merged.set(frame, leftoverRef.current.length);
+        samples = merged;
+        leftoverRef.current = null;
+      } else {
+        samples = frame;
+      }
+
+      for (let off = 0; off + SEND_SIZE <= samples.length; off += SEND_SIZE) {
+        const slice = samples.subarray(off, off + SEND_SIZE);
+        const payload = f32ToI16(slice).buffer;
+        sendTimeRef.current = performance.now();
+        ws.send(payload);
+      }
+
+      const rest = samples.length % SEND_SIZE;
+      if (rest) leftoverRef.current = samples.subarray(samples.length - rest);
+    },
+  });
+
   useEffect(() => {
-    start();
-    return stop;
+    openWS();
+    return () => {
+      wsRef.current?.close();
+      vad.pause();
+    };
   }, []);
 
-  return { transcript, isListening: listening, error, stop };
+  return {
+    error,
+    isListening: vad.listening,
+    stop: vad.pause,
+  };
 };
