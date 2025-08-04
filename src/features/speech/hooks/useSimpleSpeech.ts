@@ -40,48 +40,21 @@ export const useSimpleSpeech = ({
   const leftoverRef = useRef<Float32Array | null>(null);
   const sendTimeRef = useRef<number | null>(null);
 
-  const openWS = () => {
-    const url = new URL(STT_URL);
-    url.searchParams.append('provider', selectedSttModel);
-    if (accessToken) url.searchParams.append('token', accessToken.replace(/^Bearer\s/i, ''));
-    if (recipeId) url.searchParams.append('recipe_id', recipeId);
-    const ws = new WebSocket(url.toString());
-    ws.binaryType = 'arraybuffer';
-    wsRef.current = ws;
-    isWSReady.current = false;
+  const accessTokenRef = useRef(accessToken);
+  const recipeIdRef = useRef(recipeId);
+  const onIntentRef = useRef(onIntent);
 
-    ws.onopen = () => {
-      console.log('[WS] connected');
-      isWSReady.current = true;
-    };
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
 
-    ws.onmessage = ({ data }) => {
-      const receiveTime = performance.now();
-      if (sendTimeRef.current !== null) {
-        console.log(`[WS] 응답 지연: ${(receiveTime - sendTimeRef.current).toFixed(1)}ms`);
-      }
+  useEffect(() => {
+    recipeIdRef.current = recipeId;
+  }, [recipeId]);
 
-      try {
-        const j = JSON.parse(data as string);
-        if (j.status === 200 && j.data?.intent) {
-          onIntent?.(parseIntent(j.data.intent));
-        }
-        console.log(j.data);
-      } catch {
-        // ignore
-      }
-    };
-
-    ws.onerror = e => {
-      console.error('[WS] error', e);
-      setError('WebSocket 오류');
-    };
-
-    ws.onclose = () => {
-      console.log('[WS] closed');
-      setTimeout(openWS, 500);
-    };
-  };
+  useEffect(() => {
+    onIntentRef.current = onIntent;
+  }, [onIntent]);
 
   const vad = useMicVAD({
     model: 'v5',
@@ -136,6 +109,50 @@ export const useSimpleSpeech = ({
   });
 
   useEffect(() => {
+    const openWS = () => {
+      const url = new URL(STT_URL);
+      url.searchParams.append('provider', selectedSttModel);
+      const token = accessTokenRef.current;
+      if (token) url.searchParams.append('token', token.replace(/^Bearer\s/i, ''));
+      if (recipeIdRef.current) url.searchParams.append('recipe_id', recipeIdRef.current);
+      const ws = new WebSocket(url.toString());
+      ws.binaryType = 'arraybuffer';
+      wsRef.current = ws;
+      isWSReady.current = false;
+
+      ws.onopen = () => {
+        console.log('[WS] connected');
+        isWSReady.current = true;
+      };
+
+      ws.onmessage = ({ data }) => {
+        const receiveTime = performance.now();
+        if (sendTimeRef.current !== null) {
+          console.log(`[WS] 응답 지연: ${(receiveTime - sendTimeRef.current).toFixed(1)}ms`);
+        }
+
+        try {
+          const j = JSON.parse(data as string);
+          if (j.status === 200 && j.data?.intent) {
+            onIntentRef.current?.(parseIntent(j.data.intent));
+          }
+          console.log(j.data);
+        } catch {
+          // ignore
+        }
+      };
+
+      ws.onerror = e => {
+        console.error('[WS] error', e);
+        setError('WebSocket 오류');
+      };
+
+      ws.onclose = () => {
+        console.log('[WS] closed');
+        setTimeout(openWS, 500);
+      };
+    };
+
     openWS();
     return () => {
       wsRef.current?.close();
