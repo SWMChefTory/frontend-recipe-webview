@@ -7,15 +7,11 @@ import { useNavigate, useParams } from 'react-router-dom';
  * 레시피 정보 페이지
  * URL: /recipes/:id
  */
-interface RecipeDetailPageProps {
-  accessToken: string | null;
-}
-
-const RecipeDetailPage = ({ accessToken }: RecipeDetailPageProps): JSX.Element => {
+const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData, loading, error } = useRecipeData(id, accessToken);
+  const { recipeData, loading, error } = useRecipeData(id);
 
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
