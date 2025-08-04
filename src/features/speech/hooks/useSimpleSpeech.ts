@@ -43,6 +43,8 @@ export const useSimpleSpeech = ({
   const accessTokenRef = useRef(accessToken);
   const recipeIdRef = useRef(recipeId);
   const onIntentRef = useRef(onIntent);
+  const selectedSttModelRef = useRef(selectedSttModel);
+  const vadRef = useRef<ReturnType<typeof useMicVAD> | null>(null);
 
   useEffect(() => {
     accessTokenRef.current = accessToken;
@@ -56,7 +58,11 @@ export const useSimpleSpeech = ({
     onIntentRef.current = onIntent;
   }, [onIntent]);
 
-  const vad = useMicVAD({
+  useEffect(() => {
+    selectedSttModelRef.current = selectedSttModel;
+  }, [selectedSttModel]);
+
+  vadRef.current = useMicVAD({
     model: 'v5',
     positiveSpeechThreshold: 0.25,
     negativeSpeechThreshold: 0.1,
@@ -111,7 +117,7 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     const openWS = () => {
       const url = new URL(STT_URL);
-      url.searchParams.append('provider', selectedSttModel);
+      url.searchParams.append('provider', selectedSttModelRef.current ?? 'VITO');
       const token = accessTokenRef.current;
       if (token) url.searchParams.append('token', token.replace(/^Bearer\s/i, ''));
       if (recipeIdRef.current) url.searchParams.append('recipe_id', recipeIdRef.current);
@@ -156,13 +162,13 @@ export const useSimpleSpeech = ({
     openWS();
     return () => {
       wsRef.current?.close();
-      vad.pause();
+      vadRef.current?.pause();
     };
   }, []);
 
   return {
     error,
-    isListening: vad.listening,
-    stop: vad.pause,
+    isListening: vadRef.current?.listening ?? false,
+    stop: vadRef.current?.pause ?? (() => {}),
   };
 };
