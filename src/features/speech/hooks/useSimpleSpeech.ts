@@ -137,8 +137,8 @@ export const useSimpleSpeech = ({
             onIntentRef.current?.(parseIntent(j.data.intent));
           }
           console.log(j.data);
-        } catch {
-          // ignore
+        } catch (e) {
+          console.error('[WS] error', e);
         }
       };
 
