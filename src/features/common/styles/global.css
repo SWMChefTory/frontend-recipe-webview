@@ -1,5 +1,5 @@
 .app {
-  max-width: 400px;
+  max-width: 100%;
   margin: 0 auto;
   background-color: white;
   min-height: 100vh;
@@ -8,7 +8,6 @@
   position: relative;
   opacity: 0;
   transition: opacity 0.15s ease-in-out;
-  /* React Native WebView 스크롤 보장 */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -46,13 +45,13 @@
   .app {
     max-width: 100%;
   }
-  
+
   .app.cooking-mode {
     height: 100vh;
     overflow: hidden;
   }
-  
+
   .youtube-container iframe {
     height: 200px;
   }
-} 
+}

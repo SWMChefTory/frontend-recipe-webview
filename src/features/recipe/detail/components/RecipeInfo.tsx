@@ -7,6 +7,7 @@ import StartCookingButton from 'features/recipe/detail/components/StartCookingBu
 import Video from 'features/recipe/detail/components/Video';
 import { RecipeInfoProps } from 'features/recipe/detail/types';
 import { useState } from 'react';
+import RecipeSteps from './RecipeSteps';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
   const [selectedSttModel, setSelectedSttModel] = useState<string>('VITO');
@@ -26,14 +27,21 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
 
       <div className="recipe-content">
         <header className="recipe-header">
-          <h1 className="recipe-title">{recipeData.video_info.video_title}</h1>
+          <div className="recipe-header-card">
+            <h1 className="recipe-title">{recipeData.video_info.video_title}</h1>
+          </div>
         </header>
 
         <IngredientList ingredients={recipeData.ingredients_info.ingredients} />
+
+        <RecipeSteps steps={recipeData.recipe_steps} />
       </div>
 
       <STTModelSelector selected={selectedSttModel} onChange={setSelectedSttModel} />
-      <StartCookingButton onClick={() => onStartRecipeStep(selectedSttModel)} />
+
+      <div className="button-container">
+        <StartCookingButton onClick={() => onStartRecipeStep(selectedSttModel)} />
+      </div>
     </div>
   );
 };

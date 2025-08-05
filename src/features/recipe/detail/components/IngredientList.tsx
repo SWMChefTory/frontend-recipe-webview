@@ -6,12 +6,18 @@ interface Props {
 
 const IngredientList = ({ ingredients }: Props): JSX.Element => {
   return (
-    <section className="ingredients-section">
+    <section className="ingredient-section">
       <h3 className="section-title">재료</h3>
-      <ul className="ingredients-list">
+      <ul className="ingredient-card-list">
         {ingredients.map((ingredient, index) => (
-          <li key={index} className="ingredient-item">
-            {index + 1}. {ingredient.name} {ingredient.amount} {ingredient.unit}
+          <li key={index} className="ingredient-card">
+            <span className="ingredient-name">{ingredient.name}</span>
+            {ingredient.amount > 0 && (
+              <span className="ingredient-amount">
+                {ingredient.amount}
+                {ingredient.unit}
+              </span>
+            )}
           </li>
         ))}
       </ul>

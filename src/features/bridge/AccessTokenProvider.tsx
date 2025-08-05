@@ -9,7 +9,9 @@ export const useAccessToken = (): string | null => {
 };
 
 export const AccessTokenProvider = ({ children }: { children: React.ReactNode }): JSX.Element => {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(
+    'REMOVED',
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
