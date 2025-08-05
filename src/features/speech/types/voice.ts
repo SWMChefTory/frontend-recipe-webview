@@ -13,15 +13,4 @@ export type VoiceCommand =
   | 'STEP10'
   | 'TIMESTAMP';
 
-export interface UseSpeechRecognitionResult {
-  isListening: boolean;
-  isVoiceDetected: boolean;
-  transcript: string;
-  error: string | null;
-  isSupported: boolean;
-  startListening: () => void;
-  stopListening: () => void;
-  resetDetection: () => void;
-}
-
 export type VoiceCommandCallback = (command: VoiceCommand, stepNumber?: number) => void;

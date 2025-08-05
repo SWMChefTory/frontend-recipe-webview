@@ -20,7 +20,6 @@ const YouTubePlayer = ({
   /** iFrame API 파라미터 */
   const opts: YTOpts = {
     width: '100%',
-    height: '220',
     playerVars: {
       autoplay: autoplay ? 1 : 0,
       start: startTime ?? 0,
