@@ -1,0 +1,132 @@
+.measurement-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: white;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+  pointer-events: none;
+}
+
+.measurement-overlay.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.overlay-content {
+  padding: 24px;
+  font-family: 'Noto Sans KR', sans-serif;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.back-button {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  color: #333;
+  padding: 0;
+  z-index: 1000;
+  transition: background-color 0.2s ease;
+}
+
+.guide-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.unit-table {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.unit-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  font-size: 16px;
+  color: #444;
+}
+
+.unit-row .value {
+  color: #b28b69;
+  font-weight: 600;
+  text-align: right;
+}
+
+.unit-row .equal {
+  text-align: center;
+  font-weight: bold;
+  width: 24px;
+}
+
+.guide-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 48px 0 16px;
+  text-align: center;
+}
+
+.image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.image-category-title {
+  text-align: center;
+  font-weight: 600;
+  margin: 16px 0 8px;
+  font-size: 16px;
+}
+
+.image-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.image-box {
+  flex: 1;
+  min-width: 45%;
+  text-align: center;
+}
+
+.image-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: #eee;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.caption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #444;
+}

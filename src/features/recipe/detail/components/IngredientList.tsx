@@ -2,12 +2,19 @@ import { Ingredient } from 'features/recipe/detail/types/recipe';
 
 interface Props {
   ingredients: readonly Ingredient[];
+  onOpenMeasurement?: () => void;
 }
 
-const IngredientList = ({ ingredients }: Props): JSX.Element => {
+const IngredientList = ({ ingredients, onOpenMeasurement }: Props): JSX.Element => {
   return (
     <section className="ingredient-section">
-      <h3 className="section-title">재료</h3>
+      <div className="section-title-row">
+        <h3 className="section-title">재료</h3>
+        <button className="measurement-button" onClick={onOpenMeasurement}>
+          계량법
+        </button>
+      </div>
+
       <ul className="ingredient-card-list">
         {ingredients.map((ingredient, index) => (
           <li key={index} className="ingredient-card">

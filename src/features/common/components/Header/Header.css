@@ -62,7 +62,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #ff4444;
+  color: #ff4500;
   padding: 8px;
   border-radius: 8px;
   transition: background-color 0.2s ease;
@@ -84,15 +84,15 @@
     padding: 8px 12px;
     min-height: 52px;
   }
-  
+
   .header-title {
     font-size: 17px;
     max-width: calc(100% - 120px); /* 모바일에서는 버튼이 작으므로 조정 */
   }
-  
+
   .header-back-btn,
   .header-timer-btn {
     width: 36px;
     height: 36px;
   }
-} 
+}
