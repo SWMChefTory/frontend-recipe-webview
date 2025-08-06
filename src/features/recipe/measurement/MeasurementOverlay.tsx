@@ -21,7 +21,7 @@ const MeasurementOverlay = ({ onClose }: Props) => {
           </svg>
         </button>
 
-        <h1 className="guide-title">계량하기</h1>
+        <h1 className="guide-title">계량법</h1>
         <div className="unit-table">
           <div className="unit-row">
             <span>1큰술 (1Tbsp)</span>
@@ -73,7 +73,7 @@ const MeasurementOverlay = ({ onClose }: Props) => {
         />
 
         <MeasurementSection
-          title="가루류 계량"
+          title="액체류 계량"
           groups={[
             {
               categoryLabel: '1큰술',
@@ -84,7 +84,7 @@ const MeasurementOverlay = ({ onClose }: Props) => {
                 },
                 {
                   src: '/images/measurement/dry/tbsp/spoon.png',
-                  caption: '1숟가락 소복이',
+                  caption: '1+½숟가락 소복이',
                 },
               ],
             },
@@ -97,7 +97,7 @@ const MeasurementOverlay = ({ onClose }: Props) => {
                 },
                 {
                   src: '/images/measurement/dry/tsp/spoon.png',
-                  caption: '½ 숟가락',
+                  caption: '⅔ 숟가락',
                 },
               ],
             },
