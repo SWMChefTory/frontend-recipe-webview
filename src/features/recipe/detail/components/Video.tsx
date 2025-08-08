@@ -1,4 +1,4 @@
-import YouTubePlayer from 'features/common/components/YouTube/YouTubePlayer';
+import YouTubePlayer from 'features/_common/components/YouTube/YouTubePlayer';
 
 interface Props {
   videoId: string;

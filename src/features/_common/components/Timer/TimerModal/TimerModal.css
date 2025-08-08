@@ -1,0 +1,374 @@
+/* 타이머 모달 오버레이 */
+.timer-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* 타이머 모달 */
+.timer-modal {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 모달 헤더 */
+.timer-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.timer-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333333;
+  margin: 0;
+}
+
+.timer-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666666;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.timer-modal-close:hover {
+  background-color: #f5f5f5;
+  color: #333333;
+}
+
+.timer-modal-close:active {
+  background-color: #e8e8e8;
+}
+
+/* 모달 콘텐츠 */
+.timer-modal-content {
+  padding: 24px;
+}
+
+/* 타이머 입력 영역 */
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.timer-input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-input-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666666;
+  text-align: center;
+}
+
+.timer-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px 12px;
+  min-width: 80px;
+}
+
+.timer-input-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+.timer-input-btn:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  border-color: #d0d0d0;
+}
+
+.timer-input-btn:active:not(:disabled) {
+  background-color: #e8e8e8;
+  transform: scale(0.95);
+}
+
+.timer-input-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.timer-input-display {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333333;
+  text-align: center;
+  min-width: 50px;
+  line-height: 1;
+}
+
+.timer-separator {
+  font-size: 32px;
+  font-weight: 600;
+  color: #333333;
+  margin-top: 24px;
+}
+
+/* 프리셋 버튼들 */
+.timer-preset-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.timer-preset-btn {
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timer-preset-btn:hover {
+  background-color: #e9ecef;
+  border-color: #d0d0d0;
+}
+
+.timer-preset-btn:active {
+  background-color: #dee2e6;
+  transform: scale(0.98);
+}
+
+/* 모달 액션 버튼들 */
+.timer-modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.timer-modal-btn {
+  flex: 1;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-height: 48px;
+}
+
+.timer-modal-btn-cancel {
+  background-color: #f8f9fa;
+  color: #666666;
+  border: 1px solid #e5e5e5;
+}
+
+.timer-modal-btn-cancel:hover {
+  background-color: #e9ecef;
+  border-color: #d0d0d0;
+}
+
+.timer-modal-btn-cancel:active {
+  background-color: #dee2e6;
+}
+
+.timer-modal-btn-confirm {
+  background-color: #ff4500;
+  color: #ffffff;
+}
+
+.timer-modal-btn-confirm:hover:not(:disabled) {
+  background-color: #e63e00;
+}
+
+.timer-modal-btn-confirm:active:not(:disabled) {
+  background-color: #cc3600;
+  transform: scale(0.98);
+}
+
+.timer-modal-btn-confirm:disabled {
+  background-color: #cccccc;
+  color: #999999;
+  cursor: not-allowed;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .timer-modal-overlay {
+    padding: 16px;
+  }
+
+  .timer-modal {
+    max-width: 100%;
+  }
+
+  .timer-modal-header {
+    padding: 16px 20px 12px;
+  }
+
+  .timer-modal-title {
+    font-size: 18px;
+  }
+
+  .timer-modal-content {
+    padding: 20px;
+  }
+
+  .timer-inputs {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .timer-input-container {
+    padding: 12px 8px;
+    min-width: 70px;
+  }
+
+  .timer-input-display {
+    font-size: 28px;
+    min-width: 45px;
+  }
+
+  .timer-separator {
+    font-size: 28px;
+    margin-top: 20px;
+  }
+
+  .timer-preset-buttons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .timer-preset-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .timer-modal-actions {
+    padding: 12px 20px 20px;
+    gap: 10px;
+  }
+
+  .timer-modal-btn {
+    padding: 10px 20px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+}
+
+/* 다크 모드 지원 (추후 확장 가능) */
+@media (prefers-color-scheme: dark) {
+  .timer-modal {
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+
+  .timer-modal-title {
+    color: #ffffff;
+  }
+
+  .timer-modal-close {
+    color: #cccccc;
+  }
+
+  .timer-modal-close:hover {
+    background-color: #333333;
+    color: #ffffff;
+  }
+
+  .timer-input-container {
+    background-color: #333333;
+  }
+
+  .timer-input-btn {
+    background-color: #444444;
+    border-color: #555555;
+    color: #ffffff;
+  }
+
+  .timer-input-btn:hover:not(:disabled) {
+    background-color: #555555;
+  }
+
+  .timer-input-display {
+    color: #ffffff;
+  }
+
+  .timer-separator {
+    color: #ffffff;
+  }
+
+  .timer-preset-btn {
+    background-color: #333333;
+    border-color: #555555;
+    color: #ffffff;
+  }
+
+  .timer-preset-btn:hover {
+    background-color: #444444;
+  }
+
+  .timer-modal-btn-cancel {
+    background-color: #333333;
+    color: #cccccc;
+    border-color: #555555;
+  }
+
+  .timer-modal-btn-cancel:hover {
+    background-color: #444444;
+  }
+}

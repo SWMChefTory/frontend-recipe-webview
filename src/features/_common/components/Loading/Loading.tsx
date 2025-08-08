@@ -1,5 +1,5 @@
-import 'features/common/components/Loading/Loading.css';
-import { LoadingProps } from 'features/common/types';
+import 'features/_common/components/Loading/Loading.css';
+import { LoadingProps } from 'features/_common/types';
 
 /**
  * 로딩 상태를 표시하는 컴포넌트

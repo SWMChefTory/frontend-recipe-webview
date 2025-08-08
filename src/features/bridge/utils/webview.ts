@@ -1,4 +1,4 @@
-import { WEBVIEW_MESSAGE_TYPES } from '../../common/constants';
+import { WEBVIEW_MESSAGE_TYPES } from 'features/_common/constants';
 import { RecipeData } from '../../recipe/detail/types/recipe';
 import { BridgeMessage, BridgeMessageType } from '../types/webview';
 

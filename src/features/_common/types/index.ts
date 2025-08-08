@@ -20,6 +20,9 @@ export interface HeaderProps {
   totalSteps?: number;
   onBack: () => void;
   showTimer?: boolean;
+  onTimerClick?: () => void;
+  timerTimeLeft?: number;
+  formatTime?: (time: number) => string;
 }
 
 // YouTube 플레이어 Props
@@ -45,4 +48,4 @@ export interface SpeechRecognitionProps {
   transcript: string;
   error: string | null;
   isSupported: boolean;
-} 
+}
