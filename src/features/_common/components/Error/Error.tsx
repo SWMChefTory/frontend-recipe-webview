@@ -1,5 +1,5 @@
-import 'features/common/components/Error/Error.css';
-import { ErrorProps } from 'features/common/types';
+import 'features/_common/components/Error/Error.css';
+import { ErrorProps } from 'features/_common/types';
 import React from 'react';
 
 /**

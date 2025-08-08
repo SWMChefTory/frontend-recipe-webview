@@ -1,0 +1,303 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 56px;
+  box-sizing: border-box;
+}
+
+.header-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333333;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.header-back-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.header-back-btn:active {
+  background-color: #e8e8e8;
+}
+
+.header-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  font-weight: 600;
+  color: #333333;
+  text-align: center;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(100% - 160px); /* 양쪽 버튼 공간 확보 */
+  transition: max-width 0.3s ease;
+}
+
+/* 타이머 컨트롤이 있을 때 제목 영역 고정 유지 */
+/* 제목 너비는 항상 일정하게 유지 */
+
+.header-timer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ff4500;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.header-timer-btn:hover {
+  background-color: #fff5f5;
+}
+
+.header-timer-btn:active {
+  background-color: #ffe8e8;
+}
+
+/* 타이머 섹션 */
+.header-timer-section {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+/* 타이머 버튼 (미설정 시) */
+.header-timer-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+  height: 40px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ff4500;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  gap: 2px;
+}
+
+.header-timer-btn:hover {
+  background-color: #fff5f5;
+}
+
+.header-timer-btn:active {
+  background-color: #ffe8e8;
+}
+
+.header-timer-text {
+  font-size: 10px;
+  font-weight: 500;
+  color: #ff4500;
+  line-height: 1;
+}
+
+/* 타이머 시간 표시 (클릭 가능) */
+.header-timer-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  height: 32px;
+  background-color: #ff4500;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(255, 69, 0, 0.2);
+}
+
+.header-timer-display:hover {
+  background-color: #e63e00;
+  transform: scale(1.02);
+}
+
+.header-timer-display:active {
+  background-color: #cc3700;
+  transform: scale(0.98);
+}
+
+/* 타이머 컨트롤 (실행 중) */
+.header-timer-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fff5f5;
+  border: 1px solid #ffb3b3;
+  border-radius: 10px;
+  padding: 4px 8px;
+  animation: timerControlsSlideIn 0.3s ease-out;
+  white-space: nowrap;
+}
+
+@keyframes timerControlsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.header-timer-time {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: #ff4500;
+  white-space: nowrap;
+  min-width: 35px;
+}
+
+.header-timer-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.header-timer-control-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.header-timer-pause-btn {
+  color: #ffc107;
+}
+
+.header-timer-pause-btn:hover {
+  background-color: #fff8dc;
+}
+
+.header-timer-pause-btn:active {
+  background-color: #fff0b3;
+  transform: scale(0.95);
+}
+
+.header-timer-resume-btn {
+  color: #28a745;
+}
+
+.header-timer-resume-btn:hover {
+  background-color: #e8f5e8;
+}
+
+.header-timer-resume-btn:active {
+  background-color: #d4edda;
+  transform: scale(0.95);
+}
+
+.header-timer-stop-btn {
+  color: #dc3545;
+}
+
+.header-timer-stop-btn:hover {
+  background-color: #ffe6e6;
+}
+
+.header-timer-stop-btn:active {
+  background-color: #ffcccc;
+  transform: scale(0.95);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+    min-height: 52px;
+  }
+
+  .header-title {
+    font-size: 17px;
+    max-width: calc(100% - 120px); /* 모바일에서는 버튼이 작으므로 조정 */
+  }
+
+  /* 모바일에서도 제목 너비 일정하게 유지 */
+
+  .header-back-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .header-timer-btn {
+    min-width: 40px;
+    height: 36px;
+    padding: 2px 6px;
+  }
+
+  .header-timer-text {
+    font-size: 9px;
+  }
+
+  .header-timer-controls {
+    padding: 3px 6px;
+    gap: 4px;
+  }
+
+  .header-timer-time {
+    font-size: 11px;
+    min-width: 30px;
+  }
+
+  .header-timer-control-btn {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-timer-control-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .header-timer-display {
+    min-width: 50px;
+    height: 28px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 14px;
+  }
+}

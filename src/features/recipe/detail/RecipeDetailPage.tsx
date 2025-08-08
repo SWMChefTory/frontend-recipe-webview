@@ -1,5 +1,5 @@
+import { Error, Loading, useBodyScrollLock, useTransition } from 'features/_common';
 import { useBridgeActions } from 'features/bridge';
-import { Error, Loading, useBodyScrollLock, useTransition } from 'features/common';
 import { RecipeInfo, useRecipeData } from 'features/recipe/detail';
 import { useNavigate, useParams } from 'react-router-dom';
 

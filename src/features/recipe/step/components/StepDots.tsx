@@ -1,4 +1,4 @@
-import { StepDotsProps } from '../../../common/types';
+import { StepDotsProps } from 'features/_common/types';
 
 /**
  * 조리 단계 인디케이터 컴포넌트

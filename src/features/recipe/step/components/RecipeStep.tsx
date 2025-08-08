@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+// src/features/recipe/step/components/RecipeStep.tsx (전체 코드)
+
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
 
+import { Header, TimerModal, TimerPopover, YouTubePlayer, useGlobalTimer } from 'features/_common';
+import TimerStartingModal from 'features/_common/components/Timer/TimerStartingModal/TimerStartingModal';
 import { useAccessToken } from 'features/bridge';
-import Header from 'features/common/components/Header/Header';
-import YouTubePlayer from 'features/common/components/YouTube/YouTubePlayer';
 import { RecipeData } from 'features/recipe/detail/types/recipe';
 import StepCard from 'features/recipe/step/components/StepCard';
 import StepDots from 'features/recipe/step/components/StepDots';
@@ -36,48 +38,152 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
 
   const ytRef = useRef<YT.Player | null>(null);
   const [volume, setVolume] = useState(0);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [isTimerPopoverOpen, setIsTimerPopoverOpen] = useState(false);
+
+  // 타이머 시작 알림 모달 관련 상태
+  const [isStartingSoonModalOpen, setIsStartingSoonModalOpen] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [timerDuration, setTimerDuration] = useState({ minutes: 0, seconds: 0 });
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const accessToken = useAccessToken();
+  const { timer, startTimer, pauseTimer, resumeTimer, stopTimer, formatTime } = useGlobalTimer();
   const { id: recipeId } = useParams<{ id: string }>();
 
-  const handleIntent = (intent: BasicIntent) => {
-    if (intent.startsWith('STEP')) {
-      const num = parseInt(intent.slice(4), 10);
-      if (!Number.isNaN(num) && num >= 1) {
-        carouselControls.goToStep(num);
-      }
-      return;
+  // 타이머와 인터벌 정리 함수
+  const clearAllTimers = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
-    const [cmd, arg] = intent.split(' ');
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  // 5초 카운트다운 후 타이머 시작하는 함수
+  const startTimerWithCountdown = (minutes: number, seconds: number) => {
+    clearAllTimers(); // 기존 타이머/인터벌 정리
+    setCountdown(5); // 카운트다운 5로 리셋
+    setTimerDuration({ minutes, seconds }); // 타이머 시간 저장
+    setIsStartingSoonModalOpen(true); // 모달 열기
+
+    // 카운트다운 인터벌 시작
+    intervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // 5초 후 타이머 시작
+    timeoutRef.current = setTimeout(() => {
+      startTimer(minutes, seconds);
+      setIsStartingSoonModalOpen(false);
+      clearAllTimers();
+    }, 5000);
+  };
+
+  // 모달 닫기 핸들러
+  const handleStartingModalClose = () => {
+    setIsStartingSoonModalOpen(false);
+    clearAllTimers();
+  };
+
+  // 타이머 취소 핸들러
+  const handleTimerCancel = () => {
+    setIsStartingSoonModalOpen(false);
+    clearAllTimers();
+  };
+
+  const handleIntent = (intent: BasicIntent) => {
+    const [cmd, arg1, arg2] = intent.split(' ');
     switch (cmd) {
+      // ... 다른 case들은 동일 ...
       case 'NEXT':
         carouselControls.goToNext();
         break;
       case 'PREV':
         carouselControls.goToPrevious();
         break;
+      case 'STEP': {
+        const num = parseInt(arg1 ?? '', 10);
+        if (!Number.isNaN(num) && num >= 1) {
+          carouselControls.goToStep(num);
+        }
+        break;
+      }
       case 'TIMESTAMP': {
-        const secs = parseInt(arg ?? '', 10);
+        const secs = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(secs)) {
-          ytRef.current?.seekTo(secs, true);
           carouselControls.seekTo(secs);
+          ytRef.current?.seekTo(secs, true);
+        }
+        break;
+      }
+      case 'TIMER': {
+        switch (arg1) {
+          case 'START':
+            setIsTimerModalOpen(true);
+            break;
+          case 'STOP':
+            pauseTimer();
+            break;
+          case 'CHECK':
+            setIsTimerPopoverOpen(true);
+            break;
+          case 'SET': {
+            const totalSeconds = parseInt(arg2 ?? '0', 10);
+            if (Number.isNaN(totalSeconds) || totalSeconds <= 0) break;
+
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            startTimerWithCountdown(minutes, seconds);
+            break;
+          }
         }
         break;
       }
     }
   };
 
+  const handleTimerClick = () => {
+    if (timer.timeLeft > 0) {
+      setIsTimerPopoverOpen(true);
+    } else {
+      setIsTimerModalOpen(true);
+    }
+  };
+
+  const handleTimerModalClose = () => {
+    setIsTimerModalOpen(false);
+  };
+
+  const handleTimerPopoverClose = () => {
+    setIsTimerPopoverOpen(false);
+  };
+
+  const handleSetTimer = (minutes: number, seconds: number) => {
+    startTimer(minutes, seconds);
+  };
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      clearAllTimers();
+    };
+  }, []);
+
   useSimpleSpeech({
     selectedSttModel,
     accessToken,
     recipeId: recipeId!,
-    onVoiceStart: () => {
-      // ytRef.current?.mute();
-    },
-    onVoiceEnd: () => {
-      // ytRef.current?.unMute();
-      // setVolume(0);
-    },
     onIntent: handleIntent,
     onVolume: v => setVolume(v),
   });
@@ -90,6 +196,9 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         totalSteps={carouselControls.totalSteps}
         onBack={onBackToRecipe}
         showTimer
+        onTimerClick={handleTimerClick}
+        timerTimeLeft={timer.timeLeft}
+        formatTime={formatTime}
       />
 
       <YouTubePlayer
@@ -138,6 +247,32 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           </div>
         )}
       </section>
+
+      <TimerModal
+        isOpen={isTimerModalOpen}
+        onClose={handleTimerModalClose}
+        onSetTimer={handleSetTimer}
+      />
+
+      <TimerStartingModal
+        isOpen={isStartingSoonModalOpen}
+        countdown={countdown}
+        timerTime={formatTime(timerDuration.minutes * 60 + timerDuration.seconds)}
+        onClose={handleStartingModalClose}
+        onCancel={handleTimerCancel}
+      />
+
+      <TimerPopover
+        isOpen={isTimerPopoverOpen}
+        onClose={handleTimerPopoverClose}
+        timeLeft={timer.timeLeft}
+        isRunning={timer.isRunning}
+        formatTime={formatTime}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onStop={stopTimer}
+        initialTime={timer.initialTime}
+      />
     </div>
   );
 };

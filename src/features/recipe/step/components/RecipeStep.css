@@ -13,8 +13,8 @@
   margin: 0;
   position: relative;
   margin-top: 8px;
-  /* 헤더(56px) + YouTube(220px) + 여백을 고려하여 높이 계산 */
-  height: calc(100vh - 300px);
+  /* 헤더(56px) + YouTube(16:9 비율) + 여백을 고려하여 높이 계산 */
+  height: calc(100vh - 56px - 56.25vw - 32px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -223,7 +223,7 @@
 /* 반응형 디자인 */
 @media (max-width: 480px) {
   .cooking-steps-container {
-    height: calc(100vh - 280px);
+    height: calc(100vh - 56px - 56.25vw - 24px);
     padding: 15px;
   }
 
