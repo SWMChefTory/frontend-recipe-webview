@@ -26,6 +26,9 @@
   transition: all 0.2s ease;
   border: 2px solid transparent;
   position: relative;
+  /* 터치 스크롤 제스처를 비활성화해 드래그 동작에 집중 */
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .swipe-timer-container:hover {

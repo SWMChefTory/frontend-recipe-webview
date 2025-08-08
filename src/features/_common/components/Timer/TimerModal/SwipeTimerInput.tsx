@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './SwipeTimerInput.css';
 
 interface SwipeTimerInputProps {
@@ -26,30 +26,33 @@ const SwipeTimerInput = ({ value, min, max, onChange, label }: SwipeTimerInputPr
     setStartValue(value);
   };
 
-  const handleMove = (clientY: number) => {
-    if (!isDragging) return;
+  const handleMove = useCallback(
+    (clientY: number) => {
+      if (!isDragging) return;
 
-    const deltaY = startY - clientY; // 위로 스와이프하면 양수
-    const sensitivity = 5; // 5픽셀당 1씩 변경 (더 부드럽게)
-    const delta = Math.round(deltaY / sensitivity);
-    let newValue = startValue + delta;
+      const deltaY = startY - clientY; // 위로 스와이프하면 양수
+      const sensitivity = 5; // 5픽셀당 1씩 변경 (더 부드럽게)
+      const delta = Math.round(deltaY / sensitivity);
+      let newValue = startValue + delta;
 
-    // 값 순환 처리
-    const range = max - min + 1;
-    if (newValue > max) {
-      newValue = min + ((newValue - min) % range);
-    } else if (newValue < min) {
-      newValue = max - ((min - newValue - 1) % range);
-    }
+      // 값 순환 처리
+      const range = max - min + 1;
+      if (newValue > max) {
+        newValue = min + ((newValue - min) % range);
+      } else if (newValue < min) {
+        newValue = max - ((min - newValue - 1) % range);
+      }
 
-    if (newValue !== value) {
-      onChange(newValue);
-    }
-  };
+      if (newValue !== value) {
+        onChange(newValue);
+      }
+    },
+    [isDragging, startY, startValue, value, min, max, onChange],
+  );
 
-  const handleEnd = () => {
+  const handleEnd = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   // 마우스 이벤트
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -57,30 +60,39 @@ const SwipeTimerInput = ({ value, min, max, onChange, label }: SwipeTimerInputPr
     handleStart(e.clientY);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    handleMove(e.clientY);
-  };
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      handleMove(e.clientY);
+    },
+    [handleMove],
+  );
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     handleEnd();
-  };
+  }, [handleEnd]);
 
   // 터치 이벤트
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
+    // touchstart 단계에서는 preventDefault를 호출하지 않습니다.
+    // 스크롤 개입 방지는 CSS touch-action: none 으로 처리합니다.
     const touch = e.touches[0];
     handleStart(touch.clientY);
   };
 
-  const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    handleMove(touch.clientY);
-  };
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+      const touch = e.touches[0];
+      handleMove(touch.clientY);
+    },
+    [handleMove],
+  );
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     handleEnd();
-  };
+  }, [handleEnd]);
 
   // 전역 이벤트 리스너 등록/해제
   useEffect(() => {
@@ -98,7 +110,7 @@ const SwipeTimerInput = ({ value, min, max, onChange, label }: SwipeTimerInputPr
       };
     }
     return undefined;
-  }, [isDragging, startY, startValue, value]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   return (
     <div className="swipe-timer-input">
