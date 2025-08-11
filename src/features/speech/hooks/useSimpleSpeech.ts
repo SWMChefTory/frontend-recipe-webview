@@ -1,4 +1,5 @@
 import { useMicVAD } from '@ricky0123/vad-react';
+import { sendRequestAccessTokenRefresh } from 'features/bridge/utils/webview';
 import { BasicIntent, parseIntent } from 'features/speech/types/parseIntent';
 import { useEffect, useRef, useState } from 'react';
 
@@ -64,8 +65,8 @@ export const useSimpleSpeech = ({
 
   vadRef.current = useMicVAD({
     model: 'v5',
-    positiveSpeechThreshold: 0.5,
-    negativeSpeechThreshold: 0.25,
+    positiveSpeechThreshold: 0.7,
+    negativeSpeechThreshold: 0.5,
     startOnLoad: true,
     additionalAudioConstraints: {
       noiseSuppression: true,
@@ -132,20 +133,9 @@ export const useSimpleSpeech = ({
       };
 
       ws.onmessage = ({ data }) => {
-        const receiveTime = performance.now();
-        if (sendTimeRef.current !== null) {
-          console.log(`[WS] 응답 지연: ${(receiveTime - sendTimeRef.current).toFixed(1)}ms`);
-        }
-
-        try {
-          const j = JSON.parse(data as string);
-          if (j.status === 200 && j.data?.intent) {
-            onIntentRef.current?.(parseIntent(j.data.intent));
-          }
-          console.log(j.data.base_intent);
-          console.log(j.data.intent);
-        } catch (e) {
-          console.error('[WS] error', e);
+        const j = JSON.parse(data as string);
+        if (j.status === 200 && j.data?.intent) {
+          onIntentRef.current?.(parseIntent(j.data.intent));
         }
       };
 
@@ -154,8 +144,13 @@ export const useSimpleSpeech = ({
         setError('WebSocket 오류');
       };
 
-      ws.onclose = () => {
+      ws.onclose = e => {
         console.log('[WS] closed');
+        console.error(e);
+
+        if (e.code === 1008) {
+          sendRequestAccessTokenRefresh();
+        }
         setTimeout(openWS, 500);
       };
     };

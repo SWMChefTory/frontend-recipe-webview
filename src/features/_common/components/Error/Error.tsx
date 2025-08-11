@@ -1,5 +1,6 @@
 import 'features/_common/components/Error/Error.css';
 import { ErrorProps } from 'features/_common/types';
+import { sendBackPressed } from 'features/bridge/utils/webview';
 import React from 'react';
 
 /**
@@ -8,17 +9,19 @@ import React from 'react';
  * @returns JSX 엘리먼트
  */
 const Error: React.FC<ErrorProps> = ({ error }) => {
-  const handleRetry = (): void => {
-    window.location.reload();
+  const handleBack = (): void => {
+    sendBackPressed();
   };
 
   return (
     <div className="error-container">
       <h2>오류가 발생했습니다</h2>
       <p>{error}</p>
-      <button onClick={handleRetry} type="button" aria-label="다시 시도">
-        다시 시도
-      </button>
+      <div className="error-actions" role="group" aria-label="에러 액션">
+        <button onClick={handleBack} type="button" aria-label="뒤로">
+          뒤로
+        </button>
+      </div>
     </div>
   );
 };
