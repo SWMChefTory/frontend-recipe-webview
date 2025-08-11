@@ -60,6 +60,13 @@ export const sendBackToRecipe = (recipeData: RecipeData): void => {
  * 뒤로가기 메시지 전송
  * @param recipeData - 레시피 데이터
  */
-export const sendBackPressed = (recipeData: RecipeData): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
+export const sendBackPressed = (): void => {
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, null);
+};
+
+/**
+ * 액세스 토큰 재발급 요청 메시지 전송
+ */
+export const sendRequestAccessTokenRefresh = (): void => {
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.REFRESH_TOKEN, null);
 };

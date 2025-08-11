@@ -21,7 +21,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
 
   const handleBackPress = (): void => {
     if (window.ReactNativeWebView) {
-      sendBackPressed(recipeData);
+      sendBackPressed();
     } else {
       window.history.back();
     }

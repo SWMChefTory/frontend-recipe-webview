@@ -34,4 +34,11 @@
 
 .error-container button:hover {
   background-color: #e63939;
-} 
+}
+
+/* 에러 액션 버튼들을 가로로 배치 */
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}

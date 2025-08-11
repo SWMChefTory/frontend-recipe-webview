@@ -12,6 +12,7 @@ export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
   FINISH_COOKING: 'FINISH_COOKING',
   BACK_TO_RECIPE: 'BACK_TO_RECIPE',
   BACK_PRESSED: 'BACK_PRESSED',
+  REFRESH_TOKEN: 'REFRESH_TOKEN',
 } as const;
 
 // YouTube 설정
@@ -23,6 +24,6 @@ export const YOUTUBE_CONFIG = {
     'playsinline=1',
     'disablekb=1',
     'iv_load_policy=3',
-    'html5=1'
+    'html5=1',
   ] as const,
-} as const; 
+} as const;

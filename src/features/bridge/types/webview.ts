@@ -5,7 +5,8 @@ export type BridgeMessageType =
   | 'START_COOKING'
   | 'FINISH_COOKING'
   | 'BACK_TO_RECIPE'
-  | 'BACK_PRESSED';
+  | 'BACK_PRESSED'
+  | 'REFRESH_TOKEN';
 
 // Bridge 메시지 인터페이스
 export interface BridgeMessage {

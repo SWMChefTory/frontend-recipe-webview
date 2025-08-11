@@ -16,7 +16,8 @@ export const AccessTokenProvider = ({ children }: { children: React.ReactNode })
       let msg: unknown;
       try {
         msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-      } catch {
+      } catch (e) {
+        console.log('error', e);
         return;
       }
 
