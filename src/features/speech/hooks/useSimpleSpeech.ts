@@ -65,7 +65,7 @@ export const useSimpleSpeech = ({
 
   vadRef.current = useMicVAD({
     model: 'v5',
-    positiveSpeechThreshold: 0.7,
+    positiveSpeechThreshold: 0.6,
     negativeSpeechThreshold: 0.5,
     startOnLoad: true,
     additionalAudioConstraints: {
