@@ -1,15 +1,56 @@
 /* src/features/recipe/step/VoiceIndicator.css */
 .voice-indicator-wrapper {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  z-index: 1000;
+  cursor: grab;
+  animation: float 3s ease-in-out infinite;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.voice-indicator-wrapper.dragging {
+  cursor: grabbing;
+  animation: none;
+}
+
+.voice-indicator-floater {
+  width: 40px;
+  height: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 16px 0;
 }
 
 .voice-indicator {
-  width: 80px;
-  height: 80px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #ff4500;
-  transition: transform 0.1s ease-out;
+  background: radial-gradient(circle at 30% 30%, #ff7a59, #ff4444 60%, #e53e3e 100%);
+  box-shadow:
+    0 8px 20px rgba(229, 62, 62, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.2s ease;
+}
+
+.voice-indicator-wrapper.dragging .voice-indicator {
+  box-shadow:
+    0 6px 14px rgba(229, 62, 62, 0.3),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }

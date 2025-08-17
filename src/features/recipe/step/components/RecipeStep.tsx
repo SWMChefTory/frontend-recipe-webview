@@ -40,6 +40,12 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const [volume, setVolume] = useState(0);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isTimerPopoverOpen, setIsTimerPopoverOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const voiceIndicatorRef = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const INDICATOR_SIZE = 40;
 
   // 타이머 시작 알림 모달 관련 상태
   const [isStartingSoonModalOpen, setIsStartingSoonModalOpen] = useState(false);
@@ -180,6 +186,103 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     };
   }, []);
 
+  // 음성 인디케이터 초기 위치를 캐러셀 하단으로 설정
+  useEffect(() => {
+    const updateInitialPosition = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const carousel = container.querySelector('.carousel-container') as HTMLElement | null;
+      const containerRect = container.getBoundingClientRect();
+      if (carousel) {
+        const carouselRect = carousel.getBoundingClientRect();
+        const centerX =
+          carouselRect.left - containerRect.left + carouselRect.width / 2 - INDICATOR_SIZE / 2;
+        let y = carouselRect.bottom - containerRect.top + 12; // 캐러셀 하단에서 12px 아래
+        // 컨테이너 내부로 한정
+        const clampedX = Math.max(0, Math.min(centerX, container.clientWidth - INDICATOR_SIZE));
+        const clampedY = Math.max(0, Math.min(y, container.clientHeight - INDICATOR_SIZE));
+        setVoicePosition({ x: clampedX, y: clampedY });
+      } else {
+        // 폴백: 컨테이너 좌상단에 배치
+        setVoicePosition({ x: 16, y: 16 });
+      }
+    };
+
+    updateInitialPosition();
+    window.addEventListener('resize', updateInitialPosition);
+    return () => window.removeEventListener('resize', updateInitialPosition);
+  }, []);
+
+  // 드래그 앤 드롭 핸들러
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const target = voiceIndicatorRef.current;
+    if (!target) return;
+    e.preventDefault();
+    e.stopPropagation();
+    target.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+    const containerRect = container.getBoundingClientRect();
+    const startX = e.clientX - containerRect.left;
+    const startY = e.clientY - containerRect.top;
+    dragOffsetRef.current = { x: startX - voicePosition.x, y: startY - voicePosition.y };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    const container = containerRef.current;
+    if (!container) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const containerRect = container.getBoundingClientRect();
+    const posX = e.clientX - containerRect.left - dragOffsetRef.current.x;
+    const posY = e.clientY - containerRect.top - dragOffsetRef.current.y;
+    const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
+    const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
+    setVoicePosition({ x: clampedX, y: clampedY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const target = voiceIndicatorRef.current;
+    if (target) {
+      try {
+        target.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  // 모바일(개발자도구 포함)에서 포인터 캡처가 불안정할 때를 위한 전역 이벤트 핸들러
+  useEffect(() => {
+    if (!isDragging) return;
+    const onPointerMove = (e: PointerEvent) => {
+      const container = containerRef.current;
+      if (!container) return;
+      e.preventDefault();
+      const containerRect = container.getBoundingClientRect();
+      const posX = e.clientX - containerRect.left - dragOffsetRef.current.x;
+      const posY = e.clientY - containerRect.top - dragOffsetRef.current.y;
+      const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
+      const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
+      setVoicePosition({ x: clampedX, y: clampedY });
+    };
+    const endDrag = (e: PointerEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', endDrag, { passive: false });
+    window.addEventListener('pointercancel', endDrag, { passive: false });
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove as EventListener);
+      window.removeEventListener('pointerup', endDrag as EventListener);
+      window.removeEventListener('pointercancel', endDrag as EventListener);
+    };
+  }, [isDragging]);
+
   useSimpleSpeech({
     selectedSttModel,
     accessToken,
@@ -210,7 +313,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         onPlayerReady={player => (ytRef.current = player)}
       />
 
-      <section className="cooking-steps-container">
+      <section className="cooking-steps-container" ref={containerRef}>
         <StepDots
           totalSteps={carouselControls.totalSteps}
           currentStep={currentStep}
@@ -230,13 +333,25 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           </Slider>
         </div>
 
-        <div className="voice-indicator-wrapper">
-          <div
-            className="voice-indicator"
-            style={{
-              transform: `scale(${1 + volume * 1.2})`,
-            }}
-          />
+        <div
+          ref={voiceIndicatorRef}
+          className={`voice-indicator-wrapper ${isDragging ? 'dragging' : ''}`}
+          style={{
+            left: `${voicePosition.x}px`,
+            top: `${voicePosition.y}px`,
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+        >
+          <div className="voice-indicator-floater">
+            <div
+              className="voice-indicator"
+              style={{
+                transform: `scale(${1 + volume * 1.5})`,
+              }}
+            />
+          </div>
         </div>
 
         {isLastStep && (
