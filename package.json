@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@echogarden/fvad-wasm": "^0.2.0",
+    "@radix-ui/react-collapsible": "^1.1.12",
     "@ricky0123/vad-react": "^0.0.30",
     "@shiguredo/rnnoise-wasm": "^2025.1.5",
     "@testing-library/jest-dom": "^5.16.4",
@@ -11,6 +12,7 @@
     "@testing-library/user-event": "^13.5.0",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.11.0",
+    "lucide-react": "^0.539.0",
     "onnxruntime-web": "^1.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
