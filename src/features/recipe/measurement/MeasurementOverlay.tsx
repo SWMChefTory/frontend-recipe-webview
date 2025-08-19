@@ -71,38 +71,6 @@ const MeasurementOverlay = ({ onClose }: Props) => {
             },
           ]}
         />
-
-        <MeasurementSection
-          title="액체류 계량"
-          groups={[
-            {
-              categoryLabel: '1큰술',
-              images: [
-                {
-                  src: '/images/measurement/dry/tbsp/measuring.png',
-                  caption: '계량스푼',
-                },
-                {
-                  src: '/images/measurement/dry/tbsp/spoon.png',
-                  caption: '1+½숟가락 소복이',
-                },
-              ],
-            },
-            {
-              categoryLabel: '1작은술',
-              images: [
-                {
-                  src: '/images/measurement/dry/tsp/measuring.png',
-                  caption: '계량스푼',
-                },
-                {
-                  src: '/images/measurement/dry/tsp/spoon.png',
-                  caption: '⅔ 숟가락',
-                },
-              ],
-            },
-          ]}
-        />
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ import TimerStartingModal from 'features/_common/components/Timer/TimerStartingM
 import { useAccessToken } from 'features/bridge';
 import { RecipeData } from 'features/recipe/detail/types/recipe';
 import StepCard from 'features/recipe/step/components/StepCard';
-import StepDots from 'features/recipe/step/components/StepDots';
 import { useRecipeStepController } from 'features/recipe/step/hooks/useRecipeStepController';
 import { useSimpleSpeech } from 'features/speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'features/speech/types/parseIntent';
@@ -32,7 +31,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     youtubeKey,
     currentStepData,
     carouselControls,
-    handleStepClick,
     isLastStep,
   } = useRecipeStepController(recipeData);
 
@@ -186,26 +184,17 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     };
   }, []);
 
-  // 음성 인디케이터 초기 위치를 캐러셀 하단으로 설정
+  // 음성 인디케이터 초기 위치를 화면 하단 중앙에서 살짝 위로 설정
   useEffect(() => {
     const updateInitialPosition = () => {
       const container = containerRef.current;
       if (!container) return;
-      const carousel = container.querySelector('.carousel-container') as HTMLElement | null;
-      const containerRect = container.getBoundingClientRect();
-      if (carousel) {
-        const carouselRect = carousel.getBoundingClientRect();
-        const centerX =
-          carouselRect.left - containerRect.left + carouselRect.width / 2 - INDICATOR_SIZE / 2;
-        let y = carouselRect.bottom - containerRect.top + 12; // 캐러셀 하단에서 12px 아래
-        // 컨테이너 내부로 한정
-        const clampedX = Math.max(0, Math.min(centerX, container.clientWidth - INDICATOR_SIZE));
-        const clampedY = Math.max(0, Math.min(y, container.clientHeight - INDICATOR_SIZE));
-        setVoicePosition({ x: clampedX, y: clampedY });
-      } else {
-        // 폴백: 컨테이너 좌상단에 배치
-        setVoicePosition({ x: 16, y: 16 });
-      }
+      const centerX = container.clientWidth / 2 - INDICATOR_SIZE / 2;
+      const bottomOffset = 24; // 하단에서 24px 위
+      const y = container.clientHeight - INDICATOR_SIZE - bottomOffset;
+      const clampedX = Math.max(0, Math.min(centerX, container.clientWidth - INDICATOR_SIZE));
+      const clampedY = Math.max(0, Math.min(y, container.clientHeight - INDICATOR_SIZE));
+      setVoicePosition({ x: clampedX, y: clampedY });
     };
 
     updateInitialPosition();
@@ -314,21 +303,10 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       />
 
       <section className="cooking-steps-container" ref={containerRef}>
-        <StepDots
-          totalSteps={carouselControls.totalSteps}
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-        />
-
         <div className="carousel-container">
           <Slider ref={sliderRef} {...slickSettings}>
             {recipeData.recipe_steps.map((step, idx) => (
-              <StepCard
-                key={`step-${idx}`}
-                step={step}
-                index={idx}
-                totalSteps={carouselControls.totalSteps}
-              />
+              <StepCard key={`step-${idx}`} step={step} index={idx} />
             ))}
           </Slider>
         </div>

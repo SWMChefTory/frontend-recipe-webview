@@ -67,39 +67,15 @@ export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult =>
 
   // Slick 설정
   const slickSettings: SlickSettings = {
-    dots: false,
+    dots: true,
     infinite: false,
     speed: 300,
-    slidesToShow: 1,
-    slidesToScroll: 1,
     centerMode: true,
-    centerPadding: '80px', // 기본값 증가
-    swipeToSlide: true,
-    touchThreshold: 10, // 터치 민감도 조정
+    centerPadding: '10%',
     afterChange: handleSlideChange,
-    arrows: false, // 화살표 버튼 비활성화 (명시적)
+    arrows: false,
     adaptiveHeight: false, // 높이 적응 비활성화
     draggable: true,
-    responsive: [
-      {
-        breakpoint: 768,
-        settings: {
-          centerPadding: '70px', // 태블릿에서도 충분한 미리보기
-        },
-      },
-      {
-        breakpoint: 480,
-        settings: {
-          centerPadding: '60px', // 모바일에서도 양 옆 미리보기가 잘 보이도록 증가
-        },
-      },
-      {
-        breakpoint: 360,
-        settings: {
-          centerPadding: '50px', // 작은 모바일 화면에서도 미리보기 유지
-        },
-      },
-    ],
   };
 
   return {
