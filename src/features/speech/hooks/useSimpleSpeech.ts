@@ -144,13 +144,14 @@ export const useSimpleSpeech = ({
         setError('WebSocket 오류');
       };
 
-      ws.onclose = e => {
+      ws.onclose = async e => {
         console.log('[WS] closed');
         console.error(e);
 
         if (e.code === 1008) {
-          sendRequestAccessTokenRefresh();
+          await sendRequestAccessTokenRefresh();
         }
+
         setTimeout(openWS, 500);
       };
     };
