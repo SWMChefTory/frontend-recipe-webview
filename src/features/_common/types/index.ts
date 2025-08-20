@@ -28,7 +28,6 @@ export interface HeaderProps {
 // YouTube 플레이어 Props
 export interface YouTubePlayerProps {
   youtubeEmbedId: string;
-  startTime: number;
   title: string;
   autoplay?: boolean;
   youtubeKey?: number;

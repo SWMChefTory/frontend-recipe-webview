@@ -6,16 +6,14 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
   const {
     sliderRef,
     currentStep,
-    youtubeKey,
     handleStepClick,
     slickSettings,
     goToNext,
     goToPrevious,
     goToStep,
-  } = useCarousel(recipeData);
+  } = useCarousel();
 
   const [seekTime, setSeekTime] = useState<{ stepIdx: number; seconds: number } | null>(null);
-  const [seekKey, setSeekKey] = useState<number>(0);
 
   const totalSteps = useMemo(() => recipeData.recipe_steps.length, [recipeData]);
 
@@ -40,8 +38,6 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
         });
         if (stepIdx !== -1) {
           handleStepClick(stepIdx);
-          setSeekTime({ stepIdx, seconds });
-          setSeekKey(prev => prev + 1);
         }
       },
     }),
@@ -70,7 +66,6 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
     sliderRef,
     currentStep,
     slickSettings,
-    youtubeKey: seekTime !== null ? seekKey : youtubeKey,
     currentStepData,
     carouselControls,
     handleStepClick,
