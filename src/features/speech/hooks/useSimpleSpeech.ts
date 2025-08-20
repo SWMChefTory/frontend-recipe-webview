@@ -46,6 +46,8 @@ export const useSimpleSpeech = ({
   const onIntentRef = useRef(onIntent);
   const selectedSttModelRef = useRef(selectedSttModel);
   const vadRef = useRef<ReturnType<typeof useMicVAD> | null>(null);
+  const isMountedRef = useRef(true);
+  const reconnectTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     accessTokenRef.current = accessToken;
@@ -147,18 +149,26 @@ export const useSimpleSpeech = ({
       ws.onclose = async e => {
         console.log('[WS] closed');
         console.error(e);
-
         if (e.code === 1008) {
           await sendRequestAccessTokenRefresh();
         }
-
-        setTimeout(openWS, 500);
+        if (isMountedRef.current) {
+          reconnectTimeoutRef.current = window.setTimeout(openWS, 500);
+        }
       };
     };
 
     openWS();
     return () => {
-      wsRef.current?.close();
+      isMountedRef.current = false;
+      if (reconnectTimeoutRef.current !== null) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (wsRef.current) {
+        wsRef.current.onclose = null;
+        wsRef.current.close(1000, 'page unmounted');
+      }
       vadRef.current?.pause();
     };
   }, []);
