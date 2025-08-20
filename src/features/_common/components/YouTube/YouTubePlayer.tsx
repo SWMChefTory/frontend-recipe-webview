@@ -11,7 +11,6 @@ interface Props extends YouTubePlayerProps {
 
 const YouTubePlayer = ({
   youtubeEmbedId,
-  startTime,
   title,
   autoplay = false,
   youtubeKey,
@@ -23,13 +22,11 @@ const YouTubePlayer = ({
     height: '100%',
     playerVars: {
       autoplay: autoplay ? 1 : 0,
-      start: startTime ?? 0,
     },
   };
 
   /** 준비 이벤트 */
   const handleReady: NonNullable<YouTubeProps['onReady']> = e => {
-    if (startTime) e.target.seekTo(startTime, true);
     onPlayerReady?.(e.target);
   };
 

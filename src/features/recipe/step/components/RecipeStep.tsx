@@ -24,33 +24,30 @@ interface Props {
 }
 
 const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttModel }: Props) => {
-  const {
-    sliderRef,
-    currentStep,
-    slickSettings,
-    youtubeKey,
-    currentStepData,
-    carouselControls,
-    isLastStep,
-  } = useRecipeStepController(recipeData);
+  const { sliderRef, currentStep, slickSettings, currentStepData, carouselControls, isLastStep } =
+    useRecipeStepController(recipeData);
 
+  // 유튜브 플레이어 관련 상태
   const ytRef = useRef<YT.Player | null>(null);
-  const [volume, setVolume] = useState(0);
-  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const [isTimerPopoverOpen, setIsTimerPopoverOpen] = useState(false);
+  const skipNextAutoSeekRef = useRef<boolean>(false);
+
+  // 음성 인디케이터 관련 상태
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [volume, setVolume] = useState(0);
   const voiceIndicatorRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const INDICATOR_SIZE = 40;
 
-  // 타이머 시작 알림 모달 관련 상태
+  // 타이머 관련 상태
   const [isStartingSoonModalOpen, setIsStartingSoonModalOpen] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [timerDuration, setTimerDuration] = useState({ minutes: 0, seconds: 0 });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [isTimerPopoverOpen, setIsTimerPopoverOpen] = useState(false);
 
   const accessToken = useAccessToken();
   const { timer, startTimer, pauseTimer, resumeTimer, stopTimer, formatTime } = useGlobalTimer();
@@ -108,7 +105,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
     switch (cmd) {
-      // ... 다른 case들은 동일 ...
       case 'NEXT':
         carouselControls.goToNext();
         break;
@@ -125,6 +121,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       case 'TIMESTAMP': {
         const secs = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(secs)) {
+          skipNextAutoSeekRef.current = true;
           carouselControls.seekTo(secs);
           ytRef.current?.seekTo(secs, true);
         }
@@ -280,6 +277,50 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     onVolume: v => setVolume(v),
   });
 
+  // 캐러셀 단계 변경 시 해당 단계 시작 시간으로 YouTube를 시킹
+  useEffect(() => {
+    const player = ytRef.current;
+    if (!player) return;
+    if (skipNextAutoSeekRef.current) {
+      // 타임스탬프 명령 직후 자동 시킹 1회 스킵
+      skipNextAutoSeekRef.current = false;
+      return;
+    }
+    const startSeconds = currentStepData.start_time ?? 0;
+    try {
+      player.seekTo(startSeconds, true);
+    } catch {}
+  }, [currentStepData.start_time]);
+
+  // 재생 시간이 현재 스텝 범위를 벗어나면 캐러셀을 해당 스텝으로 이동
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const player = ytRef.current;
+      if (!player) return;
+      let currentSeconds = 0;
+      try {
+        // getCurrentTime는 재생/일시정지와 무관하게 현재 시간을 반환
+        if (typeof player.getCurrentTime === 'function') {
+          currentSeconds = player.getCurrentTime();
+        }
+      } catch {
+        return;
+      }
+
+      const steps = recipeData.recipe_steps;
+      const startOfCurrent = steps[currentStep]?.start_time ?? 0;
+      const startOfNext = steps[currentStep + 1]?.start_time ?? Number.POSITIVE_INFINITY;
+
+      if (currentSeconds < startOfCurrent || currentSeconds >= startOfNext) {
+        // 비디오 시간에 맞춰 캐러셀만 이동하고, 자동 시킹은 1회 스킵
+        skipNextAutoSeekRef.current = true;
+        carouselControls.seekTo(currentSeconds);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [currentStep, recipeData.recipe_steps, carouselControls]);
+
   return (
     <div className="cooking-mode">
       <Header
@@ -295,11 +336,13 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
 
       <YouTubePlayer
         youtubeEmbedId={recipeData.video_info.video_id}
-        startTime={currentStepData.start_time}
         title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
         autoplay
-        youtubeKey={youtubeKey}
-        onPlayerReady={player => (ytRef.current = player)}
+        onPlayerReady={player => {
+          ytRef.current = player;
+          const startSeconds = currentStepData.start_time ?? 0;
+          player.seekTo(startSeconds, true);
+        }}
       />
 
       <section className="cooking-steps-container" ref={containerRef}>

@@ -6,14 +6,7 @@ interface Props {
 }
 
 function Video({ videoId, title }: Props): JSX.Element {
-  return (
-    <YouTubePlayer
-      youtubeEmbedId={videoId}
-      startTime={0}
-      title={`${title} 동영상`}
-      autoplay={false}
-    />
-  );
+  return <YouTubePlayer youtubeEmbedId={videoId} title={`${title} 동영상`} autoplay={false} />;
 }
 
 export default Video;

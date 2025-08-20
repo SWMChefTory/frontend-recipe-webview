@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import Slider from 'react-slick';
-import { RecipeData } from '../../detail/types';
 
 interface SlickSettings {
   [key: string]: unknown;
@@ -10,7 +9,6 @@ interface SlickSettings {
 interface UseCarouselResult {
   sliderRef: React.RefObject<Slider>;
   currentStep: number;
-  youtubeKey: number;
   handleStepClick: (stepIndex: number) => void;
   goToNext: () => void;
   goToPrevious: () => void;
@@ -23,17 +21,9 @@ interface UseCarouselResult {
  * @param recipeData - 레시피 데이터
  * @returns 캐러셀 상태와 핸들러들
  */
-export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult => {
+export const useCarousel = (): UseCarouselResult => {
   const sliderRef = useRef<Slider>(null);
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [youtubeKey, setYoutubeKey] = useState<number>(0);
-
-  // 단계 변경 시 YouTube iframe 강제 새로고침
-  useEffect(() => {
-    if (recipeData) {
-      setYoutubeKey(prev => prev + 1);
-    }
-  }, [currentStep, recipeData]);
 
   const handleStepClick = useCallback((stepIndex: number): void => {
     setCurrentStep(stepIndex);
@@ -81,7 +71,6 @@ export const useCarousel = (recipeData: RecipeData | null): UseCarouselResult =>
   return {
     sliderRef,
     currentStep,
-    youtubeKey,
     handleStepClick,
     slickSettings,
     goToNext,
