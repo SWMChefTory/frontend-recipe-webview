@@ -175,7 +175,6 @@
 
 /* 활성 슬라이드: 길이와 색으로 명확히 강조 */
 .slick-dots li.slick-active button:before {
-  width: 1.9rem;
   background: #ff4500;
   box-shadow: 0 2px 6px rgba(255, 69, 0, 0.28);
   transform: translateY(-1px);
