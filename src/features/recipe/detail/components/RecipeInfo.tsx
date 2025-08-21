@@ -9,11 +9,14 @@ import Video from 'features/recipe/detail/components/Video';
 import { RecipeInfoProps } from 'features/recipe/detail/types';
 import MeasurementOverlay from 'features/recipe/measurement/MeasurementOverlay';
 import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import RecipeSteps from './RecipeSteps';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
   const [selectedSttModel, setSelectedSttModel] = useState<string>('VITO');
   const [showMeasurement, setShowMeasurement] = useState(false);
+
+  const { id: recipeId } = useParams<{ id: string }>();
 
   const handleBackPress = (): void => {
     if (window.ReactNativeWebView) {
@@ -25,7 +28,10 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
 
   // 타이머 관련 핸들러 함수들
   const handleTimerClick = () => {
-    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
+    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
+      recipe_id: recipeId ?? '',
+      recipe_title: recipeData.video_info.video_title,
+    });
   };
 
   return (
