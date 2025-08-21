@@ -72,17 +72,28 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       case 'TIMER': {
         switch (arg1) {
           case 'START':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, recipeData);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, null, {
+              recipe_id: recipeId ?? '',
+              recipe_title: recipeData.video_info.video_title,
+            });
             break;
           case 'STOP':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, recipeData);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, {
+              recipe_id: recipeId ?? '',
+              recipe_title: recipeData.video_info.video_title,
+            });
             break;
           case 'CHECK':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
+              recipe_id: recipeId ?? '',
+              recipe_title: recipeData.video_info.video_title,
+            });
             break;
           case 'SET': {
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, recipeData, {
-              addtitionalTime: arg2 ?? '0',
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, null, {
+              recipe_id: recipeId ?? '',
+              recipe_title: recipeData.video_info.video_title,
+              timer_time: arg2 ?? '0',
             });
             break;
           }
@@ -93,7 +104,10 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   };
 
   const handleTimerClick = () => {
-    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
+    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
+      recipe_id: recipeId ?? '',
+      recipe_title: recipeData.video_info.video_title,
+    });
   };
 
   // 드래그 앤 드롭 핸들러

@@ -16,7 +16,9 @@ export type BridgeMessageType =
 export interface BridgeMessage {
   type: BridgeMessageType;
   data: RecipeData | null;
-  addtitionalTime?: string;
+  recipe_id?: string;
+  recipe_title?: string;
+  timer_time?: string;
 }
 
 // Slick 캐러셀 설정 타입
