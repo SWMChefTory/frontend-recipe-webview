@@ -26,7 +26,6 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   // 타이머 관련 핸들러 함수들
   const handleTimerClick = () => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
-    console.log('handleTimerClick', recipeData);
   };
 
   return (
