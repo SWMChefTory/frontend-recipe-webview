@@ -6,12 +6,17 @@ export type BridgeMessageType =
   | 'FINISH_COOKING'
   | 'BACK_TO_RECIPE'
   | 'BACK_PRESSED'
-  | 'REFRESH_TOKEN';
+  | 'REFRESH_TOKEN'
+  | 'TIMER_START'
+  | 'TIMER_STOP'
+  | 'TIMER_CHECK'
+  | 'TIMER_SET';
 
 // Bridge 메시지 인터페이스
 export interface BridgeMessage {
   type: BridgeMessageType;
   data: RecipeData | null;
+  addtitionalTime?: string;
 }
 
 // Slick 캐러셀 설정 타입

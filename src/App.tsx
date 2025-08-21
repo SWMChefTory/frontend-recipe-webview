@@ -1,4 +1,3 @@
-import { TimerProvider } from 'features/_common';
 import 'features/_common/styles/global.css';
 import { AccessTokenProvider } from 'features/bridge';
 import RecipeDetailPage from 'features/recipe/detail/RecipeDetailPage';
@@ -9,14 +8,12 @@ import 'slick-carousel/slick/slick.css';
 
 const App = (): React.ReactNode => (
   <AccessTokenProvider>
-    <TimerProvider>
-      <Router>
-        <Routes>
-          <Route path="/recipes/:id" element={<RecipeDetailPage />} />
-          <Route path="/recipes/:id/steps" element={<RecipeStepPage />} />
-        </Routes>
-      </Router>
-    </TimerProvider>
+    <Router>
+      <Routes>
+        <Route path="/recipes/:id" element={<RecipeDetailPage />} />
+        <Route path="/recipes/:id/steps" element={<RecipeStepPage />} />
+      </Routes>
+    </Router>
   </AccessTokenProvider>
 );
 

@@ -4,15 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
 
-import { Header, TimerModal, TimerPopover, YouTubePlayer, useGlobalTimer } from 'features/_common';
-import TimerStartingModal from 'features/_common/components/Timer/TimerStartingModal/TimerStartingModal';
-import { useAccessToken } from 'features/bridge';
+import { Header, YouTubePlayer } from 'features/_common';
+import { sendBridgeMessage, useAccessToken } from 'features/bridge';
 import { RecipeData } from 'features/recipe/detail/types/recipe';
 import StepCard from 'features/recipe/step/components/StepCard';
 import { useRecipeStepController } from 'features/recipe/step/hooks/useRecipeStepController';
 import { useSimpleSpeech } from 'features/speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'features/speech/types/parseIntent';
 
+import { WEBVIEW_MESSAGE_TYPES } from 'features/_common/constants';
 import 'features/recipe/step/components/RecipeStep.css';
 import './VoiceIndicator.css';
 
@@ -37,70 +37,12 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const voiceIndicatorRef = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [hasCustomPosition, setHasCustomPosition] = useState(false);
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const INDICATOR_SIZE = 40;
 
-  // 타이머 관련 상태
-  const [isStartingSoonModalOpen, setIsStartingSoonModalOpen] = useState(false);
-  const [countdown, setCountdown] = useState(5);
-  const [timerDuration, setTimerDuration] = useState({ minutes: 0, seconds: 0 });
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const [isTimerPopoverOpen, setIsTimerPopoverOpen] = useState(false);
-
   const accessToken = useAccessToken();
-  const { timer, startTimer, pauseTimer, resumeTimer, stopTimer, formatTime } = useGlobalTimer();
   const { id: recipeId } = useParams<{ id: string }>();
-
-  // 타이머와 인터벌 정리 함수
-  const clearAllTimers = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  // 5초 카운트다운 후 타이머 시작하는 함수
-  const startTimerWithCountdown = (minutes: number, seconds: number) => {
-    clearAllTimers(); // 기존 타이머/인터벌 정리
-    setCountdown(5); // 카운트다운 5로 리셋
-    setTimerDuration({ minutes, seconds }); // 타이머 시간 저장
-    setIsStartingSoonModalOpen(true); // 모달 열기
-
-    // 카운트다운 인터벌 시작
-    intervalRef.current = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    // 5초 후 타이머 시작
-    timeoutRef.current = setTimeout(() => {
-      startTimer(minutes, seconds);
-      setIsStartingSoonModalOpen(false);
-      clearAllTimers();
-    }, 5000);
-  };
-
-  // 모달 닫기 핸들러
-  const handleStartingModalClose = () => {
-    setIsStartingSoonModalOpen(false);
-    clearAllTimers();
-  };
-
-  // 타이머 취소 핸들러
-  const handleTimerCancel = () => {
-    setIsStartingSoonModalOpen(false);
-    clearAllTimers();
-  };
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
@@ -130,22 +72,18 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       case 'TIMER': {
         switch (arg1) {
           case 'START':
-            setIsTimerModalOpen(true);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, recipeData);
             break;
           case 'STOP':
-            pauseTimer();
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, recipeData);
             break;
           case 'CHECK':
-            setIsTimerPopoverOpen(true);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
             break;
           case 'SET': {
-            const totalSeconds = parseInt(arg2 ?? '0', 10);
-            if (Number.isNaN(totalSeconds) || totalSeconds <= 0) break;
-
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-
-            startTimerWithCountdown(minutes, seconds);
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, recipeData, {
+              addtitionalTime: arg2 ?? '0',
+            });
             break;
           }
         }
@@ -155,49 +93,8 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   };
 
   const handleTimerClick = () => {
-    if (timer.timeLeft > 0) {
-      setIsTimerPopoverOpen(true);
-    } else {
-      setIsTimerModalOpen(true);
-    }
+    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, recipeData);
   };
-
-  const handleTimerModalClose = () => {
-    setIsTimerModalOpen(false);
-  };
-
-  const handleTimerPopoverClose = () => {
-    setIsTimerPopoverOpen(false);
-  };
-
-  const handleSetTimer = (minutes: number, seconds: number) => {
-    startTimer(minutes, seconds);
-  };
-
-  // 컴포넌트 언마운트 시 타이머 정리
-  useEffect(() => {
-    return () => {
-      clearAllTimers();
-    };
-  }, []);
-
-  // 음성 인디케이터 초기 위치를 화면 하단 중앙에서 살짝 위로 설정
-  useEffect(() => {
-    const updateInitialPosition = () => {
-      const container = containerRef.current;
-      if (!container) return;
-      const centerX = container.clientWidth / 2 - INDICATOR_SIZE / 2;
-      const bottomOffset = 24; // 하단에서 24px 위
-      const y = container.clientHeight - INDICATOR_SIZE - bottomOffset;
-      const clampedX = Math.max(0, Math.min(centerX, container.clientWidth - INDICATOR_SIZE));
-      const clampedY = Math.max(0, Math.min(y, container.clientHeight - INDICATOR_SIZE));
-      setVoicePosition({ x: clampedX, y: clampedY });
-    };
-
-    updateInitialPosition();
-    window.addEventListener('resize', updateInitialPosition);
-    return () => window.removeEventListener('resize', updateInitialPosition);
-  }, []);
 
   // 드래그 앤 드롭 핸들러
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -210,9 +107,13 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     target.setPointerCapture(e.pointerId);
     setIsDragging(true);
     const containerRect = container.getBoundingClientRect();
-    const startX = e.clientX - containerRect.left;
-    const startY = e.clientY - containerRect.top;
-    dragOffsetRef.current = { x: startX - voicePosition.x, y: startY - voicePosition.y };
+    const posX = e.clientX - containerRect.left - INDICATOR_SIZE / 2;
+    const posY = e.clientY - containerRect.top - INDICATOR_SIZE / 2;
+    const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
+    const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
+    setHasCustomPosition(true);
+    setVoicePosition({ x: clampedX, y: clampedY });
+    dragOffsetRef.current = { x: INDICATOR_SIZE / 2, y: INDICATOR_SIZE / 2 };
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -328,10 +229,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         currentStep={currentStep + 1}
         totalSteps={carouselControls.totalSteps}
         onBack={onBackToRecipe}
-        showTimer
         onTimerClick={handleTimerClick}
-        timerTimeLeft={timer.timeLeft}
-        formatTime={formatTime}
       />
 
       <YouTubePlayer
@@ -357,10 +255,15 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         <div
           ref={voiceIndicatorRef}
           className={`voice-indicator-wrapper ${isDragging ? 'dragging' : ''}`}
-          style={{
-            left: `${voicePosition.x}px`,
-            top: `${voicePosition.y}px`,
-          }}
+          style={
+            hasCustomPosition
+              ? {
+                  left: `${voicePosition.x}px`,
+                  top: `${voicePosition.y}px`,
+                  transform: 'none',
+                }
+              : undefined
+          }
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -383,32 +286,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           </div>
         )}
       </section>
-
-      <TimerModal
-        isOpen={isTimerModalOpen}
-        onClose={handleTimerModalClose}
-        onSetTimer={handleSetTimer}
-      />
-
-      <TimerStartingModal
-        isOpen={isStartingSoonModalOpen}
-        countdown={countdown}
-        timerTime={formatTime(timerDuration.minutes * 60 + timerDuration.seconds)}
-        onClose={handleStartingModalClose}
-        onCancel={handleTimerCancel}
-      />
-
-      <TimerPopover
-        isOpen={isTimerPopoverOpen}
-        onClose={handleTimerPopoverClose}
-        timeLeft={timer.timeLeft}
-        isRunning={timer.isRunning}
-        formatTime={formatTime}
-        onPause={pauseTimer}
-        onResume={resumeTimer}
-        onStop={stopTimer}
-        initialTime={timer.initialTime}
-      />
     </div>
   );
 };

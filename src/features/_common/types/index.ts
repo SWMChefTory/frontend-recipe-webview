@@ -19,10 +19,7 @@ export interface HeaderProps {
   currentStep?: number;
   totalSteps?: number;
   onBack: () => void;
-  showTimer?: boolean;
   onTimerClick?: () => void;
-  timerTimeLeft?: number;
-  formatTime?: (time: number) => string;
 }
 
 // YouTube 플레이어 Props
