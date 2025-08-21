@@ -5,7 +5,9 @@
   height: 40px;
   z-index: 1000;
   cursor: grab;
-  animation: float 3s ease-in-out infinite;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
@@ -22,6 +24,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: float 3s ease-in-out infinite;
 }
 
 .voice-indicator {
