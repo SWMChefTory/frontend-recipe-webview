@@ -3,7 +3,6 @@ import { WEBVIEW_MESSAGE_TYPES } from 'features/_common/constants';
 import { sendBackPressed, sendBridgeMessage } from 'features/bridge/utils/webview';
 import IngredientList from 'features/recipe/detail/components/IngredientList';
 import 'features/recipe/detail/components/RecipeInfo.css';
-import STTModelSelector from 'features/recipe/detail/components/STTModelSelector';
 import StartCookingButton from 'features/recipe/detail/components/StartCookingButton';
 import Video from 'features/recipe/detail/components/Video';
 import { RecipeInfoProps } from 'features/recipe/detail/types';
@@ -13,7 +12,6 @@ import { useParams } from 'react-router-dom';
 import RecipeSteps from './RecipeSteps';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
-  const [selectedSttModel, setSelectedSttModel] = useState<string>('VITO');
   const [showMeasurement, setShowMeasurement] = useState(false);
 
   const { id: recipeId } = useParams<{ id: string }>();
@@ -60,10 +58,8 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
           <RecipeSteps steps={recipeData.recipe_steps} />
         </div>
 
-        <STTModelSelector selected={selectedSttModel} onChange={setSelectedSttModel} />
-
         <div className="button-container">
-          <StartCookingButton onClick={() => onStartRecipeStep(selectedSttModel)} />
+          <StartCookingButton onClick={() => onStartRecipeStep('CLOVA')} />
         </div>
       </div>
 

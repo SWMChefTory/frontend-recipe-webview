@@ -27,7 +27,7 @@ interface Params {
 }
 
 export const useSimpleSpeech = ({
-  selectedSttModel = 'VITO',
+  selectedSttModel = 'CLOVA',
   accessToken,
   recipeId,
   onVoiceStart,
