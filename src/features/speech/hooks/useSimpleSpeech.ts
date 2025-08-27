@@ -88,6 +88,9 @@ export const useSimpleSpeech = ({
   const recipeIdRef = useRef(recipeId);
   const onIntentRef = useRef(onIntent);
   const selectedSttModelRef = useRef(selectedSttModel);
+  const onVoiceStartRef = useRef(onVoiceStart);
+  const onVoiceEndRef = useRef(onVoiceEnd);
+  const onVolumeRef = useRef(onVolume);
 
   useEffect(() => {
     accessTokenRef.current = accessToken;
@@ -101,6 +104,15 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     selectedSttModelRef.current = selectedSttModel;
   }, [selectedSttModel]);
+  useEffect(() => {
+    onVoiceStartRef.current = onVoiceStart;
+  }, [onVoiceStart]);
+  useEffect(() => {
+    onVoiceEndRef.current = onVoiceEnd;
+  }, [onVoiceEnd]);
+  useEffect(() => {
+    onVolumeRef.current = onVolume;
+  }, [onVolume]);
 
   // ------------------------
   // WebSocket
@@ -221,7 +233,7 @@ export const useSimpleSpeech = ({
             if (!inst) return;
 
             // 볼륨 콜백
-            onVolume?.(rms);
+            onVolumeRef.current?.(rms);
 
             const ws = wsRef.current;
 
@@ -292,7 +304,7 @@ export const useSimpleSpeech = ({
                     preBufferRef.current = []; // Pre-buffer 비우기
                   }
 
-                  onVoiceStart?.();
+                  onVoiceStartRef.current?.();
                 }
               } else {
                 if (probability < NEG_TH && now - lastOnRef.current > ON_HOLD_MS) {
@@ -318,7 +330,7 @@ export const useSimpleSpeech = ({
                     }
 
                     preBufferRef.current = []; // Pre-buffer 초기화
-                    onVoiceEnd?.();
+                    onVoiceEndRef.current?.();
                   }
                 } else {
                   lastOffRef.current = 0;
