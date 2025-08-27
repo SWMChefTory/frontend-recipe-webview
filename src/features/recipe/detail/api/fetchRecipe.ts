@@ -1,6 +1,6 @@
 import { RecipeData } from '../types/recipe';
 
-const BASE_API_URL = 'https://cheftories.com';
+const BASE_API_URL = 'https://api.cheftories.com';
 
 export const fetchRecipe = async (id: string, accessToken: string | null): Promise<RecipeData> => {
   if (!accessToken) {
