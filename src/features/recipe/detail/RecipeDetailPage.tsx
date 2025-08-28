@@ -24,8 +24,8 @@ const RecipeDetailPage = (): JSX.Element => {
   // 네이티브 앱과 통신
   const bridgeActions = useBridgeActions(recipeData);
 
-  // 스크롤 잠금 해제
-  useBodyScrollLock(false);
+  // 로딩 중에는 스크롤 잠금
+  useBodyScrollLock(loading);
 
   return (
     <div className={`app ${transitioning ? 'transitioning' : ''} ${fadeIn ? 'fade-in' : ''}`}>
