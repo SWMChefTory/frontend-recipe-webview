@@ -1,4 +1,5 @@
 import { useAccessToken } from 'features/bridge/AccessTokenProvider';
+import { sendRequestAccessTokenRefresh } from 'features/bridge/utils/webview';
 import { useEffect, useState } from 'react';
 import { fetchRecipe } from '../api/fetchRecipe';
 import { RecipeData } from '../types/recipe';
@@ -34,6 +35,7 @@ export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
       }
 
       if (!accessToken || !accessToken.startsWith('Bearer ')) {
+        sendRequestAccessTokenRefresh();
         setError('유효하지 않은 액세스 토큰입니다.');
         setLoading(false);
         return;

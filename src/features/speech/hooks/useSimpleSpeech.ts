@@ -7,6 +7,9 @@ import { VADInstance, VADModuleLoader } from 'ten-vad-lib';
 // ONNX Runtime Web for KWS
 import * as ort from 'onnxruntime-web';
 
+// Bridge utils for token refresh
+import { sendRequestAccessTokenRefresh } from 'features/bridge/utils/webview';
+
 const STT_URL = 'wss://api.cheftories.com/api/v1/voice-command/ws';
 const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 160; // 10ms @ 16kHz
@@ -162,7 +165,6 @@ export const useSimpleSpeech = ({
   // ------------------------
   const loadKwsModel = async () => {
     try {
-      console.log('[KWS] 모델 로딩 중...');
       const response = await fetch('/model_singlefile_v2.onnx');
       const arrayBuffer = await response.arrayBuffer();
 
@@ -172,10 +174,6 @@ export const useSimpleSpeech = ({
 
       const session = await ort.InferenceSession.create(arrayBuffer, options);
       kwsSessionRef.current = session;
-
-      console.log('[KWS] 모델 로드 완료');
-      console.log(`[KWS] 입력: ${session.inputNames[0]}`);
-      console.log(`[KWS] 출력: ${session.outputNames[0]}`);
     } catch (err: any) {
       console.error('[KWS] 모델 로드 실패:', err.message);
       setError(`KWS 모델 로드 실패: ${err.message}`);
@@ -222,7 +220,7 @@ export const useSimpleSpeech = ({
 
       if (!kwsArmedRef.current && kwsSustainMsRef.current >= KWS_CONFIG.minSustainMs) {
         kwsArmedRef.current = true;
-        onKwsActivation(probToriya, ema);
+        onKwsActivation();
       }
     } else {
       kwsSustainMsRef.current = 0;
@@ -230,11 +228,7 @@ export const useSimpleSpeech = ({
     }
   };
 
-  const onKwsActivation = (probToriya: number, ema: number) => {
-    console.log(
-      `[KWS] 🎯 토리야 검출! 확률: ${(probToriya * 100).toFixed(1)}%, EMA: ${(ema * 100).toFixed(1)}%`,
-    );
-
+  const onKwsActivation = () => {
     kwsActivatedRef.current = true;
     onKwsActivateRef.current?.();
 
@@ -245,7 +239,6 @@ export const useSimpleSpeech = ({
 
     kwsTimeoutRef.current = setTimeout(() => {
       if (kwsActivatedRef.current && !speechActiveRef.current) {
-        console.log('[KWS] 3초 타임아웃 - KWS 비활성화');
         deactivateKws();
       }
     }, KWS_CONFIG.timeoutMs);
@@ -288,14 +281,21 @@ export const useSimpleSpeech = ({
       ws.onmessage = ({ data }) => {
         try {
           const j = JSON.parse(data as string);
-          console.log('[WS] message', j);
           if (j.status === 200 && j.data?.intent) {
             onIntentRef.current?.(j.data.intent); // 필요 시 parseIntent
+          } else if (j.status === 401 || j.status === 403) {
+            // 인증 오류 시 토큰 재요청
+            sendRequestAccessTokenRefresh();
+            setError('인증 오류가 발생했습니다');
           }
         } catch {}
       };
       ws.onerror = e => {
         console.error('[WS] error', e);
+        // 토큰이 없거나 유효하지 않을 때 재요청
+        if (!accessTokenRef.current) {
+          sendRequestAccessTokenRefresh();
+        }
         setError('WebSocket 오류');
       };
       ws.onclose = () => {
@@ -328,24 +328,14 @@ export const useSimpleSpeech = ({
         // KWS 모델 로드
         await loadKwsModel();
 
-        console.log('[VAD] 모듈 로드 시작...');
         const module = await VADModuleLoader.getInstance().loadModule();
-        console.log('[VAD] 모듈 로드 완료:', module);
 
         const hopSize = CHUNK_SIZE; // 10ms @ 16kHz
         const voiceThreshold = POS_TH;
-        console.log(
-          '[VAD] VAD 인스턴스 생성 중... hopSize:',
-          hopSize,
-          'threshold:',
-          voiceThreshold,
-        );
         const vad = new VADInstance(module, hopSize, voiceThreshold);
         vadInstanceRef.current = vad;
-        console.log('[VAD] VAD 인스턴스 생성 완료:', vad);
 
         // 3) 마이크 오픈
-        console.log('[VAD] 마이크 권한 요청 중...');
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             channelCount: 1,
@@ -358,11 +348,9 @@ export const useSimpleSpeech = ({
         });
         if (destroyed) return;
         streamRef.current = stream;
-        console.log('[VAD] 마이크 스트림 획득 완료:', stream);
 
         const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
         audioCtxRef.current = ctx;
-        console.log('[VAD] 오디오 컨텍스트 생성 완료. 샘플레이트:', ctx.sampleRate);
 
         const src = ctx.createMediaStreamSource(stream);
 
@@ -370,7 +358,6 @@ export const useSimpleSpeech = ({
         await ctx.audioWorklet.addModule('/vad-processor.js');
         const vadWorklet = new AudioWorkletNode(ctx, 'vad-processor');
         processorRef.current = vadWorklet as any;
-        console.log('[VAD] AudioWorklet 프로세서 생성 완료');
 
         let processCount = 0;
 
@@ -380,9 +367,6 @@ export const useSimpleSpeech = ({
 
           if (type === 'audioData') {
             processCount++;
-            if (processCount % 100 === 0) {
-              console.log('[VAD] 오디오 프로세싱 중... count:', processCount);
-            }
 
             const inst = vadInstanceRef.current;
             if (!inst) return;
@@ -399,15 +383,6 @@ export const useSimpleSpeech = ({
 
               // 4) TEN VAD 실시간 프레임 처리
               const { probability } = await inst.processFrame(i16);
-
-              if (processCount % 50 === 0) {
-                console.log(
-                  '[VAD] 확률:',
-                  probability.toFixed(3),
-                  '활성:',
-                  speechActiveRef.current,
-                );
-              }
 
               // 5) KWS 처리 (KWS가 비활성화된 상태에서만)
               if (!kwsActivatedRef.current) {
@@ -444,16 +419,9 @@ export const useSimpleSpeech = ({
                   active = true;
                   speechActiveRef.current = true;
                   lastOnRef.current = now;
-                  console.log(
-                    '[VAD] 🎤 음성 시작 감지! 확률:',
-                    probability.toFixed(3),
-                    'pre-buffer 청크:',
-                    preBufferRef.current.length,
-                  );
 
                   // Pre-buffer부터 전송 시작
                   if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
-                    console.log('[VAD] Pre-buffer 전송 시작');
                     for (const bufferedChunk of preBufferRef.current) {
                       // Pre-buffer 청크들을 30ms 단위로 전송
                       let tx: Float32Array;
@@ -489,7 +457,6 @@ export const useSimpleSpeech = ({
                     active = false;
                     speechActiveRef.current = false;
                     lastOffRef.current = 0;
-                    console.log('[VAD] 🔇 음성 종료 감지! 확률:', probability.toFixed(3));
 
                     // 음성 종료 신호 전송 (is_final=true)
                     if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
@@ -502,7 +469,6 @@ export const useSimpleSpeech = ({
                         // 빈 데이터로라도 is_final 신호 전송
                         sendAudioData(ws, new ArrayBuffer(0), true);
                       }
-                      console.log('[VAD] 음성 종료 신호 전송 (is_final=true)');
                     }
 
                     preBufferRef.current = []; // Pre-buffer 초기화
@@ -514,7 +480,6 @@ export const useSimpleSpeech = ({
                         clearTimeout(kwsTimeoutRef.current);
                       }
                       kwsTimeoutRef.current = setTimeout(() => {
-                        console.log('[KWS] 3초 타임아웃 - KWS 비활성화');
                         deactivateKws();
                       }, KWS_CONFIG.timeoutMs);
                     }
@@ -564,7 +529,6 @@ export const useSimpleSpeech = ({
         };
 
         src.connect(vadWorklet).connect(ctx.destination);
-        console.log('[VAD] 오디오 파이프라인 연결 완료');
       } catch (e: any) {
         console.error('[VAD] 초기화 실패:', e);
         setError(e?.message ?? '오디오 초기화 실패');
