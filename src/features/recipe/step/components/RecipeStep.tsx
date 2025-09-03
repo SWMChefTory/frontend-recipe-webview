@@ -195,15 +195,12 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
       if (probability > 0.1) {
         // 노이즈 필터링
-        console.log(`[UI] KWS 확률: ${(probability * 100).toFixed(1)}%`);
       }
     },
     onKwsActivate: () => {
-      console.log('[UI] KWS 활성화 - Voice Indicator 표시');
       setShowVoiceIndicator(true);
     },
     onKwsDeactivate: () => {
-      console.log('[UI] KWS 비활성화 - Voice Indicator 숨김');
       setShowVoiceIndicator(false);
     },
   });
