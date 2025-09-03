@@ -38,8 +38,9 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const [isDragging, setIsDragging] = useState(false);
   const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hasCustomPosition, setHasCustomPosition] = useState(false);
+  const [showVoiceIndicator, setShowVoiceIndicator] = useState(false);
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const INDICATOR_SIZE = 40;
+  const INDICATOR_SIZE = 80;
 
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
@@ -190,6 +191,21 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     recipeId: recipeId!,
     onIntent: handleIntent,
     onVolume: v => setVolume(v),
+    onKwsDetection: probability => {
+      // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
+      if (probability > 0.1) {
+        // 노이즈 필터링
+        console.log(`[UI] KWS 확률: ${(probability * 100).toFixed(1)}%`);
+      }
+    },
+    onKwsActivate: () => {
+      console.log('[UI] KWS 활성화 - Voice Indicator 표시');
+      setShowVoiceIndicator(true);
+    },
+    onKwsDeactivate: () => {
+      console.log('[UI] KWS 비활성화 - Voice Indicator 숨김');
+      setShowVoiceIndicator(false);
+    },
   });
 
   // 캐러셀 단계 변경 시 해당 단계 시작 시간으로 YouTube를 시킹
@@ -266,31 +282,45 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           </Slider>
         </div>
 
-        <div
-          ref={voiceIndicatorRef}
-          className={`voice-indicator-wrapper ${isDragging ? 'dragging' : ''}`}
-          style={
-            hasCustomPosition
-              ? {
-                  left: `${voicePosition.x}px`,
-                  top: `${voicePosition.y}px`,
-                  transform: 'none',
-                }
-              : undefined
-          }
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-        >
-          <div className="voice-indicator-floater">
-            <div
-              className="voice-indicator"
-              style={{
-                transform: `scale(${1 + volume * 1.5})`,
-              }}
-            />
+        {showVoiceIndicator && (
+          <div
+            ref={voiceIndicatorRef}
+            className={`voice-indicator-wrapper ${isDragging ? 'dragging' : ''}`}
+            style={
+              hasCustomPosition
+                ? {
+                    left: `${voicePosition.x}px`,
+                    top: `${voicePosition.y}px`,
+                    transform: 'none',
+                  }
+                : undefined
+            }
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+          >
+            <div className="voice-indicator-floater">
+              <div
+                className="voice-indicator"
+                style={{
+                  transform: `scale(${1 + volume * 0.3})`, // Siri 스타일로 볼륨 반응 조정
+                }}
+              >
+                {/* 웨이브 레이어들 */}
+                <div className="voice-indicator-wave" />
+                <div className="voice-indicator-wave" />
+                <div className="voice-indicator-wave" />
+                {/* 중앙 코어 */}
+                <div
+                  className="voice-indicator-core"
+                  style={{
+                    transform: `scale(${1 + volume * 0.5})`, // 볼륨에 따른 코어 크기 조정
+                  }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {isLastStep && (
           <div className="bottom-actions">
