@@ -359,15 +359,11 @@ export const useSimpleSpeech = ({
         const vadWorklet = new AudioWorkletNode(ctx, 'vad-processor');
         processorRef.current = vadWorklet as any;
 
-        let processCount = 0;
-
         // AudioWorklet에서 오는 메시지 처리
         vadWorklet.port.onmessage = async event => {
           const { type, chunks, rms } = event.data;
 
           if (type === 'audioData') {
-            processCount++;
-
             const inst = vadInstanceRef.current;
             if (!inst) return;
 
