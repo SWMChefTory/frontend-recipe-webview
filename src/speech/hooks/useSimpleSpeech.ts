@@ -298,12 +298,15 @@ export const useSimpleSpeech = ({
 
     openWS();
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      const reconnectTimeout = reconnectTimeoutRef.current;
+      const ws = wsRef.current;
+
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
       }
-      if (wsRef.current) {
-        wsRef.current.onclose = null;
-        wsRef.current.close(1000, 'page unmounted');
+      if (ws) {
+        ws.onclose = null;
+        ws.close(1000, 'page unmounted');
       }
     };
   }, []);
