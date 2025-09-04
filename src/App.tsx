@@ -1,8 +1,8 @@
-import 'features/_common/styles/global.css';
-import { AccessTokenProvider } from 'features/bridge';
-import RecipeDetailPage from 'features/recipe/detail/RecipeDetailPage';
-import RecipeStepPage from 'features/recipe/step/RecipeStepPage';
+import '_common/styles/global.css';
+import { AccessTokenProvider } from 'bridge';
 import { Route, HashRouter as Router, Routes } from 'react-router-dom';
+import RecipeDetailPage from 'recipe/detail/RecipeDetailPage';
+import RecipeStepPage from 'recipe/step/RecipeStepPage';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
 
