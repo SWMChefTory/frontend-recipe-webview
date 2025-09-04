@@ -298,6 +298,7 @@ export const useSimpleSpeech = ({
 
     openWS();
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const reconnectTimeout = reconnectTimeoutRef.current;
       const ws = wsRef.current;
 
