@@ -156,8 +156,8 @@ export const useSimpleSpeech = ({
     HOP_SAMPLES: 1600, // 100ms @16k
     threshold: 0.4,
     minSustainMs: 200,
-    alpha: 0.2,
-    timeoutMs: 2000, // 1초 타임아웃
+    alpha: 0.3,
+    timeoutMs: 2000, // 타임아웃
   };
 
   // ------------------------
