@@ -17,8 +17,8 @@ const BUFFER_CHUNKS = 3; // 30ms 묶음
 const SEND_SIZE = CHUNK_SIZE * BUFFER_CHUNKS;
 
 // VAD 게이팅 히스테리시스
-const POS_TH = 0.6; // 켜짐 임계
-const NEG_TH = 0.5; // 꺼짐 임계
+const POS_TH = 0.5; // 켜짐 임계
+const NEG_TH = 0.4; // 꺼짐 임계
 const ON_HOLD_MS = 150; // 켜짐 유지(바운스 방지)
 const OFF_HOLD_MS = 250; // 꺼짐 지연(턴 종료 안정)
 
@@ -212,9 +212,6 @@ export const useSimpleSpeech = ({
 
     const ema = kwsEmaRef.current;
 
-    // KWS 확률 로그 출력 (퍼센트로 표시)
-    // console.log(`[KWS] 확률: ${(ema * 100).toFixed(1)}%`);
-
     // 콜백으로 확률 전달
     onKwsDetectionRef.current?.(ema);
 
@@ -405,17 +402,22 @@ export const useSimpleSpeech = ({
                 preBufferRef.current.shift(); // 오래된 청크 제거
               }
 
-              // 6) 히스테리시스 게이팅 (KWS가 활성화된 상태에서만)
+              // 6) 히스테리시스 게이팅 (VAD는 항상 작동)
               const now = performance.now();
               let active = speechActiveRef.current;
-              if (!active && kwsActivatedRef.current) {
+              if (!active) {
                 if (probability >= POS_TH) {
                   active = true;
                   speechActiveRef.current = true;
                   lastOnRef.current = now;
 
-                  // Pre-buffer부터 전송 시작
-                  if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
+                  // Pre-buffer부터 전송 시작 (KWS 활성화 상태에서만)
+                  if (
+                    ws &&
+                    ws.readyState === WebSocket.OPEN &&
+                    isWSReady.current &&
+                    kwsActivatedRef.current
+                  ) {
                     for (const bufferedChunk of preBufferRef.current) {
                       // Pre-buffer 청크들을 30ms 단위로 전송
                       let tx: Float32Array;
@@ -452,8 +454,13 @@ export const useSimpleSpeech = ({
                     speechActiveRef.current = false;
                     lastOffRef.current = 0;
 
-                    // 음성 종료 신호 전송 (is_final=true)
-                    if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
+                    // 음성 종료 신호 전송 (is_final=true) - KWS 활성화 상태에서만
+                    if (
+                      ws &&
+                      ws.readyState === WebSocket.OPEN &&
+                      isWSReady.current &&
+                      kwsActivatedRef.current
+                    ) {
                       // 남은 데이터가 있다면 먼저 전송
                       if (txLeftoverRef.current && txLeftoverRef.current.length > 0) {
                         const finalPayload = f32ToI16(txLeftoverRef.current).buffer;
@@ -474,7 +481,9 @@ export const useSimpleSpeech = ({
                         clearTimeout(kwsTimeoutRef.current);
                       }
                       kwsTimeoutRef.current = setTimeout(() => {
-                        deactivateKws();
+                        if (kwsActivatedRef.current && !speechActiveRef.current) {
+                          deactivateKws();
+                        }
                       }, KWS_CONFIG.timeoutMs);
                     }
                   }
@@ -577,6 +586,30 @@ export const useSimpleSpeech = ({
     return () => {
       isMountedRef.current = false;
     };
+  }, []);
+
+  // ------------------------
+  // Page Visibility API - 백그라운드/포그라운드 전환 처리
+  // ------------------------
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 백그라운드로 갔을 때
+        if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
+          audioCtxRef.current.suspend();
+        }
+        // KWS 비활성화
+        deactivateKws();
+      } else {
+        // 포그라운드로 돌아왔을 때
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   return {
