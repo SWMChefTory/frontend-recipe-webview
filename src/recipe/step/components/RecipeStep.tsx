@@ -39,6 +39,9 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [hasCustomPosition, setHasCustomPosition] = useState(false);
   const [showVoiceIndicator, setShowVoiceIndicator] = useState(false);
+  const [isKwsActive, setIsKwsActive] = useState(false);
+  const [isVadActive, setIsVadActive] = useState(false);
+  const voiceIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const INDICATOR_SIZE = 80;
 
@@ -191,6 +194,12 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     recipeId: recipeId!,
     onIntent: handleIntent,
     onVolume: v => setVolume(v),
+    onVoiceStart: () => {
+      setIsVadActive(true);
+    },
+    onVoiceEnd: () => {
+      setIsVadActive(false);
+    },
     onKwsDetection: probability => {
       // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
       if (probability > 0.1) {
@@ -198,10 +207,10 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       }
     },
     onKwsActivate: () => {
-      setShowVoiceIndicator(true);
+      setIsKwsActive(true);
     },
     onKwsDeactivate: () => {
-      setShowVoiceIndicator(false);
+      setIsKwsActive(false);
     },
   });
 
@@ -248,6 +257,41 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
 
     return () => clearInterval(interval);
   }, [currentStep, recipeData.recipe_steps, carouselControls]);
+
+  // voice-indicator 표시 로직
+  useEffect(() => {
+    // KWS 활성화 시 voice-indicator 켜기
+    if (isKwsActive) {
+      setShowVoiceIndicator(true);
+      // 기존 타이머가 있다면 취소
+      if (voiceIndicatorTimeoutRef.current) {
+        clearTimeout(voiceIndicatorTimeoutRef.current);
+        voiceIndicatorTimeoutRef.current = null;
+      }
+    }
+  }, [isKwsActive]);
+
+  useEffect(() => {
+    // VAD가 꺼졌을 때 2초 후 voice-indicator 끄기
+    if (!isVadActive && showVoiceIndicator) {
+      voiceIndicatorTimeoutRef.current = setTimeout(() => {
+        setShowVoiceIndicator(false);
+      }, 2000);
+    } else if (isVadActive) {
+      // VAD가 다시 켜지면 타이머 취소
+      if (voiceIndicatorTimeoutRef.current) {
+        clearTimeout(voiceIndicatorTimeoutRef.current);
+        voiceIndicatorTimeoutRef.current = null;
+      }
+    }
+
+    // 컴포넌트 언마운트 시 타이머 정리
+    return () => {
+      if (voiceIndicatorTimeoutRef.current) {
+        clearTimeout(voiceIndicatorTimeoutRef.current);
+      }
+    };
+  }, [isVadActive, showVoiceIndicator]);
 
   return (
     <div className="cooking-mode">
