@@ -154,10 +154,10 @@ export const useSimpleSpeech = ({
     TARGET_SR: 16000,
     WINDOW_SAMPLES: 16000, // 1s
     HOP_SAMPLES: 1600, // 100ms @16k
-    threshold: 0.4,
+    threshold: 0.45,
     minSustainMs: 200,
-    alpha: 0.3,
-    timeoutMs: 2000, // 타임아웃
+    alpha: 0.4,
+    timeoutMs: 2000, // 1초 타임아웃
   };
 
   // ------------------------
@@ -211,6 +211,9 @@ export const useSimpleSpeech = ({
         : KWS_CONFIG.alpha * probToriya + (1 - KWS_CONFIG.alpha) * kwsEmaRef.current;
 
     const ema = kwsEmaRef.current;
+
+    // KWS 확률 로그 출력 (퍼센트로 표시)
+    // console.log(`[KWS] 확률: ${(ema * 100).toFixed(1)}%`);
 
     // 콜백으로 확률 전달
     onKwsDetectionRef.current?.(ema);
