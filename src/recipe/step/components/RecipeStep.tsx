@@ -244,8 +244,8 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           type="button"
         >
           <img
-            src={isKwsActive ? '/toriya-listening.png' : '/toriya-idle.png'}
-            alt={isKwsActive ? '토리야 듣는 중' : '토리야 대기 중'}
+            src={isKwsActive ? '/tori-listening.png' : '/tori-idle.png'}
+            alt={isKwsActive ? '토리 듣는 중' : '토리 대기 중'}
           />
         </button>
       </div>

@@ -338,9 +338,7 @@ export const useSimpleSpeech = ({
           audio: {
             channelCount: 1,
             sampleRate: SAMPLE_RATE,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: false,
+            noiseSuppression: false,
           } as any,
           video: false,
         });
