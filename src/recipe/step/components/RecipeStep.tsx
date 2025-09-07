@@ -8,13 +8,13 @@ import { Header, YouTubePlayer } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
 import StepCard from 'recipe/step/components/StepCard';
+import VoiceGuide from 'recipe/step/components/VoiceGuide';
 import { useRecipeStepController } from 'recipe/step/hooks/useRecipeStepController';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
-import './VoiceIndicator.css';
 
 interface Props {
   recipeData: RecipeData;
@@ -31,36 +31,33 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const ytRef = useRef<YT.Player | null>(null);
   const skipNextAutoSeekRef = useRef<boolean>(false);
 
-  // 음성 인디케이터 관련 상태
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [volume, setVolume] = useState(0);
-  const voiceIndicatorRef = useRef<HTMLDivElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [voicePosition, setVoicePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [hasCustomPosition, setHasCustomPosition] = useState(false);
-  const [showVoiceIndicator, setShowVoiceIndicator] = useState(false);
+  // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
-  const [isVadActive, setIsVadActive] = useState(false);
-  const voiceIndicatorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const dragOffsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const INDICATOR_SIZE = 80;
+  const [showVoiceGuide, setShowVoiceGuide] = useState(false);
 
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
+
+    // 유효한 명령이 실행되면 KWS 비활성화
+    let commandExecuted = false;
+
     switch (cmd) {
       case 'NEXT':
         carouselControls.goToNext();
+        commandExecuted = true;
         break;
       case 'PREV':
         carouselControls.goToPrevious();
+        commandExecuted = true;
         break;
       case 'STEP': {
         const num = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(num) && num >= 1) {
           carouselControls.goToStep(num);
+          commandExecuted = true;
         }
         break;
       }
@@ -70,6 +67,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           skipNextAutoSeekRef.current = true;
           carouselControls.seekTo(secs);
           ytRef.current?.seekTo(secs, true);
+          commandExecuted = true;
         }
         break;
       }
@@ -80,18 +78,21 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
               recipe_id: recipeId ?? '',
               recipe_title: recipeData.video_info.video_title,
             });
+            commandExecuted = true;
             break;
           case 'STOP':
             sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, {
               recipe_id: recipeId ?? '',
               recipe_title: recipeData.video_info.video_title,
             });
+            commandExecuted = true;
             break;
           case 'CHECK':
             sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
               recipe_id: recipeId ?? '',
               recipe_title: recipeData.video_info.video_title,
             });
+            commandExecuted = true;
             break;
           case 'SET': {
             sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, null, {
@@ -99,11 +100,17 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
               recipe_title: recipeData.video_info.video_title,
               timer_time: arg2 ?? '0',
             });
+            commandExecuted = true;
             break;
           }
         }
         break;
       }
+    }
+
+    // 명령이 실행되었으면 KWS 비활성화
+    if (commandExecuted) {
+      setIsKwsActive(false);
     }
   };
 
@@ -114,92 +121,19 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     });
   };
 
-  // 드래그 앤 드롭 핸들러
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const target = voiceIndicatorRef.current;
-    if (!target) return;
-    e.preventDefault();
-    e.stopPropagation();
-    target.setPointerCapture(e.pointerId);
-    setIsDragging(true);
-    const containerRect = container.getBoundingClientRect();
-    const posX = e.clientX - containerRect.left - INDICATOR_SIZE / 2;
-    const posY = e.clientY - containerRect.top - INDICATOR_SIZE / 2;
-    const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
-    const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
-    setHasCustomPosition(true);
-    setVoicePosition({ x: clampedX, y: clampedY });
-    dragOffsetRef.current = { x: INDICATOR_SIZE / 2, y: INDICATOR_SIZE / 2 };
+  const handleVoiceGuideOpen = () => {
+    setShowVoiceGuide(true);
   };
 
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    const container = containerRef.current;
-    if (!container) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const containerRect = container.getBoundingClientRect();
-    const posX = e.clientX - containerRect.left - dragOffsetRef.current.x;
-    const posY = e.clientY - containerRect.top - dragOffsetRef.current.y;
-    const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
-    const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
-    setVoicePosition({ x: clampedX, y: clampedY });
+  const handleVoiceGuideClose = () => {
+    setShowVoiceGuide(false);
   };
-
-  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    const target = voiceIndicatorRef.current;
-    if (target) {
-      try {
-        target.releasePointerCapture(e.pointerId);
-      } catch {}
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  // 모바일(개발자도구 포함)에서 포인터 캡처가 불안정할 때를 위한 전역 이벤트 핸들러
-  useEffect(() => {
-    if (!isDragging) return;
-    const onPointerMove = (e: PointerEvent) => {
-      const container = containerRef.current;
-      if (!container) return;
-      e.preventDefault();
-      const containerRect = container.getBoundingClientRect();
-      const posX = e.clientX - containerRect.left - dragOffsetRef.current.x;
-      const posY = e.clientY - containerRect.top - dragOffsetRef.current.y;
-      const clampedX = Math.max(0, Math.min(posX, container.clientWidth - INDICATOR_SIZE));
-      const clampedY = Math.max(0, Math.min(posY, container.clientHeight - INDICATOR_SIZE));
-      setVoicePosition({ x: clampedX, y: clampedY });
-    };
-    const endDrag = (e: PointerEvent) => {
-      e.preventDefault();
-      setIsDragging(false);
-    };
-    window.addEventListener('pointermove', onPointerMove, { passive: false });
-    window.addEventListener('pointerup', endDrag, { passive: false });
-    window.addEventListener('pointercancel', endDrag, { passive: false });
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove as EventListener);
-      window.removeEventListener('pointerup', endDrag as EventListener);
-      window.removeEventListener('pointercancel', endDrag as EventListener);
-    };
-  }, [isDragging]);
 
   useSimpleSpeech({
     selectedSttModel,
     accessToken,
     recipeId: recipeId!,
     onIntent: handleIntent,
-    onVolume: v => setVolume(v),
-    onVoiceStart: () => {
-      setIsVadActive(true);
-    },
-    onVoiceEnd: () => {
-      setIsVadActive(false);
-    },
     onKwsDetection: probability => {
       // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
       if (probability > 0.1) {
@@ -258,41 +192,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     return () => clearInterval(interval);
   }, [currentStep, recipeData.recipe_steps, carouselControls]);
 
-  // voice-indicator 표시 로직
-  useEffect(() => {
-    // KWS 활성화 시 voice-indicator 켜기
-    if (isKwsActive) {
-      setShowVoiceIndicator(true);
-      // 기존 타이머가 있다면 취소
-      if (voiceIndicatorTimeoutRef.current) {
-        clearTimeout(voiceIndicatorTimeoutRef.current);
-        voiceIndicatorTimeoutRef.current = null;
-      }
-    }
-  }, [isKwsActive]);
-
-  useEffect(() => {
-    // VAD가 꺼졌을 때 2초 후 voice-indicator 끄기
-    if (!isVadActive && showVoiceIndicator) {
-      voiceIndicatorTimeoutRef.current = setTimeout(() => {
-        setShowVoiceIndicator(false);
-      }, 2000);
-    } else if (isVadActive) {
-      // VAD가 다시 켜지면 타이머 취소
-      if (voiceIndicatorTimeoutRef.current) {
-        clearTimeout(voiceIndicatorTimeoutRef.current);
-        voiceIndicatorTimeoutRef.current = null;
-      }
-    }
-
-    // 컴포넌트 언마운트 시 타이머 정리
-    return () => {
-      if (voiceIndicatorTimeoutRef.current) {
-        clearTimeout(voiceIndicatorTimeoutRef.current);
-      }
-    };
-  }, [isVadActive, showVoiceIndicator]);
-
   return (
     <div className="cooking-mode">
       <Header
@@ -314,7 +213,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         }}
       />
 
-      <section className="cooking-steps-container" ref={containerRef}>
+      <section className="cooking-steps-container">
         <div className="carousel-container">
           <Slider ref={sliderRef} {...slickSettings}>
             {recipeData.recipe_steps.map((step, idx) => (
@@ -322,46 +221,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
             ))}
           </Slider>
         </div>
-
-        {showVoiceIndicator && (
-          <div
-            ref={voiceIndicatorRef}
-            className={`voice-indicator-wrapper ${isDragging ? 'dragging' : ''}`}
-            style={
-              hasCustomPosition
-                ? {
-                    left: `${voicePosition.x}px`,
-                    top: `${voicePosition.y}px`,
-                    transform: 'none',
-                  }
-                : undefined
-            }
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            <div className="voice-indicator-floater">
-              <div
-                className="voice-indicator"
-                style={{
-                  transform: `scale(${1 + volume * 0.3})`, // Siri 스타일로 볼륨 반응 조정
-                }}
-              >
-                {/* 웨이브 레이어들 */}
-                <div className="voice-indicator-wave" />
-                <div className="voice-indicator-wave" />
-                <div className="voice-indicator-wave" />
-                {/* 중앙 코어 */}
-                <div
-                  className="voice-indicator-core"
-                  style={{
-                    transform: `scale(${1 + volume * 0.5})`, // 볼륨에 따른 코어 크기 조정
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         {isLastStep && (
           <div className="bottom-actions">
@@ -371,6 +230,27 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
           </div>
         )}
       </section>
+
+      {/* 플로팅 음성 가이드 버튼 */}
+      <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
+        <div className="speech-bubble">
+          <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
+          <div className="speech-bubble-arrow"></div>
+        </div>
+        <button
+          className="floating-voice-guide-btn"
+          onClick={handleVoiceGuideOpen}
+          aria-label="음성 명령 가이드"
+          type="button"
+        >
+          <img
+            src={isKwsActive ? '/toriya-listening.png' : '/toriya-idle.png'}
+            alt={isKwsActive ? '토리야 듣는 중' : '토리야 대기 중'}
+          />
+        </button>
+      </div>
+
+      <VoiceGuide isVisible={showVoiceGuide} onClose={handleVoiceGuideClose} />
     </div>
   );
 };
