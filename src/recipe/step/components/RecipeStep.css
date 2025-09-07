@@ -211,28 +211,29 @@
 .floating-voice-guide-container {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  right: var(--anchor-right);
   z-index: 999;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  /* 기본 상태에서도 부드러운 트랜지션 적용 */
-  transition:
-    left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    right 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    gap 0.3s ease;
+  /* 버튼만 레이아웃에 참여하도록 하고 말풍선은 절대 배치로 분리 */
+  display: inline-block;
+  /* 버튼 기준 고정 위치값을 변수로 관리 */
+  --anchor-right: 24px;
+  --btn-size: 80px;
+  transform: translateX(0);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+  will-change: transform;
 }
 
 /* 말풍선 */
 .speech-bubble {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 12px); /* 버튼 왼쪽에 고정 배치 */
+  transform: translateY(-50%) translateX(10px);
   background: #ffffff;
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   opacity: 0;
-  transform: translateX(10px);
   transition:
     opacity 0.4s ease,
     transform 0.4s ease;
@@ -262,11 +263,11 @@
 @keyframes speechBubbleAppear {
   0% {
     opacity: 0;
-    transform: translateX(10px);
+    transform: translateY(-50%) translateX(10px);
   }
   100% {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(-50%) translateX(0);
   }
 }
 
@@ -274,22 +275,17 @@
 .speech-bubble.appeared {
   animation: none !important;
   opacity: 1;
-  transform: translateX(0);
+  transform: translateY(-50%) translateX(0);
 }
 
 /* KWS 비활성화 시 버튼 이동 완료 후 말풍선 다시 보이기 */
 .floating-voice-guide-container:not(.kws-active) .speech-bubble {
   opacity: 1 !important;
-  transform: translateX(0) !important;
-  width: auto !important;
-  padding: 16px 20px !important;
-  margin: 0 !important;
+  transform: translateY(-50%) translateX(0) !important;
   animation: none !important; /* 기존 애니메이션 중단하여 중복 방지 */
   transition:
-    opacity 0.3s ease 0.5s,
-    transform 0.3s ease 0.5s,
-    width 0.3s ease 0.5s,
-    padding 0.3s ease 0.5s !important; /* 버튼 이동 완료 후 나타남 */
+    opacity 0.3s ease 0.55s,
+    transform 0.3s ease 0.55s; /* 버튼 복귀 후 나타남 */
 }
 
 /* 플로팅 음성 가이드 버튼 */
@@ -330,33 +326,21 @@
 
 /* KWS 활성화 상태 - 말풍선과 버튼이 동시에 스무스하게 이동 */
 .floating-voice-guide-container.kws-active {
-  left: 50%;
-  right: auto;
-  transform: translateX(-50%);
-  gap: 0 !important; /* 말풍선과 버튼 사이 간격 제거 */
-  transition:
-    left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    right 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    gap 0.2s ease;
+  /* 버튼을 기준으로만 이동: 우측 고정에서 화면 중앙까지 transform만 변경 */
+  /* 이동은 말풍선이 사라진 뒤 시작하도록 약간의 지연 적용 */
+  transform: translateX(calc((var(--anchor-right) + (var(--btn-size) / 2)) - 50vw));
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.32s;
 }
 
 /* KWS 활성화 시 말풍선을 부드럽게 제거하며 동시에 이동 */
 .floating-voice-guide-container.kws-active .speech-bubble {
   opacity: 0 !important;
-  transform: translateX(-10px) !important;
-  width: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  transform: translateY(-50%) translateX(-10px) !important;
   transition:
     opacity 0.3s ease,
-    transform 0.3s ease,
-    width 0.3s ease,
-    padding 0.3s ease,
-    margin 0.3s ease !important;
+    transform 0.3s ease !important;
   animation: none !important; /* 기존 애니메이션 중단 */
   pointer-events: none; /* KWS 활성화 시 클릭 방지 */
-  overflow: hidden; /* 내용이 넘치지 않도록 */
 }
 
 /* KWS 활성화 상태 - 버튼 이동과 동시에 펄스 효과 */
@@ -388,8 +372,9 @@
 @media (max-width: 1024px) {
   .floating-voice-guide-container {
     bottom: 20px;
-    right: 20px;
-    gap: 14px;
+    right: var(--anchor-right);
+    --anchor-right: 20px;
+    --btn-size: 72px;
   }
 
   .speech-bubble {
@@ -444,8 +429,9 @@
 @media (max-width: 768px) {
   .floating-voice-guide-container {
     bottom: 16px;
-    right: 16px;
-    gap: 12px;
+    right: var(--anchor-right);
+    --anchor-right: 16px;
+    --btn-size: 64px;
   }
 
   .speech-bubble {
