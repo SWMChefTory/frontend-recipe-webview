@@ -41,6 +41,19 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
 
+    // WAKEWORD 처리: KWS가 비활성화 상태일 때만 활성화
+    if (cmd === 'WAKEWORD') {
+      if (!isKwsActive) {
+        setIsKwsActive(true);
+      }
+      return;
+    }
+
+    // 다른 명령들은 KWS가 활성화된 상태에서만 실행
+    if (!isKwsActive) {
+      return;
+    }
+
     // 유효한 명령이 실행되면 KWS 비활성화
     let commandExecuted = false;
 

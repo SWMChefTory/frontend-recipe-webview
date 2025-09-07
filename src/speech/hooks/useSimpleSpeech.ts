@@ -286,6 +286,8 @@ export const useSimpleSpeech = ({
           const j = JSON.parse(data as string);
           if (j.status === 200 && j.data?.intent) {
             onIntentRef.current?.(j.data.intent);
+            // STT 인텐트 로그
+            // console.log(`[STT] intent: ${j.data.intent}, raw: ${j.data.base_intent}`);
           }
         } catch {}
       };
