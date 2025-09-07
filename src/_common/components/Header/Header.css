@@ -244,6 +244,62 @@
   transform: scale(0.95);
 }
 
+/* 태블릿 최적화 */
+@media (max-width: 1024px) {
+  .header {
+    padding: 10px 14px;
+    min-height: 56px;
+  }
+
+  .header-title {
+    font-size: 17px;
+    max-width: calc(100% - 130px);
+  }
+
+  .header-back-btn {
+    width: 38px;
+    height: 38px;
+  }
+
+  .header-timer-btn {
+    min-width: 42px;
+    height: 38px;
+    padding: 3px 7px;
+  }
+
+  .header-timer-text {
+    font-size: 9px;
+  }
+
+  .header-timer-controls {
+    padding: 4px 7px;
+    gap: 5px;
+  }
+
+  .header-timer-time {
+    font-size: 11px;
+    min-width: 32px;
+  }
+
+  .header-timer-control-btn {
+    width: 22px;
+    height: 22px;
+  }
+
+  .header-timer-control-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .header-timer-display {
+    min-width: 55px;
+    height: 30px;
+    font-size: 13px;
+    padding: 5px 11px;
+    border-radius: 15px;
+  }
+}
+
 /* 모바일 최적화 */
 @media (max-width: 768px) {
   .header {
@@ -252,11 +308,9 @@
   }
 
   .header-title {
-    font-size: 17px;
-    max-width: calc(100% - 120px); /* 모바일에서는 버튼이 작으므로 조정 */
+    font-size: 16px;
+    max-width: calc(100% - 120px);
   }
-
-  /* 모바일에서도 제목 너비 일정하게 유지 */
 
   .header-back-btn {
     width: 36px;
@@ -270,7 +324,7 @@
   }
 
   .header-timer-text {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .header-timer-controls {
@@ -279,7 +333,7 @@
   }
 
   .header-timer-time {
-    font-size: 11px;
+    font-size: 10px;
     min-width: 30px;
   }
 
@@ -296,7 +350,7 @@
   .header-timer-display {
     min-width: 50px;
     height: 28px;
-    font-size: 12px;
+    font-size: 11px;
     padding: 4px 10px;
     border-radius: 14px;
   }

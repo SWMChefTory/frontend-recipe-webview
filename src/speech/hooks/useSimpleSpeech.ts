@@ -212,6 +212,9 @@ export const useSimpleSpeech = ({
 
     const ema = kwsEmaRef.current;
 
+    // KWS 확률 로그
+    // console.log('[KWS] prob:', probToriya.toFixed(3), 'ema:', (ema ?? 0).toFixed(3));
+
     // 콜백으로 확률 전달
     onKwsDetectionRef.current?.(ema);
 
@@ -336,7 +339,7 @@ export const useSimpleSpeech = ({
             channelCount: 1,
             sampleRate: SAMPLE_RATE,
             echoCancellation: true,
-            noiseSuppression: true, // 장치별 A/B 권장
+            noiseSuppression: true,
             autoGainControl: false,
           } as any,
           video: false,
@@ -375,6 +378,9 @@ export const useSimpleSpeech = ({
               // 4) TEN VAD 실시간 프레임 처리
               const { probability } = await inst.processFrame(i16);
 
+              // VAD 확률 로그
+              // console.log('[VAD] probability:', probability.toFixed(3));
+
               // 5) KWS 처리 (KWS가 비활성화된 상태에서만)
               if (!kwsActivatedRef.current) {
                 // KWS 버퍼에 청크 추가
@@ -411,13 +417,8 @@ export const useSimpleSpeech = ({
                   speechActiveRef.current = true;
                   lastOnRef.current = now;
 
-                  // Pre-buffer부터 전송 시작 (KWS 활성화 상태에서만)
-                  if (
-                    ws &&
-                    ws.readyState === WebSocket.OPEN &&
-                    isWSReady.current &&
-                    kwsActivatedRef.current
-                  ) {
+                  // Pre-buffer부터 전송 시작 (항상)
+                  if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
                     for (const bufferedChunk of preBufferRef.current) {
                       // Pre-buffer 청크들을 30ms 단위로 전송
                       let tx: Float32Array;
@@ -454,13 +455,8 @@ export const useSimpleSpeech = ({
                     speechActiveRef.current = false;
                     lastOffRef.current = 0;
 
-                    // 음성 종료 신호 전송 (is_final=true) - KWS 활성화 상태에서만
-                    if (
-                      ws &&
-                      ws.readyState === WebSocket.OPEN &&
-                      isWSReady.current &&
-                      kwsActivatedRef.current
-                    ) {
+                    // 음성 종료 신호 전송 (is_final=true) - 항상
+                    if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
                       // 남은 데이터가 있다면 먼저 전송
                       if (txLeftoverRef.current && txLeftoverRef.current.length > 0) {
                         const finalPayload = f32ToI16(txLeftoverRef.current).buffer;
@@ -492,14 +488,8 @@ export const useSimpleSpeech = ({
                 }
               }
 
-              // 7) 발화 중일 때 현재 청크 전송 (pre-buffer는 이미 전송됨, KWS 활성화 상태에서만)
-              if (
-                !ws ||
-                ws.readyState !== WebSocket.OPEN ||
-                !isWSReady.current ||
-                !kwsActivatedRef.current
-              )
-                continue;
+              // 7) 발화 중일 때 현재 청크 전송 (pre-buffer는 이미 전송됨, 항상)
+              if (!ws || ws.readyState !== WebSocket.OPEN || !isWSReady.current) continue;
 
               if (active) {
                 // 음성 활성 상태에서는 현재 청크를 바로 전송 (pre-buffer 제외)
