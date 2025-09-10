@@ -15,8 +15,12 @@ const StepCard = ({ step, index }: StepCardProps) => (
       <div className="step-content">
         <ul className="step-description-list">
           {step.details.map((detail, detailIndex) => (
-            <li key={`detail-${index}-${detailIndex}`} className="step-description-item">
-              {detail}
+            <li
+              key={`detail-${index}-${detailIndex}`}
+              className="step-description-item"
+            >
+              {detail.text}
+              <span className="step-description-start"> ({detail.start.toFixed(1)}s)</span>
             </li>
           ))}
         </ul>
