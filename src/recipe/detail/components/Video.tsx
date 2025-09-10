@@ -1,12 +1,23 @@
 import YouTubePlayer from '_common/components/YouTube/YouTubePlayer';
+import React from 'react';
 
 interface Props {
   videoId: string;
   title: string;
+  youtubeRef : React.MutableRefObject<YT.Player | null>;
 }
 
-function Video({ videoId, title }: Props): JSX.Element {
-  return <YouTubePlayer youtubeEmbedId={videoId} title={`${title} 동영상`} autoplay={false} />;
+function Video({ videoId, title,youtubeRef }: Props): JSX.Element {
+  return (
+    <YouTubePlayer
+      youtubeEmbedId={videoId}
+      title={`${title} 동영상`}
+      autoplay={false}
+      onPlayerReady={player => {
+        youtubeRef.current = player;
+      }}
+    />
+  );
 }
 
 export default Video;

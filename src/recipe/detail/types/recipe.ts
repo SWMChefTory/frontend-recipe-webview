@@ -7,14 +7,16 @@ export interface Ingredient {
 
 // 조리 단계 타입
 export interface RecipeStep {
-  id: string | null;
+  id: string;
   step_order: number;
   subtitle: string;
-  details: readonly string[];
   start_time: number;
-  end_time: number;
+  details: readonly RecipeStepDetail[];
 }
-
+export interface RecipeStepDetail {
+  text: string;
+  start: number;
+}
 // 비디오 정보 타입
 export interface VideoInfo {
   video_id: string;
@@ -24,9 +26,13 @@ export interface VideoInfo {
 }
 
 // 재료 정보 타입
-export interface IngredientsInfo {
+export interface Analysis {
   id: string;
-  ingredients: readonly Ingredient[];
+  ingredients: Ingredient[];
+  description: string;
+  tags: string[];
+  servings: number;
+  cooking_time: number;
 }
 
 // 시청 상태 정보 타입
@@ -41,8 +47,8 @@ export interface ViewStatus {
 export interface RecipeData {
   recipe_status: 'READY' | 'NOT_COOK_URL' | 'FAILED' | 'COMPLETED';
   video_info: VideoInfo;
-  ingredients_info: IngredientsInfo;
-  recipe_steps: readonly RecipeStep[];
+  analysis: Analysis;
+  recipe_steps: RecipeStep[];
   view_status: ViewStatus;
 }
 
