@@ -1,6 +1,7 @@
 // recipe/detail/components/RecipeHeader.tsx
 import { Clock, Minus, Plus, Users } from 'lucide-react';
 import { memo } from 'react';
+import 'recipe/detail/components/RecipeHeader.css';
 
 type Props = {
   analysisId: string | number;
@@ -67,7 +68,15 @@ function RecipeHeader({
                 >
                   <Minus size={12} />
                 </button>
-                <span className="serving-count">{currentServings}인분</span>
+                <span className="serving-count">
+                  {currentServings}인분
+                  {currentServings === originalServings && (
+                    <>
+                      <br />
+                      <span className="serving-default-inline">(기본)</span>
+                    </>
+                  )}
+                </span>
                 <button
                   className="serving-btn"
                   onClick={onIncreaseServings}

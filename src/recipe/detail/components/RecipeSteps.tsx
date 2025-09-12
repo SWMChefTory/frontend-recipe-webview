@@ -1,12 +1,18 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { ChevronDown, Clock, Play } from 'lucide-react';
 import { useRef, useState } from 'react';
+import 'recipe/detail/components/RecipeSteps.css';
 import { RecipeStepDetail } from '../types';
 import { formatTime } from '../utils/stepUtils';
 
-interface RecipeStep { subtitle: string; details: readonly RecipeStepDetail[]; }
-interface RecipeStepsProps { steps: readonly RecipeStep[]; onTimeClick?: (time: number) => void; }
-
+interface RecipeStep {
+  subtitle: string;
+  details: readonly RecipeStepDetail[];
+}
+interface RecipeStepsProps {
+  steps: readonly RecipeStep[];
+  onTimeClick?: (time: number) => void;
+}
 
 const RecipeSteps = ({ steps, onTimeClick }: RecipeStepsProps) => {
   const [open, setOpen] = useState(true);
@@ -24,7 +30,7 @@ const RecipeSteps = ({ steps, onTimeClick }: RecipeStepsProps) => {
               aria-controls="steps-collapsible"
             >
               <h3 className="steps__title">조리 과정</h3>
-              <span className="steps__meta">{steps.length} 단계</span>
+              <span className="steps__meta">{steps.length}단계</span>
             </button>
           </CollapsibleTrigger>
 

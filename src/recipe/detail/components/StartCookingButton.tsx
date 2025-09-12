@@ -1,3 +1,4 @@
+import 'recipe/detail/components/StartCookingButton.css';
 interface Props {
   onClick: () => void;
 }

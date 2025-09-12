@@ -1,26 +1,27 @@
 import { Header } from '_common';
-import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
-import { sendBackPressed, sendBridgeMessage } from 'bridge/utils/webview';
+import { sendBackPressed } from 'bridge/utils/webview';
 import { useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import IngredientList from 'recipe/detail/components/IngredientList';
+import 'recipe/detail/components/IngredientList.css';
+import 'recipe/detail/components/RecipeHeader.css';
 import 'recipe/detail/components/RecipeInfo.css';
+import 'recipe/detail/components/RecipeSteps.css';
 import StartCookingButton from 'recipe/detail/components/StartCookingButton';
+import 'recipe/detail/components/StartCookingButton.css';
 import Video from 'recipe/detail/components/Video';
 import { RecipeInfoProps } from 'recipe/detail/types';
 import MeasurementOverlay from 'recipe/measurement/MeasurementOverlay';
-import RecipeSteps from './RecipeSteps';
-import RecipeHeader from './RecipeHeader';
 import IngredientsModal from './IngredientsModal';
+import RecipeHeader from './RecipeHeader';
+import RecipeSteps from './RecipeSteps';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
   const [showMeasurement, setShowMeasurement] = useState(false);
   const youtubePlayerRef = useRef<YT.Player | null>(null);
-  const { id: recipeId } = useParams<{ id: string }>();
 
   const { analysis } = recipeData;
   const originalServings = analysis?.servings ?? 1;
-  const cookingTime = analysis?.cooking_time ?? 0;
+  const cookingTime = analysis?.cook_time ?? 0;
   const tags = analysis?.tags ?? [];
   const description = analysis?.description ?? '';
 
@@ -44,20 +45,10 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
     if (!player) return;
 
     player.seekTo(sec, true);
-    try { player.playVideo(); } catch {}
-    const videoElement = document.querySelector('iframe');
-    if (videoElement) {
-      videoElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    try {
+      player.playVideo();
+    } catch {}
   };
-
-  const handleTimerClick = () => {
-    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
-      recipe_id: recipeId ?? '',
-      recipe_title: recipeData.video_info.video_title,
-    });
-  };
-
 
   const handleStartClick = () => {
     if (totalCount !== checkedCount) {
@@ -73,7 +64,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   };
 
   const handleServingsChange = (newServings: number) => {
-    setCurrentServings(Math.max(1, Math.min(10, newServings))); // 1-10인분 제한
+    setCurrentServings(Math.max(1, Math.min(10, newServings)));
   };
 
   const decreaseServings = () => handleServingsChange(currentServings - 1);
@@ -82,11 +73,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   return (
     <>
       <div className="recipe-info">
-        <Header
-          title={recipeData.video_info.video_title}
-          onBack={handleBackPress}
-          onTimerClick={handleTimerClick}
-        />
+        <Header title={recipeData.video_info.video_title} onBack={handleBackPress} />
 
         <Video
           videoId={recipeData.video_info.video_id}
@@ -112,7 +99,10 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
             currentServings={currentServings}
             originalServings={originalServings}
             onOpenMeasurement={() => setShowMeasurement(true)}
-            onCheckedSummaryChange={(c, t) => { setCheckedCount(c); setTotalCount(t); }}
+            onCheckedSummaryChange={(c, t) => {
+              setCheckedCount(c);
+              setTotalCount(t);
+            }}
           />
 
           <RecipeSteps steps={recipeData.recipe_steps} onTimeClick={handleTimeClick} />
