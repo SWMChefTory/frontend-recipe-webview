@@ -1,8 +1,9 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { ChevronDown } from 'lucide-react';
 import React, { useState } from 'react';
-import { scaleIngredients } from '../utils/ingredientUtils';
+import 'recipe/detail/components/IngredientList.css';
 import { Ingredient } from '../types';
+import { scaleIngredients } from '../utils/ingredientUtils';
 
 interface IngredientListProps {
   ingredients: Ingredient[];
@@ -13,16 +14,15 @@ interface IngredientListProps {
 }
 
 const IngredientList: React.FC<IngredientListProps> = ({
-                                                         ingredients,
-                                                         currentServings,
-                                                         originalServings,
-                                                         onOpenMeasurement,
-                                                         onCheckedSummaryChange,
-                                                       }) => {
+  ingredients,
+  currentServings,
+  originalServings,
+  onOpenMeasurement,
+  onCheckedSummaryChange,
+}) => {
   const [open, setOpen] = useState(true);
 
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
-
 
   const total = ingredients.length;
 
@@ -41,9 +41,8 @@ const IngredientList: React.FC<IngredientListProps> = ({
     notifyChange(next);
   };
 
-  const progressPercentage = ingredients.length > 0
-    ? Math.round((checkedIngredients.size / ingredients.length) * 100)
-    : 0;
+  const progressPercentage =
+    ingredients.length > 0 ? Math.round((checkedIngredients.size / ingredients.length) * 100) : 0;
 
   return (
     <section className="ingredient-section">
@@ -56,16 +55,14 @@ const IngredientList: React.FC<IngredientListProps> = ({
               aria-expanded={open}
               aria-controls="ingredient-list"
             >
-              <h3 className="section-title">
-                재료
-              </h3>
+              <h3 className="section-title">재료</h3>
             </button>
           </CollapsibleTrigger>
 
           <div className="section-right">
             <button
               className="measurement-button"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onOpenMeasurement();
               }}
@@ -81,30 +78,54 @@ const IngredientList: React.FC<IngredientListProps> = ({
           </div>
         </div>
 
-        {(
-          <div style={{
-            padding: '0 16px 8px',
-            background: 'var(--card)'
-          }}>
-            <div style={{
-              width: '100%',
-              height: '4px',
-              background: 'var(--bg)',
-              borderRadius: '2px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                width: `${progressPercentage}%`,
-                height: '100%',
-                background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))',
-                transition: 'width 0.3s ease',
-                borderRadius: '2px'
-              }} />
+        {
+          <div
+            style={{
+              padding: '0 16px 8px',
+              background: 'var(--card)',
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                height: '4px',
+                background: 'var(--bg)',
+                borderRadius: '2px',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: `${progressPercentage}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))',
+                  transition: 'width 0.3s ease',
+                  borderRadius: '2px',
+                }}
+              />
             </div>
           </div>
-        )}
+        }
 
-        <CollapsibleContent id="ingredient-list" className="collapsible-content" data-state={open ? 'open' : 'closed'}>
+        <CollapsibleContent
+          id="ingredient-list"
+          className="collapsible-content"
+          data-state={open ? 'open' : 'closed'}
+        >
+          {currentServings !== originalServings && (
+            <div
+              style={{
+                padding: '8px',
+                textAlign: 'center',
+                fontSize: '12px',
+                color: 'var(--muted)',
+                fontStyle: 'italic',
+              }}
+            >
+              * 원본 레시피 {originalServings}인분 기준으로 {currentServings}인분에 맞춰
+              조정되었습니다.
+            </div>
+          )}
           <ul className="ingredient-card-list">
             {scaledIngredients.map((ingredient, index) => (
               <li
@@ -129,18 +150,6 @@ const IngredientList: React.FC<IngredientListProps> = ({
               </li>
             ))}
           </ul>
-
-          {currentServings !== originalServings && (
-            <div style={{
-              padding: '8px 16px 16px',
-              textAlign: 'center',
-              fontSize: '12px',
-              color: 'var(--muted)',
-              fontStyle: 'italic'
-            }}>
-              * 원본 레시피 {originalServings}인분 기준으로 {currentServings}인분에 맞춰 조정되었습니다.
-            </div>
-          )}
         </CollapsibleContent>
       </Collapsible>
     </section>

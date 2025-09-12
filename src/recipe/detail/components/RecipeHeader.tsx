@@ -1,6 +1,7 @@
 // recipe/detail/components/RecipeHeader.tsx
-import { memo } from "react";
-import { Clock, Users, Minus, Plus } from "lucide-react";
+import { Clock, Minus, Plus, Users } from 'lucide-react';
+import { memo } from 'react';
+import 'recipe/detail/components/RecipeHeader.css';
 
 type Props = {
   analysisId: string | number;
@@ -15,24 +16,32 @@ type Props = {
 };
 
 const formatMinutes = (min: number) => {
-  const m = Math.max(0, Math.floor(min ?? 0));
-  const h = Math.floor(m / 60);
-  const r = m % 60;
-  if (h > 0) return `${h}시간 ${r > 0 ? `${r}분` : ""}`.trim();
-  return `${m}분`;
+  const minutes = Math.max(0, Math.floor(min ?? 0));
+  const hour = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hour > 0) {
+    // 시간 단위는 그대로 두고, 남은 분을 5분 단위로 올림
+    const roundedMinutes = remainingMinutes > 0 ? Math.ceil(remainingMinutes / 5) * 5 : 0;
+    return `${hour}시간${roundedMinutes > 0 ? ` ${roundedMinutes}분 이내` : ''}`.trim();
+  }
+
+  // 분 단위만 있을 때도 5분 단위로 올림
+  const rounded = Math.max(5, Math.ceil(minutes / 5) * 5);
+  return `${rounded}분 이내`;
 };
 
 function RecipeHeader({
-                        analysisId,
-                        title,
-                        description,
-                        tags = [],
-                        cookingTimeMin = 0,
-                        originalServings = 0,
-                        currentServings,
-                        onDecreaseServings,
-                        onIncreaseServings,
-                      }: Props) {
+  analysisId,
+  title,
+  description,
+  tags = [],
+  cookingTimeMin = 0,
+  originalServings = 0,
+  currentServings,
+  onDecreaseServings,
+  onIncreaseServings,
+}: Props) {
   return (
     <header className="recipe-header">
       <div className="recipe-header-card" data-recipe-id={analysisId}>
@@ -41,6 +50,12 @@ function RecipeHeader({
         {!!description && <p className="recipe-description">{description}</p>}
 
         <div className="recipe-meta">
+          {cookingTimeMin > 0 && (
+            <div className="meta-item" title="조리 시간">
+              <Clock size={16} className="meta-icon" />
+              <span className="meta-label">{formatMinutes(cookingTimeMin)}</span>
+            </div>
+          )}
           {originalServings > 0 && (
             <div className="meta-item serving-adjuster" title="인분 조절">
               <Users size={16} className="meta-icon" />
@@ -53,7 +68,15 @@ function RecipeHeader({
                 >
                   <Minus size={12} />
                 </button>
-                <span className="serving-count">{currentServings}인분</span>
+                <span className="serving-count">
+                  {currentServings}인분
+                  {currentServings === originalServings && (
+                    <>
+                      <br />
+                      <span className="serving-default-inline">(기본)</span>
+                    </>
+                  )}
+                </span>
                 <button
                   className="serving-btn"
                   onClick={onIncreaseServings}
@@ -63,12 +86,6 @@ function RecipeHeader({
                   <Plus size={12} />
                 </button>
               </div>
-            </div>
-          )}
-          {cookingTimeMin > 0 && (
-            <div className="meta-item" title="조리 시간">
-              <Clock size={16} className="meta-icon" />
-              <span className="meta-label">{formatMinutes(cookingTimeMin)}</span>
             </div>
           )}
         </div>

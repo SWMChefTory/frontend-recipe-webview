@@ -1,5 +1,4 @@
 import { useBodyScrollLock, useTransition } from '_common';
-import { useBridgeActions } from 'bridge';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import RecipeStep from 'recipe/step/components/RecipeStep';
 
@@ -21,23 +20,10 @@ const RecipeStepPage = (): JSX.Element => {
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
 
-  /**
-   * 조리 완료 핸들러
-   * - React Native로 메시지 전송 후 레시피 페이지로 이동
-   * - 레시피 페이지로 이동 시 현재 페이지 정보를 저장하고 이동
-   */
-  const handleFinishCooking = (): void => {
-    bridgeActions.handleFinishCooking();
-    navigate(`/recipes/${id}`);
-  };
-
   // 레시피로 돌아가기 핸들러 - 라우터로 네비게이션
   const handleBackToRecipe = (): void => {
     navigate(`/recipes/${id}`, { replace: true });
   };
-
-  // 네이티브 앱과 통신
-  const bridgeActions = useBridgeActions(recipeData, undefined);
 
   // 조리 모드일 때 body 스크롤 방지
   useBodyScrollLock(true);
@@ -48,7 +34,6 @@ const RecipeStepPage = (): JSX.Element => {
     >
       <RecipeStep
         recipeData={recipeData}
-        onFinishCooking={handleFinishCooking}
         onBackToRecipe={handleBackToRecipe}
         selectedSttModel={selectedModel}
       />

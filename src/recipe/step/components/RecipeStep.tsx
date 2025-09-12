@@ -1,5 +1,3 @@
-// src/features/recipe/step/components/RecipeStep.tsx (전체 코드)
-
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
@@ -7,25 +5,30 @@ import Slider from 'react-slick';
 import { Header, YouTubePlayer } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
-import StepCard from 'recipe/step/components/StepCard';
 import VoiceGuide from 'recipe/step/components/VoiceGuide';
 import { useRecipeStepController } from 'recipe/step/hooks/useRecipeStepController';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
+import StepCard from './StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
 
 interface Props {
   recipeData: RecipeData;
-  onFinishCooking: () => void;
   onBackToRecipe: () => void;
   selectedSttModel: string;
 }
 
-const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttModel }: Props) => {
-  const { sliderRef, currentStep, slickSettings, currentStepData, carouselControls, isLastStep } =
-    useRecipeStepController(recipeData);
+const RecipeStep = ({ recipeData, onBackToRecipe, selectedSttModel }: Props) => {
+  const {
+    sliderRef,
+    currentStep,
+    slickSettings,
+    currentStepData,
+    carouselControls,
+    timelineStarts,
+  } = useRecipeStepController(recipeData);
 
   // 유튜브 플레이어 관련 상태
   const ytRef = useRef<YT.Player | null>(null);
@@ -176,7 +179,7 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
     } catch {}
   }, [currentStepData.start_time]);
 
-  // 재생 시간이 현재 스텝 범위를 벗어나면 캐러셀을 해당 스텝으로 이동
+  // 재생 시간이 다음 스텝 시작 시간에 도달하면 현재 스텝의 시작으로 루프
   useEffect(() => {
     const interval = setInterval(() => {
       const player = ytRef.current;
@@ -191,19 +194,21 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         return;
       }
 
-      const steps = recipeData.recipe_steps;
-      const startOfCurrent = steps[currentStep]?.start_time ?? 0;
-      const startOfNext = steps[currentStep + 1]?.start_time ?? Number.POSITIVE_INFINITY;
+      const startOfCurrent = timelineStarts[currentStep] ?? 0;
+      const startOfNext = timelineStarts[currentStep + 1] ?? Number.POSITIVE_INFINITY;
 
-      if (currentSeconds < startOfCurrent || currentSeconds >= startOfNext) {
-        // 비디오 시간에 맞춰 캐러셀만 이동하고, 자동 시킹은 1회 스킵
-        skipNextAutoSeekRef.current = true;
-        carouselControls.seekTo(currentSeconds);
+      // 다음 스텝 시작 시각에 도달 또는 초과 시 현재 스텝 시작으로 시킹하여 루프 유지
+      if (currentSeconds >= startOfNext) {
+        try {
+          player.seekTo(startOfCurrent, true);
+        } catch {}
       }
     }, 500);
 
     return () => clearInterval(interval);
-  }, [currentStep, recipeData.recipe_steps, carouselControls]);
+  }, [currentStep, timelineStarts, carouselControls]);
+
+  let stepCount = 1;
 
   return (
     <div className="cooking-mode">
@@ -212,7 +217,6 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
         currentStep={currentStep + 1}
         totalSteps={carouselControls.totalSteps}
         onBack={onBackToRecipe}
-        onTimerClick={handleTimerClick}
       />
 
       <YouTubePlayer
@@ -229,22 +233,43 @@ const RecipeStep = ({ recipeData, onFinishCooking, onBackToRecipe, selectedSttMo
       <section className="cooking-steps-container">
         <div className="carousel-container">
           <Slider ref={sliderRef} {...slickSettings}>
-            {recipeData.recipe_steps.map((step, idx) => (
-              <StepCard key={`step-${idx}`} step={step} index={idx} />
-            ))}
+            {recipeData.recipe_steps.flatMap((step, idx) =>
+              step.details.map((detail, detailIdx) => (
+                <StepCard
+                  key={`step-${idx}-${detailIdx}`}
+                  step={`${step.subtitle}(${detailIdx + 1}/${step.details.length})`}
+                  detail={detail.text}
+                  index={stepCount++}
+                />
+              )),
+            )}
           </Slider>
         </div>
-
-        {isLastStep && (
-          <div className="bottom-actions">
-            <button className="finish-cooking-btn" onClick={onFinishCooking} type="button">
-              조리 완료
-            </button>
-          </div>
-        )}
       </section>
 
       {/* 플로팅 음성 가이드 버튼 */}
+      {/* 왼쪽 하단 플로팅 타이머 버튼 */}
+      <div className="floating-timer-container">
+        <button
+          className="floating-timer-btn"
+          onClick={handleTimerClick}
+          aria-label="타이머"
+          type="button"
+        >
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="13" r="8" stroke="#ff4500" strokeWidth="2" />
+            <path
+              d="M12 9v4l3 2"
+              stroke="#ff4500"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
       <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
         <div className="speech-bubble">
           <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
