@@ -32,7 +32,7 @@ export interface Analysis {
   description: string;
   tags: string[];
   servings: number;
-  cooking_time: number;
+  cook_time: number;
 }
 
 // 시청 상태 정보 타입
