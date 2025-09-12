@@ -1,29 +1,18 @@
-import { RecipeStep } from '../../detail/types/recipe';
-
 interface StepCardProps {
-  step: RecipeStep;
+  step: string;
+  detail: string;
   index: number;
 }
 
-const StepCard = ({ step, index }: StepCardProps) => (
+const StepCard = ({ step, detail, index }: StepCardProps) => (
   <div className="carousel-slide">
     <article className="step-card">
       <header className="step-header">
-        <h3 className="step-number">Step {index + 1}</h3>
-        <div className="step-subtitle">{step.subtitle}</div>
+        <h3 className="step-number">{index}단계</h3>
+        <div className="step-subtitle">{step}</div>
       </header>
       <div className="step-content">
-        <ul className="step-description-list">
-          {step.details.map((detail, detailIndex) => (
-            <li
-              key={`detail-${index}-${detailIndex}`}
-              className="step-description-item"
-            >
-              {detail.text}
-              <span className="step-description-start"> ({detail.start.toFixed(1)}s)</span>
-            </li>
-          ))}
-        </ul>
+        <span className="step-description-text">{detail}</span>
       </div>
     </article>
   </div>

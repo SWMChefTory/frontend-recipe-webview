@@ -1,5 +1,5 @@
 .cooking-mode {
-  background-color: #f8f9fa;
+  background-color: var(--bg);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -8,7 +8,7 @@
 /* 조리 단계 컨테이너 */
 .cooking-steps-container {
   flex: 1;
-  background-color: #f8f9fa;
+  background-color: var(--bg);
   margin: 0;
   position: relative;
   margin-top: 0.5rem;
@@ -65,7 +65,7 @@
 .step-card {
   width: 100%;
   height: 40vh;
-  background: #fff;
+  background: var(--card);
   border-radius: 0.625rem;
   box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.08);
   padding: 1rem;
@@ -76,7 +76,7 @@
 }
 
 .carousel-container .slick-slide:not(.slick-center) .step-card {
-  background: #4a4a4a;
+  background: var(--text);
   box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2); /* 0 2px 8px */
   opacity: 0.75;
   transform: scale(0.85);
@@ -87,22 +87,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
+  font-size: 1.4rem;
 }
 
 .step-number {
-  background: #ff4500;
-  color: #fff;
+  background: var(--brand);
+  color: var(--card);
   border-radius: 3.125rem;
   padding: 0.25rem 0.75rem;
-  font-weight: bold;
-  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .step-subtitle {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #333;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 /* 내용 */
@@ -110,101 +108,16 @@
   flex: 1;
   display: flex;
   align-items: center;
-
   white-space: normal;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
-.step-description-list {
-  list-style-type: disc;
-  padding-left: 1.25rem;
-}
-
-.step-description-item {
-  font-size: 1rem;
-  color: #555;
+.step-description-text {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--text);
   line-height: 1.5;
-  margin-bottom: 0.5rem;
-}
-
-/* ===== React Slick Dots - Segment Bar Style ===== */
-.slick-dots {
-  position: absolute;
-  bottom: 1rem;
-  left: 0;
-  right: 0;
-  display: flex !important;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0 1rem;
-}
-
-.slick-dots li {
-  width: auto;
-  height: auto;
-  margin: 0;
-}
-
-.slick-dots li button {
-  padding: 0;
-  width: 2rem;
-  height: 1rem;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  outline: none;
-}
-
-.slick-dots li button:before {
-  content: '' !important;
-  font-size: 0;
-  display: block;
-  width: 1.2rem;
-  height: 0.35rem;
-  border-radius: 999px;
-  background: #d9d9d9;
-  opacity: 1;
-  transition:
-    width 0.25s ease,
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
-}
-
-/* 활성 슬라이드: 길이와 색으로 명확히 강조 */
-.slick-dots li.slick-active button:before {
-  background: #ff4500;
-  box-shadow: 0 2px 6px rgba(255, 69, 0, 0.28);
-  transform: translateY(-1px);
-}
-
-/* 완료 버튼 */
-.bottom-actions {
-  padding: 1.25rem;
-  text-align: center;
-}
-
-.finish-cooking-btn {
-  background: #ff4444;
-  color: #fff;
-  border: none;
-  border-radius: 0.75rem;
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: 0 0.125rem 0.5rem rgba(255, 68, 68, 0.3);
-}
-
-.finish-cooking-btn:hover {
-  background: #e53e3e;
-}
-
-.finish-cooking-btn:active {
-  transform: translateY(0.0625rem);
 }
 
 /* 플로팅 음성 가이드 컨테이너 */
@@ -229,7 +142,7 @@
   top: 50%;
   right: calc(100% + 12px); /* 버튼 왼쪽에 고정 배치 */
   transform: translateY(-50%) translateX(10px);
-  background: #ffffff;
+  background: var(--card);
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -244,7 +157,7 @@
 .speech-bubble-text {
   font-size: 1rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text);
   line-height: 1.2;
 }
 
@@ -255,7 +168,7 @@
   transform: translateY(-50%);
   width: 0;
   height: 0;
-  border-left: 10px solid #ffffff;
+  border-left: 10px solid var(--card);
   border-top: 10px solid transparent;
   border-bottom: 10px solid transparent;
 }
@@ -292,7 +205,7 @@
 .floating-voice-guide-btn {
   width: 80px;
   height: 80px;
-  background: #ffffff;
+  background: var(--card);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -306,22 +219,35 @@
   flex-shrink: 0;
 }
 
-.floating-voice-guide-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-}
-
-.floating-voice-guide-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
 .floating-voice-guide-btn img {
   width: 60px;
   height: 60px;
   object-fit: contain;
   border-radius: 50%;
   transition: all 0.3s ease;
+}
+
+/* 왼쪽 하단 플로팅 타이머 버튼 */
+.floating-timer-container {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 999;
+}
+
+.floating-timer-btn {
+  width: 80px;
+  height: 80px;
+  background: var(--card);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 /* KWS 활성화 상태 - 말풍선과 버튼이 동시에 스무스하게 이동 */
@@ -383,17 +309,27 @@
   }
 
   .speech-bubble-text {
-    font-size: 0.9375rem; /* 15px */
+    font-size: 0.9375rem;
   }
 
   .speech-bubble-arrow {
     right: -9px;
-    border-left: 9px solid #ffffff;
+    border-left: 9px solid var(--card);
     border-top: 9px solid transparent;
     border-bottom: 9px solid transparent;
   }
 
   .floating-voice-guide-btn {
+    width: 72px;
+    height: 72px;
+  }
+
+  .floating-timer-container {
+    bottom: 20px;
+    left: 20px;
+  }
+
+  .floating-timer-btn {
     width: 72px;
     height: 72px;
   }
@@ -404,19 +340,11 @@
   }
 
   .step-number {
-    font-size: 0.8125rem; /* 13px */
+    font-size: 1.2rem;
   }
 
   .step-subtitle {
-    font-size: 0.9375rem; /* 15px */
-  }
-
-  .step-description-item {
-    font-size: 0.9375rem; /* 15px */
-  }
-
-  .finish-cooking-btn {
-    font-size: 1.0625rem; /* 17px */
+    font-size: 1.2rem;
   }
 
   /* KWS 비활성화 시 말풍선 패딩 조정 */
@@ -440,17 +368,27 @@
   }
 
   .speech-bubble-text {
-    font-size: 0.875rem; /* 14px */
+    font-size: 0.875rem;
   }
 
   .speech-bubble-arrow {
     right: -8px;
-    border-left: 8px solid #ffffff;
+    border-left: 8px solid var(--card);
     border-top: 8px solid transparent;
     border-bottom: 8px solid transparent;
   }
 
   .floating-voice-guide-btn {
+    width: 64px;
+    height: 64px;
+  }
+
+  .floating-timer-container {
+    bottom: 16px;
+    left: 16px;
+  }
+
+  .floating-timer-btn {
     width: 64px;
     height: 64px;
   }
@@ -461,19 +399,11 @@
   }
 
   .step-number {
-    font-size: 0.75rem; /* 12px */
+    font-size: 1.2rem;
   }
 
   .step-subtitle {
-    font-size: 0.875rem; /* 14px */
-  }
-
-  .step-description-item {
-    font-size: 0.875rem; /* 14px */
-  }
-
-  .finish-cooking-btn {
-    font-size: 1rem; /* 16px */
+    font-size: 1.2rem;
   }
 
   /* KWS 비활성화 시 말풍선 패딩 조정 */

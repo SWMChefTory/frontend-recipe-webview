@@ -15,41 +15,62 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
 
   const [seekTime, setSeekTime] = useState<{ stepIdx: number; seconds: number } | null>(null);
 
-  const totalSteps = useMemo(() => recipeData.recipe_steps.length, [recipeData]);
+  // 상세 단계(디테일) 기준으로 평탄화된 타임라인 구성
+  const flattenedDetails = useMemo(
+    () =>
+      recipeData.recipe_steps.flatMap((step, stepIdx) =>
+        step.details.map((detail, detailIdx) => ({
+          stepIdx,
+          detailIdx,
+          text: detail.text,
+          start: detail.start,
+          subtitle: step.subtitle,
+        })),
+      ),
+    [recipeData],
+  );
+
+  const timelineStarts = useMemo(() => flattenedDetails.map(d => d.start), [flattenedDetails]);
+
+  const totalSteps = useMemo(() => flattenedDetails.length, [flattenedDetails]);
 
   const carouselControls = useMemo(
     () => ({
       goToNext,
       goToPrevious,
       goToStep: (step: number) => {
-        const stepIndex = step - 1;
-        if (stepIndex >= 0 && stepIndex < totalSteps) {
-          goToStep(stepIndex);
+        const flattenedIndex = step - 1;
+        if (flattenedIndex >= 0 && flattenedIndex < totalSteps) {
+          goToStep(flattenedIndex);
         }
       },
       currentStep: currentStep + 1,
       totalSteps,
       seekTo: (seconds: number) => {
-        const stepIdx = recipeData.recipe_steps.findIndex((step, idx) => {
-          const isLast = idx === recipeData.recipe_steps.length - 1;
-          return isLast
-            ? seconds >= step.start_time
-            : seconds >= step.start_time && seconds < recipeData.recipe_steps[idx + 1].start_time;
+        // 상세 단계 기준으로 seconds가 속하는 인덱스 찾기
+        if (timelineStarts.length === 0) return;
+        let idx = timelineStarts.findIndex((start, i) => {
+          const next = timelineStarts[i + 1] ?? Number.POSITIVE_INFINITY;
+          return seconds >= start && seconds < next;
         });
-        if (stepIdx !== -1) {
-          handleStepClick(stepIdx);
+        if (idx === -1) {
+          // seconds가 모든 시작 시간보다 작거나 마지막 이후일 때 경계 처리
+          if (seconds < timelineStarts[0]) idx = 0;
+          else idx = timelineStarts.length - 1;
         }
+        handleStepClick(idx);
       },
     }),
-    [currentStep, totalSteps, recipeData, goToNext, goToPrevious, goToStep, handleStepClick],
+    [currentStep, totalSteps, timelineStarts, goToNext, goToPrevious, goToStep, handleStepClick],
   );
 
   const currentStepData = useMemo(() => {
+    const fallbackStart = timelineStarts[currentStep] ?? 0;
     if (seekTime && seekTime.stepIdx === currentStep) {
-      return { ...recipeData.recipe_steps[currentStep], start_time: seekTime.seconds };
+      return { start_time: seekTime.seconds } as { start_time: number };
     }
-    return recipeData.recipe_steps[currentStep];
-  }, [recipeData, currentStep, seekTime]);
+    return { start_time: fallbackStart } as { start_time: number };
+  }, [currentStep, seekTime, timelineStarts]);
 
   const isLastStep = useMemo(() => currentStep === totalSteps - 1, [currentStep, totalSteps]);
 
@@ -70,5 +91,6 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
     carouselControls,
     handleStepClick,
     isLastStep,
+    timelineStarts,
   };
 };

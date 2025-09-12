@@ -57,7 +57,7 @@ export const useCarousel = (): UseCarouselResult => {
 
   // Slick 설정
   const slickSettings: SlickSettings = {
-    dots: true,
+    dots: false,
     infinite: false,
     speed: 300,
     centerMode: true,

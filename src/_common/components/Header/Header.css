@@ -29,14 +29,6 @@
   position: relative;
 }
 
-.header-back-btn:hover {
-  background-color: #f5f5f5;
-}
-
-.header-back-btn:active {
-  background-color: #e8e8e8;
-}
-
 .header-title {
   position: absolute;
   left: 50%;
@@ -74,14 +66,6 @@
   position: relative;
 }
 
-.header-timer-btn:hover {
-  background-color: #fff5f5;
-}
-
-.header-timer-btn:active {
-  background-color: #ffe8e8;
-}
-
 /* 타이머 섹션 */
 .header-timer-section {
   position: absolute;
@@ -109,14 +93,6 @@
   gap: 2px;
 }
 
-.header-timer-btn:hover {
-  background-color: #fff5f5;
-}
-
-.header-timer-btn:active {
-  background-color: #ffe8e8;
-}
-
 .header-timer-text {
   font-size: 10px;
   font-weight: 500;
@@ -142,16 +118,6 @@
   padding: 6px 12px;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(255, 69, 0, 0.2);
-}
-
-.header-timer-display:hover {
-  background-color: #e63e00;
-  transform: scale(1.02);
-}
-
-.header-timer-display:active {
-  background-color: #cc3700;
-  transform: scale(0.98);
 }
 
 /* 타이머 컨트롤 (실행 중) */
@@ -209,39 +175,12 @@
   color: #ffc107;
 }
 
-.header-timer-pause-btn:hover {
-  background-color: #fff8dc;
-}
-
-.header-timer-pause-btn:active {
-  background-color: #fff0b3;
-  transform: scale(0.95);
-}
-
 .header-timer-resume-btn {
   color: #28a745;
 }
 
-.header-timer-resume-btn:hover {
-  background-color: #e8f5e8;
-}
-
-.header-timer-resume-btn:active {
-  background-color: #d4edda;
-  transform: scale(0.95);
-}
-
 .header-timer-stop-btn {
   color: #dc3545;
-}
-
-.header-timer-stop-btn:hover {
-  background-color: #ffe6e6;
-}
-
-.header-timer-stop-btn:active {
-  background-color: #ffcccc;
-  transform: scale(0.95);
 }
 
 /* 태블릿 최적화 */
