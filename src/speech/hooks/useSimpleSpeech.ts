@@ -117,6 +117,7 @@ export const useSimpleSpeech = ({
   const kwsArmedRef = useRef<boolean>(false);
   const kwsActivatedRef = useRef<boolean>(false);
   const kwsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const kwsInferInFlightRef = useRef<boolean>(false);
 
   // 상태
   const isMountedRef = useRef(true);
@@ -193,9 +194,22 @@ export const useSimpleSpeech = ({
       const response = await fetch('/model_singlefile.onnx');
       const arrayBuffer = await response.arrayBuffer();
 
+      // Force stable WASM backend to avoid WebGPU issues
+      try {
+        ort.env.wasm.numThreads = Math.min(4, (navigator as any)?.hardwareConcurrency || 2);
+        ort.env.wasm.simd = true;
+        ort.env.wasm.proxy = true;
+        log(
+          '[KWS] ORT WASM env',
+          `threads=${ort.env.wasm.numThreads}`,
+          `simd=${ort.env.wasm.simd}`,
+          `proxy=${ort.env.wasm.proxy}`,
+        );
+      } catch {}
+
       const options = {
-        executionProviders: ['webgpu', 'wasm'],
-      };
+        executionProviders: ['wasm'],
+      } as const;
 
       const session = await ort.InferenceSession.create(arrayBuffer, options);
       kwsSessionRef.current = session;
@@ -458,14 +472,24 @@ export const useSimpleSpeech = ({
                 kwsBufferRef.current = mergedBuffer;
                 log('[KWS] 버퍼 누적', `len=${kwsBufferRef.current.length}`);
 
-                // 1초 윈도우가 준비되면 KWS 추론 실행
-                while (kwsBufferRef.current.length >= KWS_CONFIG.WINDOW_SAMPLES) {
-                  const window = kwsBufferRef.current.slice(0, KWS_CONFIG.WINDOW_SAMPLES);
+                // 준비되면 비동기 KWS 추론 실행 (in-flight 가드)
+                if (
+                  kwsBufferRef.current.length >= KWS_CONFIG.WINDOW_SAMPLES &&
+                  !kwsInferInFlightRef.current
+                ) {
+                  const window = kwsBufferRef.current.slice(
+                    kwsBufferRef.current.length - KWS_CONFIG.WINDOW_SAMPLES,
+                  );
+                  // hop 만큼 앞으로 이동 (메모리 증식 방지)
                   kwsBufferRef.current = kwsBufferRef.current.slice(KWS_CONFIG.HOP_SAMPLES);
 
-                  // KWS 추론
-                  const kwsProb = await predictKws(window);
-                  handleKwsDetection(kwsProb);
+                  kwsInferInFlightRef.current = true;
+                  predictKws(window)
+                    .then(prob => handleKwsDetection(prob))
+                    .catch(err => console.error('[KWS] async 추론 오류:', err))
+                    .finally(() => {
+                      kwsInferInFlightRef.current = false;
+                    });
                 }
               }
 
