@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useEffect, useRef, useState } from 'react';
 
 // TEN VAD exports (너가 올린 index 기준)
@@ -16,23 +15,6 @@ const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 160; // 10ms @ 16kHz
 const BUFFER_CHUNKS = 3; // 30ms 묶음
 const SEND_SIZE = CHUNK_SIZE * BUFFER_CHUNKS;
-
-// Debug logging helper
-const LOG_ENABLED = true;
-const log = (...args: any[]) => {
-  if (!LOG_ENABLED) return;
-  console.log('[Speech]', ...args);
-};
-const wsStateToText = (state: number) =>
-  state === WebSocket.CONNECTING
-    ? 'CONNECTING'
-    : state === WebSocket.OPEN
-      ? 'OPEN'
-      : state === WebSocket.CLOSING
-        ? 'CLOSING'
-        : state === WebSocket.CLOSED
-          ? 'CLOSED'
-          : 'UNKNOWN';
 
 // VAD 게이팅 히스테리시스
 const POS_TH = 0.5; // 켜짐 임계
@@ -60,12 +42,6 @@ const sendAudioData = (ws: WebSocket, audioData: ArrayBuffer, isFinal: boolean =
   const combined = new Uint8Array(finalFlag.length + audioBytes.length);
   combined.set(finalFlag, 0);
   combined.set(audioBytes, finalFlag.length);
-  log(
-    '[WS] sendAudioData',
-    `bytes=${audioBytes.length}`,
-    `isFinal=${isFinal}`,
-    `wsState=${wsStateToText(ws.readyState)}`,
-  );
   ws.send(combined.buffer);
 };
 
@@ -117,7 +93,6 @@ export const useSimpleSpeech = ({
   const kwsArmedRef = useRef<boolean>(false);
   const kwsActivatedRef = useRef<boolean>(false);
   const kwsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const kwsInferInFlightRef = useRef<boolean>(false);
 
   // 상태
   const isMountedRef = useRef(true);
@@ -128,6 +103,7 @@ export const useSimpleSpeech = ({
   const speechActiveRef = useRef(false);
   const lastOnRef = useRef(0);
   const lastOffRef = useRef(0);
+  const kwsInferringRef = useRef<boolean>(false);
 
   // 최신 값 refs
   const accessTokenRef = useRef(accessToken);
@@ -190,30 +166,15 @@ export const useSimpleSpeech = ({
   // ------------------------
   const loadKwsModel = async () => {
     try {
-      log('[KWS] 모델 로드 시작');
       const response = await fetch('/model_singlefile.onnx');
       const arrayBuffer = await response.arrayBuffer();
 
-      // Force stable WASM backend to avoid WebGPU issues
-      try {
-        ort.env.wasm.numThreads = Math.min(4, (navigator as any)?.hardwareConcurrency || 2);
-        ort.env.wasm.simd = true;
-        ort.env.wasm.proxy = true;
-        log(
-          '[KWS] ORT WASM env',
-          `threads=${ort.env.wasm.numThreads}`,
-          `simd=${ort.env.wasm.simd}`,
-          `proxy=${ort.env.wasm.proxy}`,
-        );
-      } catch {}
-
       const options = {
-        executionProviders: ['wasm'],
-      } as const;
+        executionProviders: ['webgpu', 'wasm'],
+      };
 
       const session = await ort.InferenceSession.create(arrayBuffer, options);
       kwsSessionRef.current = session;
-      log('[KWS] 모델 로드 성공, 세션 생성 완료');
     } catch (err: any) {
       console.error('[KWS] 모델 로드 실패:', err.message);
       setError(`KWS 모델 로드 실패: ${err.message}`);
@@ -222,10 +183,19 @@ export const useSimpleSpeech = ({
 
   const predictKws = async (audioChunk: Float32Array) => {
     try {
-      const session = kwsSessionRef.current;
-      if (!session) return null;
+      // 이미 추론 중이면 건너뛰기
+      if (kwsInferringRef.current) {
+        return null;
+      }
 
-      log('[KWS] 추론 시작', `chunkLen=${audioChunk.length}`);
+      kwsInferringRef.current = true; // 추론 시작 플래그
+
+      const session = kwsSessionRef.current;
+      if (!session) {
+        kwsInferringRef.current = false;
+        return null;
+      }
+
       const inputTensor = new ort.Tensor('float32', audioChunk, [1, audioChunk.length]);
       const feeds = { [session.inputNames[0]]: inputTensor };
       const results = await session.run(feeds);
@@ -235,10 +205,11 @@ export const useSimpleSpeech = ({
       const m = Math.max(logits[0], logits[1]);
       const e0 = Math.exp(logits[0] - m);
       const e1 = Math.exp(logits[1] - m);
-      const prob = e1 / (e0 + e1);
-      log('[KWS] 추론 완료', `prob=${prob.toFixed(3)}`);
-      return prob;
+
+      kwsInferringRef.current = false; // 추론 완료
+      return e1 / (e0 + e1);
     } catch (err: any) {
+      kwsInferringRef.current = false; // 오류 시에도 플래그 해제
       console.error('[KWS] 추론 오류:', err.message);
       return null;
     }
@@ -266,17 +237,9 @@ export const useSimpleSpeech = ({
 
       if (!kwsArmedRef.current && kwsSustainMsRef.current >= KWS_CONFIG.minSustainMs) {
         kwsArmedRef.current = true;
-        log(
-          '[KWS] 활성화 조건 충족',
-          `ema=${ema.toFixed(3)}`,
-          `sustainMs=${kwsSustainMsRef.current}`,
-        );
         onKwsActivation();
       }
     } else {
-      if (kwsSustainMsRef.current > 0 || kwsArmedRef.current) {
-        log('[KWS] 임계 미만으로 리셋', `ema=${ema.toFixed(3)}`);
-      }
       kwsSustainMsRef.current = 0;
       kwsArmedRef.current = false;
     }
@@ -284,7 +247,6 @@ export const useSimpleSpeech = ({
 
   const onKwsActivation = () => {
     kwsActivatedRef.current = true;
-    log('[KWS] 활성화 트리거됨');
     onKwsActivateRef.current?.();
 
     // 1초 타임아웃 설정
@@ -294,14 +256,12 @@ export const useSimpleSpeech = ({
 
     kwsTimeoutRef.current = setTimeout(() => {
       if (kwsActivatedRef.current && !speechActiveRef.current) {
-        log('[KWS] 타임아웃으로 비활성화');
         deactivateKws();
       }
     }, KWS_CONFIG.timeoutMs);
   };
 
   const deactivateKws = () => {
-    log('[KWS] 비활성화 실행');
     kwsActivatedRef.current = false;
     kwsArmedRef.current = false;
     kwsEmaRef.current = null;
@@ -327,12 +287,6 @@ export const useSimpleSpeech = ({
       if (token) url.searchParams.append('token', token.replace(/^Bearer\s/i, ''));
       if (recipeIdRef.current) url.searchParams.append('recipe_id', recipeIdRef.current);
 
-      log(
-        '[WS] Opening',
-        `provider=${selectedSttModelRef.current}`,
-        `tokenPresent=${Boolean(token)}`,
-        `recipeId=${recipeIdRef.current ?? 'none'}`,
-      );
       const ws = new WebSocket(url.toString());
       ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
@@ -340,7 +294,6 @@ export const useSimpleSpeech = ({
 
       ws.onopen = () => {
         isWSReady.current = true;
-        log('[WS] open');
       };
       ws.onmessage = ({ data }) => {
         try {
@@ -349,21 +302,16 @@ export const useSimpleSpeech = ({
             onIntentRef.current?.(j.data.intent);
             // STT 인텐트 로그
             // console.log(`[STT] intent: ${j.data.intent}, raw: ${j.data.base_intent}`);
-            log('[WS] message intent', `intent=${j.data.intent}`, `base=${j.data.base_intent}`);
-          } else {
-            log('[WS] message', j?.status ?? 'unknown');
           }
         } catch {}
       };
       ws.onerror = () => {
         setError('알 수 없는 오류가 발생했습니다.');
-        log('[WS] error');
       };
       ws.onclose = e => {
         if (e.code === 1008) {
           sendRequestAccessTokenRefresh();
         }
-        log('[WS] close', `code=${e.code}`, `reason=${e.reason}`);
       };
     };
 
@@ -378,7 +326,6 @@ export const useSimpleSpeech = ({
       }
       if (ws) {
         ws.onclose = null;
-        log('[WS] closing on unmount');
         ws.close(1000, 'page unmounted');
       }
     };
@@ -392,18 +339,15 @@ export const useSimpleSpeech = ({
 
     const start = async () => {
       try {
-        log('[Audio] 초기화 시작');
         // KWS 모델 로드
         await loadKwsModel();
 
         const module = await VADModuleLoader.getInstance().loadModule();
-        log('[VAD] 모듈 로드 완료');
 
         const hopSize = CHUNK_SIZE; // 10ms @ 16kHz
         const voiceThreshold = POS_TH;
         const vad = new VADInstance(module, hopSize, voiceThreshold);
         vadInstanceRef.current = vad;
-        log('[VAD] 인스턴스 생성', `hopSize=${hopSize}`, `th_pos=${voiceThreshold}`);
 
         // 3) 마이크 오픈
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -416,11 +360,9 @@ export const useSimpleSpeech = ({
         });
         if (destroyed) return;
         streamRef.current = stream;
-        log('[Audio] 마이크 오픈 성공');
 
         const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
         audioCtxRef.current = ctx;
-        log('[Audio] 컨텍스트 생성', `sampleRate=${ctx.sampleRate}`);
 
         const src = ctx.createMediaStreamSource(stream);
 
@@ -428,17 +370,10 @@ export const useSimpleSpeech = ({
         await ctx.audioWorklet.addModule('/vad-processor.js');
         const vadWorklet = new AudioWorkletNode(ctx, 'vad-processor');
         processorRef.current = vadWorklet as any;
-        log('[Audio] 워클릿 로드 및 생성 완료');
 
         // AudioWorklet에서 오는 메시지 처리
         vadWorklet.port.onmessage = async event => {
           const { type, chunks, rms } = event.data;
-          log(
-            '[AudioWorklet] message',
-            `type=${type}`,
-            `chunks=${chunks?.length ?? 0}`,
-            `rms=${rms?.toFixed?.(3) ?? rms}`,
-          );
 
           if (type === 'audioData') {
             const inst = vadInstanceRef.current;
@@ -456,7 +391,6 @@ export const useSimpleSpeech = ({
 
               // 4) TEN VAD 실시간 프레임 처리
               const { probability } = await inst.processFrame(i16);
-              log('[VAD] frame', `prob=${probability.toFixed(3)}`);
 
               // VAD 확률 로그
               // console.log('[VAD] probability:', probability.toFixed(3));
@@ -470,26 +404,14 @@ export const useSimpleSpeech = ({
                 mergedBuffer.set(kwsBufferRef.current);
                 mergedBuffer.set(chunkF32, kwsBufferRef.current.length);
                 kwsBufferRef.current = mergedBuffer;
-                log('[KWS] 버퍼 누적', `len=${kwsBufferRef.current.length}`);
 
-                // 준비되면 비동기 KWS 추론 실행 (in-flight 가드)
-                if (
-                  kwsBufferRef.current.length >= KWS_CONFIG.WINDOW_SAMPLES &&
-                  !kwsInferInFlightRef.current
-                ) {
-                  const window = kwsBufferRef.current.slice(
-                    kwsBufferRef.current.length - KWS_CONFIG.WINDOW_SAMPLES,
-                  );
-                  // hop 만큼 앞으로 이동 (메모리 증식 방지)
+                // 1초 윈도우가 준비되면 KWS 추론 실행
+                if (kwsBufferRef.current.length >= KWS_CONFIG.WINDOW_SAMPLES) {
+                  const window = kwsBufferRef.current.slice(0, KWS_CONFIG.WINDOW_SAMPLES);
                   kwsBufferRef.current = kwsBufferRef.current.slice(KWS_CONFIG.HOP_SAMPLES);
 
-                  kwsInferInFlightRef.current = true;
-                  predictKws(window)
-                    .then(prob => handleKwsDetection(prob))
-                    .catch(err => console.error('[KWS] async 추론 오류:', err))
-                    .finally(() => {
-                      kwsInferInFlightRef.current = false;
-                    });
+                  const kwsProb = await predictKws(window);
+                  handleKwsDetection(kwsProb);
                 }
               }
 
@@ -498,7 +420,6 @@ export const useSimpleSpeech = ({
               if (preBufferRef.current.length > PRE_BUFFER_CHUNKS) {
                 preBufferRef.current.shift(); // 오래된 청크 제거
               }
-              log('[PreBuffer] 유지', `chunks=${preBufferRef.current.length}/${PRE_BUFFER_CHUNKS}`);
 
               // 6) 히스테리시스 게이팅 (VAD는 항상 작동)
               const now = performance.now();
@@ -508,11 +429,9 @@ export const useSimpleSpeech = ({
                   active = true;
                   speechActiveRef.current = true;
                   lastOnRef.current = now;
-                  log('[Gate] ACTIVE 전환', `prob=${probability.toFixed(3)}`);
 
                   // Pre-buffer부터 전송 시작 (항상)
                   if (ws && ws.readyState === WebSocket.OPEN && isWSReady.current) {
-                    log('[TX] Pre-buffer 전송 시작', `chunks=${preBufferRef.current.length}`);
                     for (const bufferedChunk of preBufferRef.current) {
                       // Pre-buffer 청크들을 30ms 단위로 전송
                       let tx: Float32Array;
@@ -537,11 +456,9 @@ export const useSimpleSpeech = ({
                       if (txRest) txLeftoverRef.current = tx.subarray(tx.length - txRest);
                     }
                     preBufferRef.current = []; // Pre-buffer 비우기
-                    log('[TX] Pre-buffer 전송 완료');
                   }
 
                   onVoiceStartRef.current?.();
-                  log('[Voice] start');
                 }
               } else {
                 if (probability < NEG_TH && now - lastOnRef.current > ON_HOLD_MS) {
@@ -558,17 +475,14 @@ export const useSimpleSpeech = ({
                         const finalPayload = f32ToI16(txLeftoverRef.current).buffer;
                         sendAudioData(ws, finalPayload, true);
                         txLeftoverRef.current = null;
-                        log('[TX] leftover 최종 전송');
                       } else {
                         // 빈 데이터로라도 is_final 신호 전송
                         sendAudioData(ws, new ArrayBuffer(0), true);
-                        log('[TX] 빈 최종 신호 전송');
                       }
                     }
 
                     preBufferRef.current = []; // Pre-buffer 초기화
                     onVoiceEndRef.current?.();
-                    log('[Voice] end');
 
                     // KWS 타임아웃 재설정
                     if (kwsActivatedRef.current) {
@@ -613,7 +527,6 @@ export const useSimpleSpeech = ({
 
                 // 활성 상태에서는 pre-buffer에 저장하지 않음 (실시간 전송)
                 preBufferRef.current = [];
-                log('[TX] 활성 전송', `len=${tx.length}`, `rest=${txRest}`);
               } else {
                 txLeftoverRef.current = null; // 무음은 전송 버퍼 초기화
               }
@@ -622,7 +535,6 @@ export const useSimpleSpeech = ({
         };
 
         src.connect(vadWorklet).connect(ctx.destination);
-        log('[Audio] 파이프라인 연결 완료');
       } catch (e: any) {
         console.error('[VAD] 초기화 실패:', e);
         setError(e?.message ?? '오디오 초기화 실패');
@@ -633,7 +545,6 @@ export const useSimpleSpeech = ({
 
     return () => {
       destroyed = true;
-      log('[Audio] 정리 시작');
 
       if (processorRef.current) {
         try {
@@ -641,26 +552,22 @@ export const useSimpleSpeech = ({
           processorRef.current.port.onmessage = null;
         } catch {}
         processorRef.current = null;
-        log('[Audio] 워클릿 정리 완료');
       }
       if (audioCtxRef.current) {
         try {
           audioCtxRef.current.close();
         } catch {}
         audioCtxRef.current = null;
-        log('[Audio] 컨텍스트 종료');
       }
       if (streamRef.current) {
         for (const t of streamRef.current.getTracks()) t.stop();
         streamRef.current = null;
-        log('[Audio] 스트림 트랙 정지');
       }
       if (vadInstanceRef.current) {
         try {
           vadInstanceRef.current.destroy();
         } catch {}
         vadInstanceRef.current = null;
-        log('[VAD] 인스턴스 파기');
       }
       // Pre-buffer 초기화
       preBufferRef.current = [];
@@ -674,7 +581,6 @@ export const useSimpleSpeech = ({
         } catch {}
       }
       deactivateKws();
-      log('[Audio] 정리 완료');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -682,7 +588,6 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      log('[Mount] unmounted');
     };
   }, []);
 
@@ -698,13 +603,11 @@ export const useSimpleSpeech = ({
         }
         // KWS 비활성화
         deactivateKws();
-        log('[Visibility] hidden -> suspend + KWS deactivate');
       } else {
         // 포그라운드로 돌아왔을 때
         if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
           audioCtxRef.current.resume();
         }
-        log('[Visibility] visible -> resume');
       }
     };
 
@@ -717,7 +620,6 @@ export const useSimpleSpeech = ({
     isListening: speechActiveRef.current,
     isKwsActivated: kwsActivatedRef.current,
     stop: () => {
-      log('[Control] stop() 호출');
       if (audioCtxRef.current) audioCtxRef.current.suspend();
     },
   };
