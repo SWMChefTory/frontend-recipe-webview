@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo} from 'react';
 import { RecipeData } from '../../detail/types/recipe';
 import { useCarousel } from './useCarousel';
 
-export const useRecipeStepController = (recipeData: RecipeData) => {
+//캐러셀을 조작하기 위한 훅, 캐러셀은 0부터 시작하기 때문에 훅도 마찬가지로 0부터 시작한다.
+export const useCarouselController = (recipeData: RecipeData) => {
   const {
     sliderRef,
     currentStep,
@@ -12,7 +13,8 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
     goToStep,
   } = useCarousel();
 
-  const [seekTime, setSeekTime] = useState<{ stepIdx: number; seconds: number } | null>(null);
+  //TODO : seekTime 필요 없어보이는데
+  //DONE : 삭제
 
   // 상세 단계(디테일) 기준으로 평탄화된 타임라인 구성
   const flattenedDetails = useMemo(
@@ -39,12 +41,11 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
       goToNext,
       goToPrevious,
       goToStep: (step: number) => {
-        const flattenedIndex = step - 1;
+        const flattenedIndex = step; //DONE : 캐러셀은 항상 0부터 시작하게 조절해야함.
         if (flattenedIndex >= 0 && flattenedIndex < totalSteps) {
           goToStep(flattenedIndex);
         }
       },
-      currentStep: currentStep + 1,
       totalSteps,
       seekTo: (seconds: number) => {
         // 상세 단계 기준으로 seconds가 속하는 인덱스 찾기
@@ -60,6 +61,7 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
         }
         //handleStepClick제거하고 goToStep 제거
         goToStep(idx);
+        return idx;
       },
     }),
     [currentStep, totalSteps, timelineStarts, goToNext, goToPrevious, goToStep],
@@ -67,33 +69,27 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
 
 
   //TODO : 시간만 반환?
+  //현재 스텝의 시작 시간 반환하는데, seekTime은 왜 필요한가?
   const currentStepData = useMemo(() => {
     const fallbackStart = timelineStarts[currentStep] ?? 0;
-    if (seekTime && seekTime.stepIdx === currentStep) {
-      return { start_time: seekTime.seconds } as { start_time: number };
-    }
+    //TODO : seekTime에 set하지 않고 항상 null인 값인데 필요 없어보임
+    //DONE : seekTime 삭제
     return { start_time: fallbackStart } as { start_time: number };
-  }, [currentStep, seekTime, timelineStarts]);
+  }, [currentStep, timelineStarts]);
 
   const isLastStep = useMemo(() => currentStep === totalSteps - 1, [currentStep, totalSteps]);
 
 
-  //TODO : 이건 왜 필요한거? 그리고 undefined 왜 반환?
-  useEffect(() => {
-    if (seekTime && seekTime.stepIdx === currentStep) {
-      const timer = setTimeout(() => setSeekTime(null), 500);
-      return () => clearTimeout(timer);
-    }
-    return;
-  }, [seekTime, currentStep]);
+  //TODO : 이건 왜 필요한거? 그리고 undefined 왜 반환? seekTime 항상 null인데 왜 계속 null?
+  //DONE : 삭제
 
   return {
     sliderRef,
     currentStep,
-    slickSettings,
     currentStepData,
     carouselControls,
     isLastStep,
     timelineStarts,
+    slickSettings,
   };
 };

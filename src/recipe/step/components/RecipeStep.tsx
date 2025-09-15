@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
 
@@ -6,13 +6,13 @@ import { Header, YouTubePlayer } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
 import VoiceGuide from 'recipe/step/components/VoiceGuide';
-import { useRecipeStepController } from 'recipe/step/hooks/useRecipeStepController';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
 import StepCard from './StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
+import { useStepController } from '../hooks/useStepController';
 
 interface Props {
   recipeData: RecipeData;
@@ -20,18 +20,10 @@ interface Props {
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
-  const {
-    sliderRef,
-    currentStep,
-    slickSettings,
-    currentStepData,
-    carouselControls,
-    timelineStarts,
-  } = useRecipeStepController(recipeData);
+  //TODO : useEffect의 무한루프 막기 위해서 이거 있는 거 같은데, useEffect 제거해서 이거 없어도 될듯?
+  //DONE : 삭제
 
-  // 유튜브 플레이어 관련 상태
-  const ytRef = useRef<YT.Player | null>(null);
-  const skipNextAutoSeekRef = useRef<boolean>(false);
+  // const is
 
   // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
@@ -40,6 +32,33 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
+  const  isSliderInitialized = useRef(false);
+  const isYtInitialized= useRef(false);
+
+  const handleYtInitialized = () => {
+    isYtInitialized.current = true;
+    if (isSliderInitialized && isYtInitialized) {
+      handleSteps.handleRecipeByStep(0);
+    }
+  };
+
+  const handleSliderInitialized = () => {
+    isSliderInitialized.current = true;
+    if (isSliderInitialized && isYtInitialized) {
+      handleSteps.handleRecipeByStep(0);
+    }
+  };
+
+
+  const {
+    sliderRef,
+    ytRef,
+    currentStep,
+    slickSettings,
+    totalSteps,
+    handleSteps,
+  } = useStepController(recipeData);
+  
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
 
@@ -61,17 +80,18 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
     switch (cmd) {
       case 'NEXT':
-        carouselControls.goToNext();
+        handleSteps.handleRecipeToNext();
         commandExecuted = true;
         break;
       case 'PREV':
-        carouselControls.goToPrevious();
+        handleSteps.handleRecipeToPrevious();
         commandExecuted = true;
         break;
       case 'STEP': {
         const num = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(num) && num >= 1) {
-          carouselControls.goToStep(num);
+          //외부로 오는 요청은 1부터 시작하기 때문에 -1 처리
+          handleSteps.handleRecipeByStep(num-1);
           commandExecuted = true;
         }
         break;
@@ -79,26 +99,12 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       case 'TIMESTAMP': {
         const secs = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(secs)) {
-          skipNextAutoSeekRef.current = true;
-          carouselControls.seekTo(secs);
-          ytRef.current?.seekTo(secs, true);
+          handleSteps.handleRecipeByTimestamp(secs);
           commandExecuted = true;
         }
         break;
       }
-      case 'VIDEO': {
-        switch (arg1) {
-          case 'PLAY':
-            ytRef.current?.playVideo();
-            commandExecuted = true;
-            break;
-          case 'STOP':
-            ytRef.current?.pauseVideo();
-            commandExecuted = true;
-            break;
-        }
-        break;
-      }
+      //TODO : 버튼 컴포넌트로 캡슐화
       case 'TIMER': {
         switch (arg1) {
           case 'START':
@@ -142,6 +148,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     }
   };
 
+  //TODO : 버튼 컴포넌트로 캡슐화
   const handleTimerClick = () => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
       recipe_id: recipeId ?? '',
@@ -176,48 +183,13 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   });
 
   // 캐러셀 단계 변경 시 해당 단계 시작 시간으로 YouTube를 시킹
-  useEffect(() => {
-    const player = ytRef.current;
-    if (!player) return;
-    if (skipNextAutoSeekRef.current) {
-      // 타임스탬프 명령 직후 자동 시킹 1회 스킵
-      skipNextAutoSeekRef.current = false;
-      return;
-    }
-    const startSeconds = currentStepData.start_time ?? 0;
-    try {
-      player.seekTo(startSeconds, true);
-    } catch {}
-  }, [currentStepData.start_time]);
+  // TODO : 이렇게 상태 변화일 때 유튜브를 이동시키는 것은 불일치가 발생할 가능성있음. 그냥 레시피 조작할 때 마다 제거.
+  // DONE : 삭제
 
   // 재생 시간이 다음 스텝 시작 시간에 도달하면 현재 스텝의 시작으로 루프
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const player = ytRef.current;
-      if (!player) return;
-      let currentSeconds = 0;
-      try {
-        // getCurrentTime는 재생/일시정지와 무관하게 현재 시간을 반환
-        if (typeof player.getCurrentTime === 'function') {
-          currentSeconds = player.getCurrentTime();
-        }
-      } catch {
-        return;
-      }
-
-      const startOfCurrent = timelineStarts[currentStep] ?? 0;
-      const startOfNext = timelineStarts[currentStep + 1] ?? Number.POSITIVE_INFINITY;
-
-      // 다음 스텝 시작 시각에 도달 또는 초과 시 현재 스텝 시작으로 시킹하여 루프 유지
-      if (currentSeconds >= startOfNext) {
-        try {
-          player.seekTo(startOfCurrent, true);
-        } catch {}
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, [currentStep, timelineStarts, carouselControls]);
+  // TODO : 이것도 단계 변환 시킬 때 그냥 버튼에서 처리하면 안될까, 그리고 사용자가 유튜브 영상의 초를 바꾸면, 기존 단계로 돌아오는데 step도 같이 바꿔줘야 하는거 아닌가
+  // TODO : 이런 방식으로 되면 사용자가 말한 '다음'이 도착해서 다음으로 넘어갔는데, seek가 실행되서 비디오는 이전에 있던 step의 영상 시간으로 가버릴 수 도 있음.
+  // DONE : 삭제
 
   let stepCount = 1;
 
@@ -226,7 +198,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       <Header
         title={recipeData.video_info.video_title}
         currentStep={currentStep + 1}
-        totalSteps={carouselControls.totalSteps}
+        totalSteps={totalSteps}
         onBack={onBackToRecipe}
       />
 
@@ -236,14 +208,13 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         autoplay
         onPlayerReady={player => {
           ytRef.current = player;
-          const startSeconds = currentStepData.start_time ?? 0;
-          player.seekTo(startSeconds, true);
+          handleYtInitialized();
         }}
       />
 
       <section className="cooking-steps-container">
         <div className="carousel-container">
-          <Slider ref={sliderRef} {...slickSettings}>
+          <Slider ref={sliderRef} onInit={() => handleSliderInitialized()} {...slickSettings}>
             {recipeData.recipe_steps.flatMap((step, idx) =>
               step.details.map((detail, detailIdx) => (
                 <StepCard
@@ -260,6 +231,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
       {/* 플로팅 음성 가이드 버튼 */}
       {/* 왼쪽 하단 플로팅 타이머 버튼 */}
+      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className="floating-timer-container">
         <button
           className="floating-timer-btn"
@@ -281,6 +253,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         </button>
       </div>
 
+      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
         <div className="speech-bubble">
           <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
