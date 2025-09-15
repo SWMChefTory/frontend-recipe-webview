@@ -11,7 +11,7 @@ const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData, isLoading, errorMessage: errorMessage } = useRecipeData(id);
+  const { recipeData, isLoading, errorMessage } = useRecipeData(id);
 
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
