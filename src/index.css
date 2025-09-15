@@ -9,7 +9,7 @@
   --line-strong: rgba(249, 115, 22, 0.15);
   --brand: #ff4500;
   --brand-dark: #e03d00;
-  --brand-light: #fed7aa;
+  --brand-light: #fff5f0;
 
   /* 모바일 최적화 간격 */
   --space-sm: 8px;
@@ -73,5 +73,5 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: white;
 }
