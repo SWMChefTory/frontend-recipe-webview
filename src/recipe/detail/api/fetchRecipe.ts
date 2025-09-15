@@ -9,11 +9,6 @@ export const fetchRecipe = async (id: string, accessToken: string): Promise<Reci
     },
   });
 
-  // HTTP 응답 상태 체크 추가
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
   const apiResponse: RecipeData = await response.json();
 
   return apiResponse;

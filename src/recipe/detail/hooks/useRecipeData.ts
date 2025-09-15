@@ -6,8 +6,8 @@ import { RecipeData } from '../types/recipe';
 
 interface UseRecipeDataResult {
   recipeData: RecipeData | null;
-  loading: boolean;
-  error: string | null;
+  isLoading: boolean;
+  errorMessage: string | null;
 }
 
 /**
@@ -19,43 +19,65 @@ export const useRecipeData = (recipeId?: string): UseRecipeDataResult => {
   const accessToken = useAccessToken();
 
   const [recipeData, setRecipeData] = useState<RecipeData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
     setRecipeData(null);
 
+    let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isWaitingForTokenRefresh = false;
+
     const loadRecipeData = async () => {
       if (!recipeId) {
-        setError('레시피 ID가 없습니다.');
-        setLoading(false);
+        setError('레시피를 찾을 수 없습니다.');
+        setIsLoading(false);
         return;
       }
 
       if (!accessToken || !accessToken.startsWith('Bearer ')) {
-        setError('유효하지 않은 액세스 토큰입니다.');
-        setLoading(false);
+        // 토큰 재발급 요청 후 3초 동안 로딩 유지, 이후 에러 페이지 표시
+        isWaitingForTokenRefresh = true;
+        sendRequestAccessTokenRefresh();
+        refreshTimeout = setTimeout(() => {
+          setError('인증이 만료되었습니다.');
+          setIsLoading(false);
+        }, 3000);
         return;
       }
 
       try {
         const recipeResponse = await fetchRecipe(recipeId, accessToken);
         if ((recipeResponse as any)?.errorCode === 'AUTH_001') {
+          // 토큰 재발급 요청 후 3초 동안 로딩 유지, 이후 에러 페이지 표시
+          isWaitingForTokenRefresh = true;
           sendRequestAccessTokenRefresh();
+          refreshTimeout = setTimeout(() => {
+            setError('인증이 만료되었습니다.');
+            setIsLoading(false);
+          }, 3000);
           return;
         }
         setRecipeData(recipeResponse);
       } catch (err) {
-        setError(err instanceof Error ? err.message : '레시피 데이터를 불러오는 중 오류 발생');
+        setError(err instanceof Error ? err.message : '레시피를 불러오는 데 실패했습니다.');
       } finally {
-        setLoading(false);
+        if (!isWaitingForTokenRefresh) {
+          setIsLoading(false);
+        }
       }
     };
-
     loadRecipeData();
+
+    return () => {
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+        refreshTimeout = null;
+      }
+    };
   }, [recipeId, accessToken]);
 
-  return { recipeData, loading, error };
+  return { recipeData, isLoading, errorMessage: error };
 };
