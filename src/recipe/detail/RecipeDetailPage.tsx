@@ -11,7 +11,7 @@ const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData, loading, error } = useRecipeData(id);
+  const { recipeData, isLoading, errorMessage: errorMessage } = useRecipeData(id);
 
   // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
@@ -25,16 +25,14 @@ const RecipeDetailPage = (): JSX.Element => {
   const bridgeActions = useBridgeActions(recipeData);
 
   // 로딩 중에는 스크롤 잠금
-  useBodyScrollLock(loading);
+  useBodyScrollLock(isLoading);
 
   return (
     <div className={`app ${transitioning ? 'transitioning' : ''} ${fadeIn ? 'fade-in' : ''}`}>
-      {loading ? (
+      {isLoading ? (
         <Loading />
-      ) : error ? (
-        <Error error={error} />
-      ) : !recipeData ? (
-        <Error error="레시피 데이터를 찾을 수 없습니다." />
+      ) : !recipeData || errorMessage ? (
+        <Error error={errorMessage || '레시피를 찾을 수 없습니다.'} />
       ) : (
         <RecipeInfo
           recipeData={recipeData}
