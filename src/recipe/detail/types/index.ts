@@ -6,6 +6,6 @@ export * from './recipe';
 // 레시피 정보 컴포넌트 Props
 export interface RecipeInfoProps {
   recipeData: RecipeData;
-  onStartRecipeStep: (selectedModel: string) => void;
+  onStartRecipeStep: () => void;
   onBack: () => void;
 }

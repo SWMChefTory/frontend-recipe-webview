@@ -46,7 +46,6 @@ const sendAudioData = (ws: WebSocket, audioData: ArrayBuffer, isFinal: boolean =
 };
 
 interface Params {
-  selectedSttModel?: string;
   accessToken?: string | null;
   recipeId?: string;
   onVoiceStart?: () => void;
@@ -59,7 +58,6 @@ interface Params {
 }
 
 export const useSimpleSpeech = ({
-  selectedSttModel = 'CLOVA',
   accessToken,
   recipeId,
   onVoiceStart,
@@ -71,6 +69,8 @@ export const useSimpleSpeech = ({
   onKwsDeactivate,
 }: Params) => {
   const [error, setError] = useState<string | null>(null);
+
+  const STT_MODEL = 'CLOVA';
 
   // WS
   const wsRef = useRef<WebSocket | null>(null);
@@ -109,7 +109,6 @@ export const useSimpleSpeech = ({
   const accessTokenRef = useRef(accessToken);
   const recipeIdRef = useRef(recipeId);
   const onIntentRef = useRef(onIntent);
-  const selectedSttModelRef = useRef(selectedSttModel);
   const onVoiceStartRef = useRef(onVoiceStart);
   const onVoiceEndRef = useRef(onVoiceEnd);
   const onVolumeRef = useRef(onVolume);
@@ -126,9 +125,6 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     onIntentRef.current = onIntent;
   }, [onIntent]);
-  useEffect(() => {
-    selectedSttModelRef.current = selectedSttModel;
-  }, [selectedSttModel]);
   useEffect(() => {
     onVoiceStartRef.current = onVoiceStart;
   }, [onVoiceStart]);
@@ -282,7 +278,7 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     const openWS = () => {
       const url = new URL(STT_URL);
-      url.searchParams.append('provider', selectedSttModelRef.current ?? 'VITO');
+      url.searchParams.append('provider', STT_MODEL);
       const token = accessTokenRef.current;
       if (token) url.searchParams.append('token', token.replace(/^Bearer\s/i, ''));
       if (recipeIdRef.current) url.searchParams.append('recipe_id', recipeIdRef.current);

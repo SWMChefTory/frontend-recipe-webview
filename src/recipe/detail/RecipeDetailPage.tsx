@@ -17,8 +17,8 @@ const RecipeDetailPage = (): JSX.Element => {
   const { transitioning, fadeIn } = useTransition();
 
   // 조리 시작 핸들러
-  const handleStartRecipeStep = (selectedModel: string): void => {
-    navigate(`/recipes/${id}/steps`, { state: { recipeData, selectedModel } });
+  const handleStartRecipeStep = (): void => {
+    navigate(`/recipes/${id}/steps`, { state: { recipeData } });
   };
 
   // 네이티브 앱과 통신

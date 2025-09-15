@@ -55,12 +55,12 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
       setShowMissingModal(true);
       return;
     }
-    onStartRecipeStep('CLOVA');
+    onStartRecipeStep();
   };
 
   const handleProceedAnyway = () => {
     setShowMissingModal(false);
-    onStartRecipeStep('CLOVA');
+    onStartRecipeStep();
   };
 
   const handleServingsChange = (newServings: number) => {
