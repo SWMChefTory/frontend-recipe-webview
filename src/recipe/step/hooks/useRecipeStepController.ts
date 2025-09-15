@@ -30,6 +30,7 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
     [recipeData],
   );
 
+  //TODO : 비싼 연산 아닌데 useMemo를 쓴 이유는?
   const timelineStarts = useMemo(() => flattenedDetails.map(d => d.start), [flattenedDetails]);
 
   const totalSteps = useMemo(() => flattenedDetails.length, [flattenedDetails]);
