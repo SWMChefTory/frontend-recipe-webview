@@ -6,10 +6,10 @@ interface SlickSettings {
 }
 
 // 훅 반환 타입
+//TODO : handleStepClick 삭제 예정
 interface UseCarouselResult {
   sliderRef: React.RefObject<Slider>;
   currentStep: number;
-  handleStepClick: (stepIndex: number) => void;
   goToNext: () => void;
   goToPrevious: () => void;
   goToStep: (stepIndex: number) => void;
@@ -25,13 +25,6 @@ export const useCarousel = (): UseCarouselResult => {
   const sliderRef = useRef<Slider>(null);
   const [currentStep, setCurrentStep] = useState<number>(0);
 
-  const handleStepClick = useCallback((stepIndex: number): void => {
-    setCurrentStep(stepIndex);
-    if (sliderRef.current) {
-      sliderRef.current.slickGoTo(stepIndex);
-    }
-  }, []);
-
   const goToNext = useCallback(() => {
     if (sliderRef.current) {
       sliderRef.current.slickNext();
@@ -45,12 +38,13 @@ export const useCarousel = (): UseCarouselResult => {
   }, []);
 
   const goToStep = useCallback((stepIndex: number) => {
-    setCurrentStep(stepIndex);
+    // setCurrentStep(stepIndex);
     if (sliderRef.current) {
       sliderRef.current.slickGoTo(stepIndex);
     }
   }, []);
 
+  //TODO : 캐리설 slide를 통해 직접 움직일 수 도, 외부에서 움직일 수 도 있음
   const handleSlideChange = useCallback((index: number): void => {
     setCurrentStep(index);
   }, []);
@@ -70,9 +64,8 @@ export const useCarousel = (): UseCarouselResult => {
 
   return {
     sliderRef,
-    currentStep,
-    handleStepClick,
     slickSettings,
+    currentStep,
     goToNext,
     goToPrevious,
     goToStep,

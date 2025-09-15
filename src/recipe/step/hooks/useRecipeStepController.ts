@@ -6,7 +6,6 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
   const {
     sliderRef,
     currentStep,
-    handleStepClick,
     slickSettings,
     goToNext,
     goToPrevious,
@@ -59,12 +58,15 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
           if (seconds < timelineStarts[0]) idx = 0;
           else idx = timelineStarts.length - 1;
         }
-        handleStepClick(idx);
+        //handleStepClick제거하고 goToStep 제거
+        goToStep(idx);
       },
     }),
-    [currentStep, totalSteps, timelineStarts, goToNext, goToPrevious, goToStep, handleStepClick],
+    [currentStep, totalSteps, timelineStarts, goToNext, goToPrevious, goToStep],
   );
 
+
+  //TODO : 시간만 반환?
   const currentStepData = useMemo(() => {
     const fallbackStart = timelineStarts[currentStep] ?? 0;
     if (seekTime && seekTime.stepIdx === currentStep) {
@@ -75,13 +77,14 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
 
   const isLastStep = useMemo(() => currentStep === totalSteps - 1, [currentStep, totalSteps]);
 
+
+  //TODO : 이건 왜 필요한거? 그리고 undefined 왜 반환?
   useEffect(() => {
     if (seekTime && seekTime.stepIdx === currentStep) {
       const timer = setTimeout(() => setSeekTime(null), 500);
       return () => clearTimeout(timer);
     }
-
-    return undefined;
+    return;
   }, [seekTime, currentStep]);
 
   return {
@@ -90,7 +93,6 @@ export const useRecipeStepController = (recipeData: RecipeData) => {
     slickSettings,
     currentStepData,
     carouselControls,
-    handleStepClick,
     isLastStep,
     timelineStarts,
   };
