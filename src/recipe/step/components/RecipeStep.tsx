@@ -86,6 +86,19 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
+      case 'VIDEO': {
+        switch (arg1) {
+          case 'PLAY':
+            ytRef.current?.playVideo();
+            commandExecuted = true;
+            break;
+          case 'STOP':
+            ytRef.current?.pauseVideo();
+            commandExecuted = true;
+            break;
+        }
+        break;
+      }
       case 'TIMER': {
         switch (arg1) {
           case 'START':
