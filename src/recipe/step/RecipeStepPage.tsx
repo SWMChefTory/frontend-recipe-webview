@@ -12,9 +12,8 @@ const RecipeStepPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { recipeData, selectedModel } = location.state as {
+  const { recipeData } = location.state as {
     recipeData: any;
-    selectedModel: string;
   };
 
   // 화면 전환 애니메이션
@@ -32,11 +31,7 @@ const RecipeStepPage = (): JSX.Element => {
     <div
       className={`app cooking-mode ${transitioning ? 'transitioning' : ''} ${fadeIn ? 'fade-in' : ''}`}
     >
-      <RecipeStep
-        recipeData={recipeData}
-        onBackToRecipe={handleBackToRecipe}
-        selectedSttModel={selectedModel}
-      />
+      <RecipeStep recipeData={recipeData} onBackToRecipe={handleBackToRecipe} />
     </div>
   );
 };

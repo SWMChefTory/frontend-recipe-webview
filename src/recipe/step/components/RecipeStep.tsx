@@ -17,10 +17,9 @@ import 'recipe/step/components/RecipeStep.css';
 interface Props {
   recipeData: RecipeData;
   onBackToRecipe: () => void;
-  selectedSttModel: string;
 }
 
-const RecipeStep = ({ recipeData, onBackToRecipe, selectedSttModel }: Props) => {
+const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const {
     sliderRef,
     currentStep,
@@ -146,7 +145,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe, selectedSttModel }: Props) => 
   };
 
   useSimpleSpeech({
-    selectedSttModel,
     accessToken,
     recipeId: recipeId!,
     onIntent: handleIntent,
