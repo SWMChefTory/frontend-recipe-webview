@@ -33,35 +33,11 @@ export const sendBridgeMessage = (
 };
 
 /**
- * 조리 시작 메시지 전송
- * @param recipeData - 레시피 데이터
- */
-export const sendStartCooking = (recipeData: RecipeData): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.START_COOKING, recipeData);
-};
-
-/**
- * 조리 완료 메시지 전송
- * @param recipeData - 레시피 데이터
- */
-export const sendFinishCooking = (recipeData: RecipeData): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.FINISH_COOKING, recipeData);
-};
-
-/**
- * 레시피로 돌아가기 메시지 전송
- * @param recipeData - 레시피 데이터
- */
-export const sendBackToRecipe = (recipeData: RecipeData): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_TO_RECIPE, recipeData);
-};
-
-/**
  * 뒤로가기 메시지 전송
  * @param recipeData - 레시피 데이터
  */
-export const sendBackPressed = (): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, null);
+export const sendGoHome = (): void => {
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.GO_HOME, null);
 };
 
 /**

@@ -1,15 +1,44 @@
-import './MeasurementOverlay.css';
+import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import './MeasurementPage.css';
 import MeasurementSection from './components/MeasurementSection';
 
-interface Props {
-  onClose: () => void;
-}
+const MeasurementPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
-const MeasurementOverlay = ({ onClose }: Props) => {
+  const handleBack = (): void => {
+    navigate(`/recipes/${id}`, { replace: true });
+  };
+
+  // 네이티브 BACK_PRESSED 처리
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      let msg: unknown;
+      try {
+        msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      } catch (e) {
+        return;
+      }
+
+      if (
+        typeof msg === 'object' &&
+        msg !== null &&
+        'type' in msg &&
+        (msg as any).type === 'BACK_PRESSED'
+      ) {
+        navigate(`/recipes/${id}`, { replace: true });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [id, navigate]);
+
   return (
-    <div className="measurement-overlay active">
+    <div className="measurement-page active">
       <div className="overlay-content">
-        <button className="back-button" onClick={onClose}>
+        <button className="back-button" onClick={handleBack}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18L9 12L15 6"
@@ -76,4 +105,4 @@ const MeasurementOverlay = ({ onClose }: Props) => {
   );
 };
 
-export default MeasurementOverlay;
+export default MeasurementPage;
