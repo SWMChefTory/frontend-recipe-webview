@@ -1,2 +1,1 @@
-export { useCarousel } from './useCarousel';
-export { useRecipeStepController } from './useRecipeStepController';
+export { useCarouselController } from './useCarouselController';
