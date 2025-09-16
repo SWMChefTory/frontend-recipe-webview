@@ -26,15 +26,7 @@ function LoadingOverlay() {
     <div className="loading-overlay">
       <div className="loading-content">
         <div className="spinner"></div>
-        <p className="loading-message">Loading...</p>
-        {/* {progress !== undefined && (
-            <div className="progress-bar">
-              <div 
-                className="progress-fill" 
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )} */}
+        <p className="loading-message">로딩중...</p>
       </div>
     </div>
   );
@@ -129,6 +121,19 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
+      case 'VIDEO': {
+        switch (arg1) {
+          case 'PLAY':
+            ytRef.current?.playVideo();
+            commandExecuted = true;
+            break;
+          case 'STOP':
+            ytRef.current?.pauseVideo();
+            commandExecuted = true;
+            break;
+        }
+        break;
+      }
       //TODO : 버튼 컴포넌트로 캡슐화
       case 'TIMER': {
         switch (arg1) {
@@ -165,6 +170,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
+      
     }
 
     // 명령이 실행되었으면 KWS 비활성화
