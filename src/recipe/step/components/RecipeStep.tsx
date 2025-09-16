@@ -12,11 +12,32 @@ import StepCard from './StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
-import { useStepController } from '../hooks/useStepController';
+import { useStepByVoiceController } from '../hooks/useStepController';
+import { useStepInit } from '../hooks/useStepInit';
+import './Overlay.css';
 
 interface Props {
   recipeData: RecipeData;
   onBackToRecipe: () => void;
+}
+
+function LoadingOverlay() {
+  return (
+    <div className="loading-overlay">
+      <div className="loading-content">
+        <div className="spinner"></div>
+        <p className="loading-message">Loading...</p>
+        {/* {progress !== undefined && (
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )} */}
+      </div>
+    </div>
+  );
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
@@ -32,33 +53,37 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
-  const  isSliderInitialized = useRef(false);
-  const isYtInitialized= useRef(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
-  const handleYtInitialized = () => {
-    isYtInitialized.current = true;
-    if (isSliderInitialized && isYtInitialized) {
-      handleSteps.handleRecipeByStep(0);
-    }
-  };
+  const sliderRef = useRef<Slider>(null);
+  const ytRef = useRef<YT.Player | null>(null);
 
-  const handleSliderInitialized = () => {
-    isSliderInitialized.current = true;
-    if (isSliderInitialized && isYtInitialized) {
-      handleSteps.handleRecipeByStep(0);
-    }
-  };
-
-
-  const {
+  const { handleStepsFromVoice, handleStepsFromSlider } = useStepByVoiceController(
     sliderRef,
     ytRef,
-    currentStep,
-    slickSettings,
-    totalSteps,
-    handleSteps,
-  } = useStepController(recipeData);
-  
+    recipeData,
+  );
+
+  const { isInitialized, handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
+    handleStepsFromVoice.byStep(0),
+  );
+
+  const slickSettings = {
+    dots: false,
+    infinite: false,
+    speed: 300,
+    centerMode: true,
+    centerPadding: '10%',
+    afterChange: (index: number) => {
+      setCurrentStep(index);
+      handleStepsFromSlider.byStep(index);
+    },
+    arrows: false,
+    adaptiveHeight: false, // 높이 적응 비활성화
+    draggable: true,
+    onInit: () => handleSliderInitialized(),
+  };
+
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
 
@@ -80,18 +105,18 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
     switch (cmd) {
       case 'NEXT':
-        handleSteps.handleRecipeToNext();
+        handleStepsFromVoice.toNext(currentStep);
         commandExecuted = true;
         break;
       case 'PREV':
-        handleSteps.handleRecipeToPrevious();
+        handleStepsFromVoice.toPrevious(currentStep);
         commandExecuted = true;
         break;
       case 'STEP': {
         const num = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(num) && num >= 1) {
           //외부로 오는 요청은 1부터 시작하기 때문에 -1 처리
-          handleSteps.handleRecipeByStep(num-1);
+          handleStepsFromVoice.byStep(num - 1);
           commandExecuted = true;
         }
         break;
@@ -99,7 +124,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       case 'TIMESTAMP': {
         const secs = parseInt(arg1 ?? '', 10);
         if (!Number.isNaN(secs)) {
-          handleSteps.handleRecipeByTimestamp(secs);
+          handleStepsFromVoice.byTimestamp(secs);
           commandExecuted = true;
         }
         break;
@@ -195,10 +220,11 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
   return (
     <div className="cooking-mode">
+      {!isInitialized && <LoadingOverlay />}
       <Header
         title={recipeData.video_info.video_title}
         currentStep={currentStep + 1}
-        totalSteps={totalSteps}
+        totalSteps={recipeData.recipe_steps.length}
         onBack={onBackToRecipe}
       />
 
@@ -214,7 +240,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
       <section className="cooking-steps-container">
         <div className="carousel-container">
-          <Slider ref={sliderRef} onInit={() => handleSliderInitialized()} {...slickSettings}>
+          <Slider ref={sliderRef} {...slickSettings}>
             {recipeData.recipe_steps.flatMap((step, idx) =>
               step.details.map((detail, detailIdx) => (
                 <StepCard

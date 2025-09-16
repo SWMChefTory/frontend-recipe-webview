@@ -1,24 +1,30 @@
 import { RecipeData } from "recipe/detail/types/recipe";
 import {useCarouselController} from "./useCarouselController";
 import { useRef } from "react";
+import Slider from "react-slick";
 
 
-export const useStepController = (recipeData: RecipeData) => {
+export const useStepByVoiceController = (sliderRef: React.RefObject<Slider>, ytRef: React.RefObject<YT.Player>, recipeData: RecipeData) => {
     const {
-        sliderRef, //TODO : 반환
-        currentStep,  //TODO : 반환
-        slickSettings, // 반환
+        // sliderRef, //TODO : 반환
+        // currentStep,  //TODO : 반환
+        // slickSettings, // 반환
         carouselControls, //TODO : 길이만 반환
         timelineStarts,  
-      } = useCarouselController(recipeData);
+      } = useCarouselController(recipeData, sliderRef);
     
       // 유튜브 플레이어 관련 상태
-      const ytRef = useRef<YT.Player | null>(null);
+      // const ytRef = useRef<YT.Player | null>(null);
       //TODO : useEffect의 무한루프 막기 위해서 이거 있는 거 같은데, useEffect 제거해서 이거 없어도 될듯?
       //DONE : 삭제
       const stepEndIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
       const totalSteps = carouselControls.totalSteps;
+
+      // slickSettings.afterChange = (index: number) => {
+        
+      //   console.log('slickSettings.afterChange', index);
+      // }
     
       const handleStepEnd = (step: number) => {
         if (stepEndIntervalRef.current) {
@@ -52,50 +58,52 @@ export const useStepController = (recipeData: RecipeData) => {
     
         stepEndIntervalRef.current = interval;
       };
-    
-      const handleRecipeByTimestamp = (seconds: number) => {
-        const purposeStep = carouselControls.seekTo(seconds);
-        if (!purposeStep) return;
-        ytRef.current?.seekTo(seconds, true);
-        handleStepEnd(purposeStep);
-      };
-    
-      const handleRecipeByStep = (step: number) => {
-        if (step < 0 || step > totalSteps) return;
-        carouselControls.goToStep(step);
-        ytRef.current?.seekTo(timelineStarts[step], true);
-        handleStepEnd(step);
-      };
-      
-      const handleRecipeToNext = () => {
-        if (currentStep === totalSteps - 1) return;
-        const nextStep = currentStep + 1;
-        carouselControls.goToNext();
-        ytRef.current?.seekTo(timelineStarts[nextStep], true);
-        handleStepEnd(nextStep);
-      };
-    
-      const handleRecipeToPrevious = () => {
-        if (currentStep === 0) return;
-        const prevStep = currentStep - 1;
-        carouselControls.goToPrevious();
-        ytRef.current?.seekTo(timelineStarts[prevStep], true);
-        handleStepEnd(prevStep);
-      };
 
-      const handleSteps = {
-        handleRecipeByStep,
-        handleRecipeToNext,
-        handleRecipeToPrevious,
-        handleRecipeByTimestamp,
+      const handleStepsFromVoice = {
+        byStep: (step: number) => {
+          if (step < 0 || step > totalSteps) return;
+          carouselControls.goToStep(step);
+          ytRef.current?.seekTo(timelineStarts[step], true);
+          handleStepEnd(step);
+        },
+        toNext: (currentStep: number) => {
+          if (currentStep === totalSteps - 1) return;
+          const nextStep = currentStep + 1;
+          carouselControls.goToNext();
+          ytRef.current?.seekTo(timelineStarts[nextStep], true);
+          console.log('handleRecipeToNext', nextStep);
+          handleStepEnd(nextStep);
+        },
+        toPrevious: (currentStep: number) => {
+          if (currentStep === 0) return;
+          const prevStep = currentStep - 1;
+          carouselControls.goToPrevious();
+          ytRef.current?.seekTo(timelineStarts[prevStep], true);
+          handleStepEnd(prevStep);
+        },
+        byTimestamp: (seconds: number) => {
+          const purposeStep = carouselControls.seekTo(seconds);
+          if (!purposeStep) return;
+          ytRef.current?.seekTo(seconds, true);
+          handleStepEnd(purposeStep);
+        },
+      }
+
+      const handleStepsFromSlider = {
+        byStep: (step: number) => {
+          if (step < 0 || step > totalSteps) return;
+          ytRef.current?.seekTo(timelineStarts[step], true);
+          handleStepEnd(step);
+        },
       }
 
       return {
-        sliderRef,
-        ytRef,
-        currentStep,
-        slickSettings,
-        totalSteps,
-        handleSteps,
+        // sliderRef,
+        // ytRef,
+        // currentStep,
+        // slickSettings,
+        // totalSteps,
+        handleStepsFromVoice,
+        handleStepsFromSlider,
       };
 }
