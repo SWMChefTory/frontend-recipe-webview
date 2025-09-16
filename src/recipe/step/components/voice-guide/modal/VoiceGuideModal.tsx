@@ -1,5 +1,5 @@
 import React from 'react';
-import './VoiceGuide.css';
+import './VoiceGuideModal.css';
 
 interface VoiceGuideProps {
   isVisible: boolean;

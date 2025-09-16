@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Slider from "react-slick";
 
 
-export const useStepByVoiceController = (sliderRef: React.RefObject<Slider>, ytRef: React.RefObject<YT.Player>, recipeData: RecipeData) => {
+export const useStepController = (sliderRef: React.RefObject<Slider>, ytRef: React.RefObject<YT.Player>, recipeData: RecipeData) => {
     const {
         // sliderRef, //TODO : 반환
         // currentStep,  //TODO : 반환
@@ -12,6 +12,7 @@ export const useStepByVoiceController = (sliderRef: React.RefObject<Slider>, ytR
         carouselControls, //TODO : 길이만 반환
         timelineStarts,  
       } = useCarouselController(recipeData, sliderRef);
+
     
       // 유튜브 플레이어 관련 상태
       // const ytRef = useRef<YT.Player | null>(null);
@@ -98,11 +99,6 @@ export const useStepByVoiceController = (sliderRef: React.RefObject<Slider>, ytR
       }
 
       return {
-        // sliderRef,
-        // ytRef,
-        // currentStep,
-        // slickSettings,
-        // totalSteps,
         handleStepsFromVoice,
         handleStepsFromSlider,
       };

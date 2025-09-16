@@ -9,7 +9,7 @@ export const useAccessToken = (): string | null => {
 };
 
 export const AccessTokenProvider = ({ children }: { children: React.ReactNode }): JSX.Element => {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>("Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIyYzdjMzFkNy1jODYxLTRkZWYtYmUwOC05NmRiYWJkN2NlZjEiLCJ0eXBlIjoiJHtKV1RfQUNDRVNTX1RPS0VOX1RZUEV9IiwiaWF0IjoxNzU4MDA4MjY5LCJleHAiOjE3NTgwMDg1Njl9.I11QgGbFEiT6gHudEPWMlP7kBwZVH7-ej5lwBMjpMXL7jn3rVBpbsNKpz4A4ZG-EX7OS_R8CdDx1ltl6Sf0qLg");
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {

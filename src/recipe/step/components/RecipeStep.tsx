@@ -5,31 +5,21 @@ import Slider from 'react-slick';
 import { Header, YouTubePlayer } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
-import VoiceGuide from 'recipe/step/components/VoiceGuide';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
-import StepCard from './StepCard';
+import StepCard from './carousel/StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
-import { useStepByVoiceController } from '../hooks/useStepController';
+import { useStepController } from '../hooks/useStepController';
 import { useStepInit } from '../hooks/useStepInit';
-import './Overlay.css';
+import { LoadingOverlay } from 'recipe/step/components/overlay/Overlay';
+import { useOrientation } from 'recipe/step/hooks/useOrientation';
+import VoiceGuide from 'recipe/step/components/voice-guide/VoiceGuide';
 
 interface Props {
   recipeData: RecipeData;
   onBackToRecipe: () => void;
-}
-
-function LoadingOverlay() {
-  return (
-    <div className="loading-overlay">
-      <div className="loading-content">
-        <div className="spinner"></div>
-        <p className="loading-message">로딩중...</p>
-      </div>
-    </div>
-  );
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
@@ -40,7 +30,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
   // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
-  const [showVoiceGuide, setShowVoiceGuide] = useState(false);
 
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
@@ -50,7 +39,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const sliderRef = useRef<Slider>(null);
   const ytRef = useRef<YT.Player | null>(null);
 
-  const { handleStepsFromVoice, handleStepsFromSlider } = useStepByVoiceController(
+  const { handleStepsFromVoice, handleStepsFromSlider } = useStepController(
     sliderRef,
     ytRef,
     recipeData,
@@ -59,6 +48,8 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const { isInitialized, handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
     handleStepsFromVoice.byStep(0),
   );
+
+  const { orientation } = useOrientation();
 
   const slickSettings = {
     dots: false,
@@ -187,14 +178,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     });
   };
 
-  const handleVoiceGuideOpen = () => {
-    setShowVoiceGuide(true);
-  };
-
-  const handleVoiceGuideClose = () => {
-    setShowVoiceGuide(false);
-  };
-
   useSimpleSpeech({
     accessToken,
     recipeId: recipeId!,
@@ -227,12 +210,16 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   return (
     <div className="cooking-mode">
       {!isInitialized && <LoadingOverlay />}
-      <Header
-        title={recipeData.video_info.video_title}
-        currentStep={currentStep + 1}
-        totalSteps={recipeData.recipe_steps.length}
-        onBack={onBackToRecipe}
-      />
+      {
+        orientation === 'portrait' && (
+          <Header
+            title={recipeData.video_info.video_title}
+            currentStep={currentStep + 1}
+            totalSteps={recipeData.recipe_steps.length}
+            onBack={onBackToRecipe}
+          />
+        )
+      }
 
       <YouTubePlayer
         youtubeEmbedId={recipeData.video_info.video_id}
@@ -286,25 +273,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       </div>
 
       {/* TODO : 버튼 컴포넌트 분리 */}
-      <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
-        <div className="speech-bubble">
-          <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
-          <div className="speech-bubble-arrow"></div>
-        </div>
-        <button
-          className="floating-voice-guide-btn"
-          onClick={handleVoiceGuideOpen}
-          aria-label="음성 명령 가이드"
-          type="button"
-        >
-          <img
-            src={isKwsActive ? '/tori-listening.png' : '/tori-idle.png'}
-            alt={isKwsActive ? '토리 듣는 중' : '토리 대기 중'}
-          />
-        </button>
-      </div>
-
-      <VoiceGuide isVisible={showVoiceGuide} onClose={handleVoiceGuideClose} />
+      <VoiceGuide isKwsActive={isKwsActive} />
     </div>
   );
 };

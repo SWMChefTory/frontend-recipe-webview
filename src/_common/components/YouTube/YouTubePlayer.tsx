@@ -22,6 +22,11 @@ const YouTubePlayer = ({
     height: '100%',
     playerVars: {
       autoplay: autoplay ? 1 : 0,
+      fs: 0,             // 전체화면 버튼 비활성화
+      controls: 1,       // 컨트롤 표시하되 전체화면만 비활성화
+      modestbranding: 1, // YouTube 로고 최소화
+      disablekb: 1,      // 키보드 단축키 비활성화
+      rel: 0,            
     },
   };
 
