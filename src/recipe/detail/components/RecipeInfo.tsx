@@ -1,6 +1,7 @@
 import { Header } from '_common';
-import { sendBackPressed } from 'bridge/utils/webview';
+import { sendGoHome } from 'bridge/utils/webview';
 import { useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import IngredientList from 'recipe/detail/components/IngredientList';
 import 'recipe/detail/components/IngredientList.css';
 import 'recipe/detail/components/RecipeHeader.css';
@@ -10,13 +11,13 @@ import StartCookingButton from 'recipe/detail/components/StartCookingButton';
 import 'recipe/detail/components/StartCookingButton.css';
 import Video from 'recipe/detail/components/Video';
 import { RecipeInfoProps } from 'recipe/detail/types';
-import MeasurementOverlay from 'recipe/measurement/MeasurementOverlay';
 import IngredientsModal from './IngredientsModal';
 import RecipeHeader from './RecipeHeader';
 import RecipeSteps from './RecipeSteps';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
-  const [showMeasurement, setShowMeasurement] = useState(false);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const youtubePlayerRef = useRef<YT.Player | null>(null);
 
   const { analysis } = recipeData;
@@ -31,9 +32,9 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const [checkedCount, setCheckedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(analysis.ingredients.length);
 
-  const handleBackPress = (): void => {
+  const handleGoHome = (): void => {
     if (window.ReactNativeWebView) {
-      sendBackPressed();
+      sendGoHome();
     } else {
       window.history.back();
     }
@@ -73,7 +74,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   return (
     <>
       <div className="recipe-info">
-        <Header title={recipeData.video_info.video_title} onBack={handleBackPress} />
+        <Header title={recipeData.video_info.video_title} onBack={handleGoHome} />
 
         <Video
           videoId={recipeData.video_info.video_id}
@@ -98,7 +99,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
             ingredients={analysis.ingredients}
             currentServings={currentServings}
             originalServings={originalServings}
-            onOpenMeasurement={() => setShowMeasurement(true)}
+            onOpenMeasurement={() => navigate(`/recipes/${id}/measurement`)}
             onCheckedSummaryChange={(c, t) => {
               setCheckedCount(c);
               setTotalCount(t);
@@ -113,11 +114,6 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
         </div>
       </div>
 
-      {showMeasurement && (
-        <div className="measurement-overlay active">
-          <MeasurementOverlay onClose={() => setShowMeasurement(false)} />
-        </div>
-      )}
       {showMissingModal && (
         <IngredientsModal
           checkedCount={checkedCount}
