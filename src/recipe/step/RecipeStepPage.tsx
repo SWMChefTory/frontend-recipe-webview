@@ -1,4 +1,5 @@
 import { useBodyScrollLock, useTransition } from '_common';
+import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import RecipeStep from 'recipe/step/components/RecipeStep';
 
@@ -26,6 +27,30 @@ const RecipeStepPage = (): JSX.Element => {
 
   // 조리 모드일 때 body 스크롤 방지
   useBodyScrollLock(true);
+
+  // 네이티브 BACK_PRESSED 처리
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      let msg: unknown;
+      try {
+        msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      } catch (e) {
+        return;
+      }
+
+      if (
+        typeof msg === 'object' &&
+        msg !== null &&
+        'type' in msg &&
+        (msg as any).type === 'BACK_PRESSED'
+      ) {
+        navigate(`/recipes/${id}`, { replace: true });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [id, navigate]);
 
   return (
     <div
