@@ -1,0 +1,117 @@
+/* 로딩 상태 스타일 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 0;
+  text-align: center;
+}
+
+.skeleton-header {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  border-top: 0.0625rem solid #f0f0f0;
+}
+
+.skeleton-header .skeleton-button {
+  height: 2.25rem;
+}
+
+.skeleton-video {
+  position: relative;
+  width: 100%;
+  background: #f9f9f9;
+  background-color: transparent;
+  overflow: hidden;
+  margin: 0;
+}
+
+.skeleton-content {
+  width: 100%;
+  text-align: left;
+  margin: 0 auto;
+  padding: 1.25rem 1rem;
+  padding-bottom: calc(1.25rem + var(--bottom-bar-h, 4.5rem));
+}
+
+.skeleton-block {
+  margin: 0.75rem 0;
+}
+
+.skeleton-section {
+  background: #f9f9f9;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.skeleton-box {
+  width: 100%;
+}
+
+.skeleton-box-sm {
+  /* Phone (default) */
+  height: 6.25rem; /* 100px */
+}
+
+.skeleton-box-lg {
+  /* Phone (default) */
+  height: 12rem;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 3rem;
+}
+
+.skeleton-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top: 0.0625rem solid #f0f0f0;
+  z-index: 10;
+}
+
+/* Tablet */
+@media (min-width: 48rem) {
+  /* 768px */
+  .skeleton-box-lg {
+    height: 10rem;
+  }
+  .skeleton-box-sm {
+    height: 3.5rem;
+  }
+  .skeleton-button {
+    height: 3.25rem;
+  }
+}
+
+/* Desktop */
+@media (min-width: 64rem) {
+  /* 1024px */
+  .skeleton-box-lg {
+    height: 24rem;
+  }
+  .skeleton-box-sm {
+    height: 3.5rem;
+  }
+  .skeleton-button {
+    height: 3.5rem;
+  }
+}
+
+.loading-container p {
+  font-size: 1rem;
+  color: #666;
+}

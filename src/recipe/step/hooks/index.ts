@@ -1,0 +1,1 @@
+export { useCarouselController } from './useCarouselController';

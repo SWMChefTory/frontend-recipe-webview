@@ -1,0 +1,77 @@
+:root {
+  /* 모바일 중심 컬러 시스템 */
+  --bg: #fef7f0;
+  --card: #ffffff;
+  --text-strong: #1f2937;
+  --text: #374151;
+  --muted: #6b7280;
+  --line: rgba(249, 115, 22, 0.08);
+  --line-strong: rgba(249, 115, 22, 0.15);
+  --brand: #ff4500;
+  --brand-dark: #e03d00;
+  --brand-light: #fff5f0;
+
+  /* 모바일 최적화 간격 */
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 12px;
+  --space-xl: 16px;
+  --space-2xl: 24px;
+
+  /* 하단 고정 버튼 높이 */
+  --bottom-bar-h: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: clamp(16px, 2.2vw, 30px);
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#root {
+  height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+html,
+body,
+#root {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
+}
+
+body {
+  font-family:
+    'Noto Sans KR',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: white;
+}

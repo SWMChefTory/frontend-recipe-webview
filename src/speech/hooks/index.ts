@@ -1,0 +1,1 @@
+export { useSimpleSpeech } from './useSimpleSpeech';

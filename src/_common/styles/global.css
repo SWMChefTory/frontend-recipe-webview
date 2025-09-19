@@ -1,0 +1,33 @@
+/* YouTube 플레이어 컨테이너 스타일 */
+.youtube-container {
+  position: relative;
+  width: 100%;
+  /* 16:9 비율 유지 (9/16 = 0.5625 = 56.25%) */
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.youtube-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 반응형 디자인 - 모바일 최적화 */
+@media (max-width: 768px) {
+  .youtube-container {
+    /* 모바일에서도 16:9 비율 유지 */
+    padding-bottom: 56.25%;
+  }
+}
+
+/* 작은 모바일 화면 최적화 */
+@media (max-width: 480px) {
+  .youtube-container {
+    padding-bottom: 56.25%;
+  }
+}
