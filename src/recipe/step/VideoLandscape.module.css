@@ -1,0 +1,5 @@
+.video-aspect-landscape {
+    --video-landcape-width: 65%;
+    width: var(--video-landcape-width);
+    height: var(--video-landcape-height/16*9);
+}

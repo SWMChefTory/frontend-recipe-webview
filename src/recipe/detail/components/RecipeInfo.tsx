@@ -14,6 +14,7 @@ import { RecipeInfoProps } from 'recipe/detail/types';
 import IngredientsModal from './IngredientsModal';
 import RecipeHeader from './RecipeHeader';
 import RecipeSteps from './RecipeSteps';
+import SafeArea from 'recipe/_common/SafeArea';
 
 const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Element => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const increaseServings = () => handleServingsChange(currentServings + 1);
 
   return (
-    <>
+    <SafeArea>
       <div className="recipe-info">
         <Header title={recipeData.video_info.video_title} onBack={handleGoHome} />
 
@@ -122,7 +123,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
           onProceed={handleProceedAnyway}
         />
       )}
-    </>
+    </SafeArea>
   );
 };
 

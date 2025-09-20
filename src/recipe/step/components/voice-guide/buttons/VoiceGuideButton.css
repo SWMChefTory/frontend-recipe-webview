@@ -1,23 +1,37 @@
-.floating-voice-guide-container {
+/*css 전역적으로 적용되는데 일부만 적용되도록 변경할 필요 있을듯*/
+.floating-voice-guide-container{
     position: fixed;
     bottom: 24px;
-    right: var(--anchor-right);
-    z-index: 999;
-    /* 버튼만 레이아웃에 참여하도록 하고 말풍선은 절대 배치로 분리 */
+    right: 24px;
+    z-index: 999; 
     display: inline-block;
-    /* 버튼 기준 고정 위치값을 변수로 관리 */
-    --anchor-right: 24px;
     --btn-size: 80px;
     transform: translateX(0);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
     will-change: transform;
   }
+
+.floating-voice-guide-container-landscape {
+    position: fixed;
+    /* bottom: 24px; */
+    bottom: 8px;/*바닥에 붙이기 위해선 필요함*/
+    left: 80px;
+    /* right: var(--anchor-right); */
+    z-index: 999; 
+    display: inline-block;
+    --anchor-right: 24px;
+    --btn-size: 80px;
+    transform: translateX(0);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+    will-change: transform;
+}
   
   /* 말풍선 */
+  /* speechBubbleAppear이 애니메이션을 나타나게 함 ease-out 지연 forward 나타나게 하기*/
   .speech-bubble {
     position: absolute;
     top: 50%;
-    right: calc(100% + 12px); /* 버튼 왼쪽에 고정 배치 */
+    right: calc(100% + 12px);
     transform: translateY(-50%) translateX(10px);
     background: var(--card);
     padding: 16px 20px;
@@ -31,8 +45,19 @@
     animation: speechBubbleAppear 0.5s ease-out 1s forwards;
   }
   
+  @keyframes speechBubbleAppear {
+    0% {
+      opacity: 0;
+      transform: translateY(-50%) translateX(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+  }
+  
   .speech-bubble-text {
-    font-size: 1rem;
+    /* font-size: 0.9rem; */
     font-weight: 500;
     color: var(--text);
     line-height: 1.2;
@@ -50,18 +75,8 @@
     border-bottom: 10px solid transparent;
   }
   
-  @keyframes speechBubbleAppear {
-    0% {
-      opacity: 0;
-      transform: translateY(-50%) translateX(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(-50%) translateX(0);
-    }
-  }
-  
   /* 초기 애니메이션 완료 후 말풍선 상태 유지 */
+  /*speech-bubble과 appeared가 동시에 있을 때 일어나는것*/
   .speech-bubble.appeared {
     animation: none !important;
     opacity: 1;
@@ -75,7 +90,7 @@
     animation: none !important; /* 기존 애니메이션 중단하여 중복 방지 */
     transition:
       opacity 0.3s ease 0.55s,
-      transform 0.3s ease 0.55s; /* 버튼 복귀 후 나타남 */
+      transform 0.3s ease 0.55s; /* 버튼 복귀 후 나타남 */ /* TODO : opacitiy 0되는데 굳이 이동시킬 필요 있나요?*/
   }
   
   /* 플로팅 음성 가이드 버튼 */
@@ -95,26 +110,10 @@
     overflow: hidden;
     flex-shrink: 0;
   }
-  
-  .floating-voice-guide-btn img {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-  }
-  
-  /* 왼쪽 하단 플로팅 타이머 버튼 */
-  .floating-timer-container {
-    position: fixed;
-    bottom: 24px;
-    left: 24px;
-    z-index: 999;
-  }
-  
-  .floating-timer-btn {
-    width: 80px;
-    height: 80px;
+
+  .floating-voice-guide-btn-landscape {
+    width: 40px;
+    height: 40px;
     background: var(--card);
     border: none;
     border-radius: 50%;
@@ -125,31 +124,25 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .floating-voice-guide-btn-landscape img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 50%;
+    transition: all 0.3s ease;
   }
   
-  /* KWS 활성화 상태 - 말풍선과 버튼이 동시에 스무스하게 이동 */
-  .floating-voice-guide-container.kws-active {
-    /* 버튼을 기준으로만 이동: 우측 고정에서 화면 중앙까지 transform만 변경 */
-    /* 이동은 말풍선이 사라진 뒤 시작하도록 약간의 지연 적용 */
-    transform: translateX(calc((var(--anchor-right) + (var(--btn-size) / 2)) - 50vw));
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.32s;
-  }
   
-  /* KWS 활성화 시 말풍선을 부드럽게 제거하며 동시에 이동 */
-  .floating-voice-guide-container.kws-active .speech-bubble {
-    opacity: 0 !important;
-    transform: translateY(-50%) translateX(-10px) !important;
-    transition:
-      opacity 0.3s ease,
-      transform 0.3s ease !important;
-    animation: none !important; /* 기존 애니메이션 중단 */
-    pointer-events: none; /* KWS 활성화 시 클릭 방지 */
-  }
-  
-  /* KWS 활성화 상태 - 버튼 이동과 동시에 펄스 효과 */
-  .floating-voice-guide-container.kws-active .floating-voice-guide-btn {
-    /* 버튼 이동 완료 후 펄스 효과 시작 (0.5초 지연) */
-    animation: kwsPulse 2s ease-in-out 0.5s infinite;
+  .floating-voice-guide-btn img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 50%;
+    transition: all 0.3s ease;
   }
   
   /* 펄스 효과 */
@@ -185,8 +178,12 @@
       border-radius: 14px;
     }
   
-    .speech-bubble-text {
+    /* .speech-bubble-text {
       font-size: 0.9375rem;
+    } */
+
+    .speech-bubble-text {
+      font-size: 0.875rem;
     }
   
     .speech-bubble-arrow {

@@ -7,7 +7,9 @@ export type BridgeMessageType =
   | 'TIMER_START'
   | 'TIMER_STOP'
   | 'TIMER_CHECK'
-  | 'TIMER_SET';
+  | 'TIMER_SET'
+  | 'LOCK_TO_PORTRAIT_UP'
+  | 'LOCK_TO_LANDSCAPE_LEFT';
 
 // Bridge 메시지 인터페이스
 export interface BridgeMessage {

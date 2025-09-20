@@ -1,14 +1,17 @@
+import { useOrientation } from '_common/orientation/useOrientation';
 import './VoiceGuideButton.css';
 
 export default function VoiceGuideButton({ isKwsActive, handleVoiceGuideOpen }: { isKwsActive: boolean, handleVoiceGuideOpen: () => void }) {
+  const { isPortrait } = useOrientation();
   return(
-  <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
-    <div className="speech-bubble">
+  <div className={`floating-voice-guide-container-${isPortrait() ? 'portrait' : 'landscape'} ${isKwsActive ? 'kws-active' : ''}`}>
+    {isPortrait()&&<div className="speech-bubble">
       <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
       <div className="speech-bubble-arrow"></div>
-    </div>
+    </div>}
+    
     <button
-      className="floating-voice-guide-btn"
+      className={isPortrait() ? 'floating-voice-guide-btn' : 'floating-voice-guide-btn-landscape'}
       onClick={handleVoiceGuideOpen}
       aria-label="음성 명령 가이드"
       type="button"

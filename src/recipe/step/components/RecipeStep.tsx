@@ -1,21 +1,31 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
 
-import { Header, YouTubePlayer } from '_common';
-import { sendBridgeMessage, useAccessToken } from 'bridge';
+import { YouTubePlayer } from '_common';
+import Header, { HeaderRightSection } from '_common/components/Header/Header';
+import { sendBridgeMessage } from 'bridge';
+import { useAccessToken } from 'app/AccessTokenProvider';
 import { RecipeData } from 'recipe/detail/types/recipe';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
-import StepCard from './carousel/StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
-import 'recipe/step/components/RecipeStep.css';
-import { useStepController } from '../hooks/useStepController';
-import { useStepInit } from '../hooks/useStepInit';
+import { useStepController } from './hooks/useStepController';
+import { useStepInit } from './hooks/useStepInit';
 import { LoadingOverlay } from 'recipe/step/components/overlay/Overlay';
-import { useOrientation } from 'recipe/step/hooks/useOrientation';
 import VoiceGuide from 'recipe/step/components/voice-guide/VoiceGuide';
+
+import Carousel from 'recipe/step/components/carousel/Carousel';
+
+import 'recipe/step/components/RecipeStep.css';
+import { useSafeArea } from '_common/safe-area/useSafeArea';
+import { useOrientation } from '_common/orientation/useOrientation';
+import SafeArea from 'recipe/_common/SafeArea';
+import { TbCropLandscape } from "react-icons/tb";
+
+import 'recipe/step/VideoLandscape.module.css';
+
 
 interface Props {
   recipeData: RecipeData;
@@ -23,11 +33,6 @@ interface Props {
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
-  //TODO : useEffect의 무한루프 막기 위해서 이거 있는 거 같은데, useEffect 제거해서 이거 없어도 될듯?
-  //DONE : 삭제
-
-  // const is
-
   // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
 
@@ -49,23 +54,16 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     handleStepsFromVoice.byStep(0),
   );
 
-  const { orientation } = useOrientation();
+  const { isPortrait, handleLandscape, handlePortrait } = useOrientation();
+  const safeArea = useSafeArea();
 
-  const slickSettings = {
-    dots: false,
-    infinite: false,
-    speed: 300,
-    centerMode: true,
-    centerPadding: '10%',
-    afterChange: (index: number) => {
-      setCurrentStep(index);
-      handleStepsFromSlider.byStep(index);
-    },
-    arrows: false,
-    adaptiveHeight: false, // 높이 적응 비활성화
-    draggable: true,
-    onInit: () => handleSliderInitialized(),
-  };
+  console.log(isPortrait());
+
+  useEffect(() => {
+    return () => {
+      handlePortrait();
+    };
+  }, [currentStep]);
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
@@ -161,7 +159,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
-      
     }
 
     // 명령이 실행되었으면 KWS 비활성화
@@ -205,75 +202,80 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   // TODO : 이런 방식으로 되면 사용자가 말한 '다음'이 도착해서 다음으로 넘어갔는데, seek가 실행되서 비디오는 이전에 있던 step의 영상 시간으로 가버릴 수 도 있음.
   // DONE : 삭제
 
-  let stepCount = 1;
-
   return (
-    <div className="cooking-mode">
+    <div className={isPortrait() ? `cooking-mode` : `cooking-mode-landscape`}>
       {!isInitialized && <LoadingOverlay />}
-      {
-        orientation === 'portrait' && (
+      <SafeArea isLandscape={!isPortrait()} isRightApplied={isPortrait()} >
+        {isPortrait() && (
           <Header
             title={recipeData.video_info.video_title}
             currentStep={currentStep + 1}
             totalSteps={recipeData.recipe_steps.length}
             onBack={onBackToRecipe}
+            rightSection={<HeaderRightSection childrens={[{ icon: TbCropLandscape, action: handleLandscape }]} />}
           />
-        )
-      }
+        )}
 
-      <YouTubePlayer
-        youtubeEmbedId={recipeData.video_info.video_id}
-        title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
-        autoplay
-        onPlayerReady={player => {
-          ytRef.current = player;
-          handleYtInitialized();
-        }}
-      />
-
-      <section className="cooking-steps-container">
-        <div className="carousel-container">
-          <Slider ref={sliderRef} {...slickSettings}>
-            {recipeData.recipe_steps.flatMap((step, idx) =>
-              step.details.map((detail, detailIdx) => (
-                <StepCard
-                  key={`step-${idx}-${detailIdx}`}
-                  step={`${step.subtitle}(${detailIdx + 1}/${step.details.length})`}
-                  detail={detail.text}
-                  index={stepCount++}
-                />
-              )),
-            )}
-          </Slider>
+        <div className={isPortrait() ? "video-aspect" : "video-aspect-landscape"}>
+        <YouTubePlayer
+          youtubeEmbedId={recipeData.video_info.video_id}
+          title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
+          autoplay
+          onPlayerReady={player => {
+            ytRef.current = player;
+            handleYtInitialized();
+          }}
+        />
         </div>
-      </section>
 
-      {/* 플로팅 음성 가이드 버튼 */}
-      {/* 왼쪽 하단 플로팅 타이머 버튼 */}
-      {/* TODO : 버튼 컴포넌트 분리 */}
-      <div className="floating-timer-container">
-        <button
-          className="floating-timer-btn"
-          onClick={handleTimerClick}
-          aria-label="타이머"
-          type="button"
+        <section
+          className={isPortrait() ? `cooking-steps-container` : `cooking-steps-container-landscape`}
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="13" r="8" stroke="#ff4500" strokeWidth="2" />
-            <path
-              d="M12 9v4l3 2"
-              stroke="#ff4500"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
+          <Carousel
+            recipeData={recipeData}
+            sliderRef={sliderRef}
+            afterChange={(index: number) => {
+              setCurrentStep(index);
+              handleStepsFromSlider.byStep(index);
+            }}
+            onInit={handleSliderInitialized}
+          />
+        </section>
 
-      {/* TODO : 버튼 컴포넌트 분리 */}
-      <VoiceGuide isKwsActive={isKwsActive} />
+        {/* 플로팅 음성 가이드 버튼 */}
+        {/* 왼쪽 하단 플로팅 타이머 버튼 */}
+        {/* TODO : 버튼 컴포넌트 분리 */}
+        <div
+          className={
+            isPortrait() ? 'floating-timer-container' : 'floating-timer-container-landscape'
+          }
+        >
+          <button
+            className={isPortrait() ? 'floating-timer-btn' : 'floating-timer-btn-landscape'}
+            onClick={handleTimerClick}
+            aria-label="타이머"
+            type="button"
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="13" r="8" stroke="#ff4500" strokeWidth="2" />
+              <path
+                d="M12 9v4l3 2"
+                stroke="#ff4500"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {/* TODO : 버튼 컴포넌트 분리 */}
+        <VoiceGuide isKwsActive={isKwsActive} />
+        {isPortrait() && (
+          <div className="safe-area-container" style={{ height: safeArea?.bottom }} />
+        )}
+      </SafeArea>
     </div>
   );
 };

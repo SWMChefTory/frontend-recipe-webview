@@ -3,6 +3,7 @@ import { useBridgeActions } from 'bridge';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RecipeInfo, useRecipeData } from 'recipe/detail';
+import { useLocation } from 'react-router-dom';
 
 /**
  * 레시피 정보 페이지
@@ -11,6 +12,8 @@ import { RecipeInfo, useRecipeData } from 'recipe/detail';
 const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  console.log("location",location.pathname);
 
   const { recipeData, isLoading, errorMessage } = useRecipeData(id);
 

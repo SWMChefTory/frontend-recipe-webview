@@ -1,6 +1,7 @@
 import { BridgeMessageType } from '../../bridge/types/webview';
 
 // React Native WebView 메시지 타입
+// enum안하고 Record타입 쓰는 이유는?
 export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
   GO_HOME: 'GO_HOME',
   REFRESH_TOKEN: 'REFRESH_TOKEN',
@@ -8,6 +9,8 @@ export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
   TIMER_STOP: 'TIMER_STOP',
   TIMER_CHECK: 'TIMER_CHECK',
   TIMER_SET: 'TIMER_SET',
+  LOCK_TO_PORTRAIT_UP : 'LOCK_TO_PORTRAIT_UP',
+  LOCK_TO_LANDSCAPE_LEFT : 'LOCK_TO_LANDSCAPE_LEFT',
 } as const;
 
 // YouTube 설정

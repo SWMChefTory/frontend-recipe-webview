@@ -13,15 +13,6 @@ export interface ErrorProps {
 // 로딩 컴포넌트 Props
 export interface LoadingProps extends BaseComponentProps {}
 
-// 헤더 컴포넌트 Props
-export interface HeaderProps {
-  title: string;
-  currentStep?: number;
-  totalSteps?: number;
-  onBack: () => void;
-  onTimerClick?: () => void;
-}
-
 // YouTube 플레이어 Props
 export interface YouTubePlayerProps {
   youtubeEmbedId: string;

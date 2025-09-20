@@ -1,4 +1,4 @@
-import { useAccessToken } from 'bridge';
+import { useAccessToken } from 'app/AccessTokenProvider';
 import { sendRequestAccessTokenRefresh } from 'bridge/utils/webview';
 import { useEffect, useState } from 'react';
 import { fetchRecipe } from '../api/fetchRecipe';

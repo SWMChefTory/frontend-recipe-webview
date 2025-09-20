@@ -5,6 +5,7 @@ import RecipeStep from 'recipe/step/components/RecipeStep';
 
 /**
  * 조리 모드 페이지
+ * TODO : 이 주석은 뭐지...
  * URL: /recipes/:id
  */
 const RecipeStepPage = (): JSX.Element => {
@@ -27,6 +28,7 @@ const RecipeStepPage = (): JSX.Element => {
 
   // 조리 모드일 때 body 스크롤 방지
   useBodyScrollLock(true);
+
 
   // 네이티브 BACK_PRESSED 처리
   useEffect(() => {

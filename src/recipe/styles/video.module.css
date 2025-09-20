@@ -17,6 +17,25 @@
   height: 100% !important;
 }
 
+
+.youtube-container-landscape {
+  position: relative;
+  width: 72%;
+  /* 16:9 비율 유지 (9/16 = 0.5625 = 56.25%) */
+  padding-bottom: 40.5%;
+  height: 0;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.youtube-container-landscape iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* 반응형 디자인 - 모바일 최적화 */
 @media (max-width: 768px) {
   .youtube-container {

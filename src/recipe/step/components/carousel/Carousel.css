@@ -1,0 +1,54 @@
+.carousel-container {
+  position: relative;
+  margin-bottom: 1.25rem;
+  width: calc(100% + 2.5rem);
+  margin-left: -1.25rem;
+  margin-right: -1.25rem;
+  
+}
+
+.carousel-container-landscape {
+  position: relative;
+  /* margin-bottom: 1.25rem; */
+  /* width: calc(100%); */
+  /* margin-left: -1.rem; */
+  /* margin-right: -1.25rem; */
+  /* margin-right: 1rem; */
+}
+
+/* React Slick 기본 슬라이더 스타일 재정의 */
+.carousel-container .slick-slider {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.carousel-container .slick-list {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.carousel-container .slick-track {
+  position: relative;
+  left: 0;
+  top: 0;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+/* 옆 요소들이 가질 스타일 */
+.carousel-container .slick-slide:not(.slick-center) .step-card {
+  background: var(--text);
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2); /* 0 2px 8px */
+  opacity: 0.75;
+  transform: scale(0.85);
+}
+
+.carousel { height: 100%; }
+

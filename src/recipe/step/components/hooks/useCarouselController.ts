@@ -1,5 +1,5 @@
 import { useMemo} from 'react';
-import { RecipeData } from '../../detail/types/recipe';
+import { RecipeData } from '../../../detail/types/recipe';
 import { useCarousel } from './useCarousel';
 import Slider from 'react-slick';
 import { converToTimelineStarts, count } from './recipeStepUilts';
