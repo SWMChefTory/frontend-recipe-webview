@@ -2,7 +2,6 @@
 
 import { Ingredient } from '../types';
 
-
 const decimalToFraction = (decimal: number): string => {
   const commonFractions: { [key: string]: string } = {
     '0.25': '1/4',
@@ -44,9 +43,8 @@ export const scaleIngredientAmount = (amount: number, ratio: number): string => 
 export const scaleIngredients = (
   ingredients: Ingredient[],
   currentServings: number,
-  originalServings: number
+  originalServings: number,
 ) => {
-  console.log(ingredients)
   if (originalServings <= 0) return ingredients;
 
   const ratio = currentServings / originalServings;
