@@ -20,17 +20,22 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const { id } = useParams<{ id: string }>();
   const youtubePlayerRef = useRef<YT.Player | null>(null);
 
-  const { analysis } = recipeData;
-  const originalServings = analysis?.servings ?? 1;
-  const cookingTime = analysis?.cook_time ?? 0;
-  const tags = analysis?.tags ?? [];
-  const description = analysis?.description ?? '';
+  const video_info = recipeData?.video_info ?? {};
+
+  const { recipe_detail_meta: RecipeDetailMeta } = recipeData;
+  const originalServings = RecipeDetailMeta?.servings ?? 1;
+  const cookingTime = RecipeDetailMeta?.cook_time ?? 0;
+  const description = RecipeDetailMeta?.description ?? '';
+
+  const recipe_ingredients = recipeData?.recipe_ingredient ?? [];
+  const recipe_steps = recipeData?.recipe_steps ?? [];
+  const recipe_tags = recipeData?.recipe_tags ?? [];
 
   // 인분 조절 상태 (기본값은 원래 인분수)
   const [currentServings, setCurrentServings] = useState(originalServings);
   const [showMissingModal, setShowMissingModal] = useState(false);
   const [checkedCount, setCheckedCount] = useState(0);
-  const [totalCount, setTotalCount] = useState(analysis.ingredients.length);
+  const [totalCount, setTotalCount] = useState(recipe_ingredients.length);
 
   const handleGoHome = (): void => {
     if (window.ReactNativeWebView) {
@@ -74,20 +79,20 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   return (
     <>
       <div className="recipe-info">
-        <Header title={recipeData.video_info.video_title} onBack={handleGoHome} />
+        <Header title={video_info.video_title} onBack={handleGoHome} />
 
         <Video
-          videoId={recipeData.video_info.video_id}
-          title={recipeData.video_info.video_title}
+          videoId={video_info.video_id}
+          title={video_info.video_title}
           youtubeRef={youtubePlayerRef}
         />
 
         <div className="recipe-content">
           <RecipeHeader
-            analysisId={analysis.id}
-            title={recipeData.video_info.video_title}
+            analysisId={RecipeDetailMeta?.id}
+            title={video_info.video_title}
             description={description}
-            tags={tags}
+            tags={recipe_tags.map(tag => tag.name)}
             cookingTimeMin={cookingTime}
             originalServings={originalServings}
             currentServings={currentServings}
@@ -96,7 +101,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
           />
 
           <IngredientList
-            ingredients={analysis.ingredients}
+            ingredients={recipe_ingredients}
             currentServings={currentServings}
             originalServings={originalServings}
             onOpenMeasurement={() => navigate(`/recipes/${id}/measurement`)}
@@ -106,7 +111,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
             }}
           />
 
-          <RecipeSteps steps={recipeData.recipe_steps} onTimeClick={handleTimeClick} />
+          <RecipeSteps steps={recipe_steps} onTimeClick={handleTimeClick} />
         </div>
 
         <div className="button-container">
