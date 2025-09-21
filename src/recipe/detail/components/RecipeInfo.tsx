@@ -10,8 +10,9 @@ import 'recipe/detail/components/RecipeSteps.css';
 import StartCookingButton from 'recipe/detail/components/StartCookingButton';
 import 'recipe/detail/components/StartCookingButton.css';
 import Video from 'recipe/detail/components/Video';
-import { RecipeInfoProps } from 'recipe/detail/types';
+import { RecipeBriefing, RecipeInfoProps } from 'recipe/detail/types';
 import IngredientsModal from './IngredientsModal';
+import RecipeBriefings from './RecipeBriefings';
 import RecipeHeader from './RecipeHeader';
 import RecipeSteps from './RecipeSteps';
 
@@ -30,6 +31,7 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const recipe_ingredients = recipeData?.recipe_ingredient ?? [];
   const recipe_steps = recipeData?.recipe_steps ?? [];
   const recipe_tags = recipeData?.recipe_tags ?? [];
+  const recipe_briefings = recipeData?.recipe_briefings ?? [];
 
   // 인분 조절 상태 (기본값은 원래 인분수)
   const [currentServings, setCurrentServings] = useState(originalServings);
@@ -112,6 +114,9 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
           />
 
           <RecipeSteps steps={recipe_steps} onTimeClick={handleTimeClick} />
+          <RecipeBriefings
+            briefings={recipe_briefings.map((briefing: RecipeBriefing) => briefing.content)}
+          />
         </div>
 
         <div className="button-container">
