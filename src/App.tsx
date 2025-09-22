@@ -6,11 +6,14 @@ import RecipeStepPage from 'recipe/step/RecipeStepPage';
 import 'slick-carousel/slick/slick-theme.css';
 import 'slick-carousel/slick/slick.css';
 import useInitSafeArea from '_common/safe-area/useSafeArea';
+import { useInitScreenSize } from '_common/size/useScreenSize';
 
 // 예시 반환값: { top: 44, bottom: 34 }
 
 const App = (): React.ReactNode => {
   useInitSafeArea();
+  useInitScreenSize();
+  console.log('screen size');
 
   return (
     <>

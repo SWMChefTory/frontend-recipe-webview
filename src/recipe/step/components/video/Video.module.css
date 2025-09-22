@@ -1,0 +1,17 @@
+.videoAspect {
+  position: relative; /* 필수 */
+  --full-width: 100vw;
+  width: var(--full-width);
+  height: calc(var(--full-width) * 0.5625);
+  overflow: hidden;
+}
+
+.videoAspect > div,
+.videoAspect iframe,
+.videoAspect > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

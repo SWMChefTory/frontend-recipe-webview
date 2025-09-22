@@ -1,35 +1,30 @@
 /* Sticky video wrapper fixed under header */
 .video-sticky-wrapper {
   position: sticky;
-  top: 3.5rem; /* desktop/tablet header height */
   z-index: 20;
   background: var(--bg);
-  margin-top: -0.0625rem; /* tuck under header border */
+  margin-top: -0.0625rem; 
 }
 
-/* Maintain 16:9 aspect ratio for the player section */
+/*너비를 전체 차지하고 높이를 16:9 비율의 요소 확보*/
 .video-aspect {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%; /* 16:9 width의 56.25만큼 */ 
+  --full-width: 100vw;
+  width: var(--full-width);
+  height: calc(var(--full-width) * 0.5625);
 }
 
 .video-aspect > .youtube-container,
 .video-aspect iframe,
 .video-aspect > * {
   position: absolute !important;
-  inset: 0;
   width: 100% !important;
   height: 100% !important;
 }
 
 /* ensure no default margins around the player container */
-.youtube-container {
-  margin: 0;
-}
 
 @media (max-width: 768px) {
   .video-sticky-wrapper {
     top: 3.25rem;
-  } /* mobile header height */
+  } 
 }

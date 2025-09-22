@@ -1,8 +1,8 @@
 .cooking-mode {
+  display: flex;
   background-color: var(--bg);
   /* min-height: 100vh; */
   height: 100vh;
-  display: flex;
   flex-direction: column;
 }
 
@@ -17,9 +17,12 @@
 /* 조리 단계 컨테이너 */
 .cooking-steps-container {
   flex: 1;
+  display: flex;
   background-color: var(--bg);
   margin: 0;
   position: relative;
+  /* height: 100rem; */
+  height: 100%;
   /* margin-top: 0.5rem; */
   overflow: hidden;
   display: flex;
@@ -29,7 +32,6 @@
 
 .cooking-steps-container-landscape {
   flex: 1;
-  /* background-color: red; */
   /* height: 100%; */
   /* width: 100%; */
   margin: 0;
@@ -52,14 +54,15 @@
 
 .floating-timer-container-landscape {
   position: fixed;
-  bottom: 8px;
-  left: 24px;
+  bottom: 16px;
+  /* left: 24px; */
+  right: 96px;
   z-index: 999;
 }
 
 .floating-timer-btn {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   background: var(--card);
   border: none;
   border-radius: 50%;
@@ -86,29 +89,4 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-}
-
-/* KWS 활성화 상태 - 말풍선과 버튼이 동시에 스무스하게 이동 */
-.floating-voice-guide-container.kws-active {
-  /* 버튼을 기준으로만 이동: 우측 고정에서 화면 중앙까지 transform만 변경 */
-  /* 이동은 말풍선이 사라진 뒤 시작하도록 약간의 지연 적용 */
-  transform: translateX(calc((var(--anchor-right) + (var(--btn-size) / 2)) - 50vw));
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.32s;
-}
-
-/* KWS 활성화 시 말풍선을 부드럽게 제거하며 동시에 이동 */
-.floating-voice-guide-container.kws-active .speech-bubble {
-  opacity: 0 !important;
-  transform: translateY(-50%) translateX(-10px) !important;
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease !important;
-  animation: none !important; /* 기존 애니메이션 중단 */
-  pointer-events: none; /* KWS 활성화 시 클릭 방지 */
-}
-
-/* KWS 활성화 상태 - 버튼 이동과 동시에 펄스 효과 */
-.floating-voice-guide-container.kws-active .floating-voice-guide-btn {
-  /* 버튼 이동 완료 후 펄스 효과 시작 (0.5초 지연) */
-  animation: kwsPulse 2s ease-in-out 0.5s infinite;
 }

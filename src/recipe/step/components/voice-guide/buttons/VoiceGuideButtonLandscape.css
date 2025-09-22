@@ -1,0 +1,163 @@
+/*움직였다가 x축이 0으로 돌아옴 */
+.floating-voice-guide-container {
+  position: fixed;
+  right: 48px;
+  bottom: 16px;
+  z-index: 999;
+  display: inline-block;
+  --anchor-right: 24px;
+  --btn-size: 80px;
+  transform: translateX(0);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+  will-change: transform;
+}
+
+/* 펄스 효과 */
+@keyframes kwsPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 24px rgba(255, 69, 0, 0.3),
+      0 0 0 0 rgba(255, 69, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 8px 24px rgba(255, 69, 0, 0.4),
+      0 0 0 20px rgba(255, 69, 0, 0);
+  }
+}
+
+.floating-voice-guide-btn {
+  width: 40px;
+  height: 40px;
+  background: var(--card);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.floating-voice-guide-btn img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.floating-voice-guide-container.kws-active .floating-voice-guide-btn {
+  animation: kwsPulse 2s ease-in-out 0.5s infinite;
+}
+
+
+
+/* 태블릿 미디어 쿼리 */
+/* @media (max-width: 1024px) {
+    .floating-voice-guide-container {
+      bottom: 20px;
+      right: var(--anchor-right);
+      --anchor-right: 20px;
+      --btn-size: 72px;
+    }
+  
+    .speech-bubble {
+      padding: 14px 18px;
+      border-radius: 14px;
+    }
+  
+    .speech-bubble-text {
+        font-size: 0.9375rem;
+      }
+  
+    .speech-bubble-text {
+      font-size: 0.875rem;
+    }
+  
+    .speech-bubble-arrow {
+      right: -9px;
+      border-left: 9px solid var(--card);
+      border-top: 9px solid transparent;
+      border-bottom: 9px solid transparent;
+    }
+  
+    .floating-voice-guide-btn {
+      width: 72px;
+      height: 72px;
+    }
+  
+    .floating-timer-container {
+      bottom: 20px;
+      left: 20px;
+    }
+  
+    .floating-timer-btn {
+      width: 72px;
+      height: 72px;
+    }
+  
+    .floating-voice-guide-btn img {
+      width: 54px;
+      height: 54px;
+    }
+  
+    .step-number {
+      font-size: 1.2rem;
+    }
+  
+    .step-subtitle {
+      font-size: 1.2rem;
+    }
+  
+    .floating-voice-guide-container:not(.kws-active) .speech-bubble {
+      padding: 14px 18px !important;
+    }
+  } */
+
+/* 모바일 미디어 쿼리 */
+/* @media (max-width: 768px) {
+    .floating-voice-guide-container {
+      flex: 1;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      right: var(--anchor-right);
+      --anchor-right: 16px;
+      --btn-size: 64px;
+      z-index: 9999 !important;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .speech-bubble {
+      padding: 12px 8px;
+      border-radius: 8px;
+      transform: translateY(-50%) translateX(1000px);
+    }
+  
+    .speech-bubble-text {
+      font-size: 0.875rem;
+    }
+  
+    .speech-bubble-arrow {
+      right: -8px;
+      border-left: 8px solid var(--card);
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
+  
+    .floating-voice-guide-btn {
+      width: 64px;
+      height: 64px;
+    }
+    .floating-voice-guide-container:not(.kws-active) .speech-bubble {
+      padding: 12px 16px !important;
+    }
+  } */

@@ -1,288 +1,280 @@
 /*css 전역적으로 적용되는데 일부만 적용되도록 변경할 필요 있을듯*/
-.floating-voice-guide-container{
+.floating-voice-guide-container {
+  display: flex;
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  flex-direction: row;
+  --btn-size: 80px;
+  will-change: transform;
+  align-items: center;
+  justify-content: center;
+}
+
+/* KWS 활성화 상태 - 말풍선이 사라질 때 까지 기다렸다가 0.32초, 0.5초동안 왼쪽으로 이동 */
+.floating-voice-guide-container.kws-active {
+  transform: translateX(calc((var(--anchor-right) + (var(--btn-size) / 2)) - 50vw));
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.32s;
+}
+
+/*움직였다가 x축이 0으로 돌아옴 */
+.floating-voice-guide-container-landscape {
+  position: fixed;
+  right: 48px;
+  bottom: 16px;
+  z-index: 999;
+  display: inline-block;
+  --anchor-right: 24px;
+  --btn-size: 80px;
+  transform: translateX(0);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
+  will-change: transform;
+}
+
+/* 말풍선 */
+/* speechBubbleAppear이 애니메이션을 나타나게 함 ease-out 지연 forward 나타나게 하기*/
+.speech-bubble {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  opacity: 0;
+  /* animation: speechBubbleAppear 0.5s ease-out 1s forwards; */
+}
+
+@keyframes speechBubbleAppear {
+  0% {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.speech-bubble-text {
+  /* font-size: 0.9rem; */
+  font-weight: 500;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  color: var(--text);
+  line-height: 1.2;
+  border-radius: 8px;
+  background: var(--card);
+}
+
+.speech-bubble-arrow {
+  border-left: 10px solid var(--card);
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+}
+
+/* KWS 비활성화 시 0.55초 뒤에 50%만큼 내려오면 서 실행 */
+.floating-voice-guide-container:not(.kws-active) .speech-bubble {
+  opacity: 1 !important;
+  transform: translateX(0) !important;
+  animation: none !important; /* 기존 애니메이션 중단하여 중복 방지 */
+
+  transition:
+    opacity 0.3s ease 0.55s,
+    transform 0.3s ease 0.55s;
+}
+
+/* KWS 활성화 시 말풍선을 부드럽게 제거하며 동시에 이동 */
+/*kws-active 속성이 추가되면 애니메이션*/
+.floating-voice-guide-container.kws-active .speech-bubble {
+  opacity: 0 !important;
+  transform: translateY(-50%) translateX(-10px) !important;
+  transition:
+    opacity 0.3s ease,  
+    transform 0.3s ease !important;
+  animation: none !important; /* 기존 애니메이션 중단 */
+  pointer-events: none; /* KWS 활성화 시 클릭 방지 */
+}
+
+
+
+/* 펄스 효과 */
+@keyframes kwsPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 24px rgba(255, 69, 0, 0.3),
+      0 0 0 0 rgba(255, 69, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      0 8px 24px rgba(255, 69, 0, 0.4),
+      0 0 0 20px rgba(255, 69, 0, 0);
+  }
+}
+
+/* 플로팅 음성 가이드 버튼 */
+.floating-voice-guide-btn {
+  width: 64px;
+  height: 64px;
+  background: var(--card);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.floating-voice-guide-btn img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.floating-voice-guide-container.kws-active .floating-voice-guide-btn:hover {
+  transform: none; /* KWS 활성화 시 호버 효과 비활성화 */
+}
+
+/* 버튼 이동 완료 후 펄스 효과 시작 (0.5초 지연) */
+.floating-voice-guide-container.kws-active .floating-voice-guide-btn {
+  animation: kwsPulse 2s ease-in-out 0.5s infinite;
+}
+
+
+.floating-voice-guide-btn-landscape {
+  width: 40px;
+  height: 40px;
+  background: var(--card);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.floating-voice-guide-btn-landscape img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.floating-voice-guide-container-landscape.kws-active .floating-voice-guide-btn-landscape {
+  animation: kwsPulse 2s ease-in-out 0.5s infinite;
+}
+/* 태블릿 미디어 쿼리 */
+/* @media (max-width: 1024px) {
+  .floating-voice-guide-container {
+    bottom: 20px;
+    right: var(--anchor-right);
+    --anchor-right: 20px;
+    --btn-size: 72px;
+  }
+
+  .speech-bubble {
+    padding: 14px 18px;
+    border-radius: 14px;
+  }
+
+  .speech-bubble-text {
+      font-size: 0.9375rem;
+    }
+
+  .speech-bubble-text {
+    font-size: 0.875rem;
+  }
+
+  .speech-bubble-arrow {
+    right: -9px;
+    border-left: 9px solid var(--card);
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+  }
+
+  .floating-voice-guide-btn {
+    width: 72px;
+    height: 72px;
+  }
+
+  .floating-timer-container {
+    bottom: 20px;
+    left: 20px;
+  }
+
+  .floating-timer-btn {
+    width: 72px;
+    height: 72px;
+  }
+
+  .floating-voice-guide-btn img {
+    width: 54px;
+    height: 54px;
+  }
+
+  .step-number {
+    font-size: 1.2rem;
+  }
+
+  .step-subtitle {
+    font-size: 1.2rem;
+  }
+
+  .floating-voice-guide-container:not(.kws-active) .speech-bubble {
+    padding: 14px 18px !important;
+  }
+} */
+
+/* 모바일 미디어 쿼리 */
+/* @media (max-width: 768px) {
+  .floating-voice-guide-container {
+    flex: 1;
     position: fixed;
     bottom: 24px;
     right: 24px;
-    z-index: 999; 
-    display: inline-block;
-    --btn-size: 80px;
-    transform: translateX(0);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
-    will-change: transform;
+    right: var(--anchor-right);
+    --anchor-right: 16px;
+    --btn-size: 64px;
+    z-index: 9999 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-.floating-voice-guide-container-landscape {
-    position: fixed;
-    /* bottom: 24px; */
-    bottom: 8px;/*바닥에 붙이기 위해선 필요함*/
-    left: 80px;
-    /* right: var(--anchor-right); */
-    z-index: 999; 
-    display: inline-block;
-    --anchor-right: 24px;
-    --btn-size: 80px;
-    transform: translateX(0);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
-    will-change: transform;
-}
-  
-  /* 말풍선 */
-  /* speechBubbleAppear이 애니메이션을 나타나게 함 ease-out 지연 forward 나타나게 하기*/
   .speech-bubble {
-    position: absolute;
-    top: 50%;
-    right: calc(100% + 12px);
-    transform: translateY(-50%) translateX(10px);
-    background: var(--card);
-    padding: 16px 20px;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    opacity: 0;
-    transition:
-      opacity 0.4s ease,
-      transform 0.4s ease;
-    white-space: nowrap;
-    animation: speechBubbleAppear 0.5s ease-out 1s forwards;
+    padding: 12px 8px;
+    border-radius: 8px;
+    transform: translateY(-50%) translateX(1000px);
   }
-  
-  @keyframes speechBubbleAppear {
-    0% {
-      opacity: 0;
-      transform: translateY(-50%) translateX(10px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(-50%) translateX(0);
-    }
-  }
-  
+
   .speech-bubble-text {
-    /* font-size: 0.9rem; */
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1.2;
+    font-size: 0.875rem;
   }
-  
+
   .speech-bubble-arrow {
-    position: absolute;
-    right: -10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 10px solid var(--card);
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
+    right: -8px;
+    border-left: 8px solid var(--card);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
   }
-  
-  /* 초기 애니메이션 완료 후 말풍선 상태 유지 */
-  /*speech-bubble과 appeared가 동시에 있을 때 일어나는것*/
-  .speech-bubble.appeared {
-    animation: none !important;
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
-  
-  /* KWS 비활성화 시 버튼 이동 완료 후 말풍선 다시 보이기 */
-  .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-    opacity: 1 !important;
-    transform: translateY(-50%) translateX(0) !important;
-    animation: none !important; /* 기존 애니메이션 중단하여 중복 방지 */
-    transition:
-      opacity 0.3s ease 0.55s,
-      transform 0.3s ease 0.55s; /* 버튼 복귀 후 나타남 */ /* TODO : opacitiy 0되는데 굳이 이동시킬 필요 있나요?*/
-  }
-  
-  /* 플로팅 음성 가이드 버튼 */
+
   .floating-voice-guide-btn {
-    width: 80px;
-    height: 80px;
-    background: var(--card);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    overflow: hidden;
-    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
   }
-
-  .floating-voice-guide-btn-landscape {
-    width: 40px;
-    height: 40px;
-    background: var(--card);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    overflow: hidden;
-    flex-shrink: 0;
+  .floating-voice-guide-container:not(.kws-active) .speech-bubble {
+    padding: 12px 16px !important;
   }
-
-  .floating-voice-guide-btn-landscape img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-  }
-  
-  
-  .floating-voice-guide-btn img {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-  }
-  
-  /* 펄스 효과 */
-  @keyframes kwsPulse {
-    0%,
-    100% {
-      box-shadow:
-        0 8px 24px rgba(255, 69, 0, 0.3),
-        0 0 0 0 rgba(255, 69, 0, 0.4);
-    }
-    50% {
-      box-shadow:
-        0 8px 24px rgba(255, 69, 0, 0.4),
-        0 0 0 20px rgba(255, 69, 0, 0);
-    }
-  }
-  
-  .floating-voice-guide-container.kws-active .floating-voice-guide-btn:hover {
-    transform: none; /* KWS 활성화 시 호버 효과 비활성화 */
-  }
-  
-  /* 태블릿 미디어 쿼리 */
-  @media (max-width: 1024px) {
-    .floating-voice-guide-container {
-      bottom: 20px;
-      right: var(--anchor-right);
-      --anchor-right: 20px;
-      --btn-size: 72px;
-    }
-  
-    .speech-bubble {
-      padding: 14px 18px;
-      border-radius: 14px;
-    }
-  
-    /* .speech-bubble-text {
-      font-size: 0.9375rem;
-    } */
-
-    .speech-bubble-text {
-      font-size: 0.875rem;
-    }
-  
-    .speech-bubble-arrow {
-      right: -9px;
-      border-left: 9px solid var(--card);
-      border-top: 9px solid transparent;
-      border-bottom: 9px solid transparent;
-    }
-  
-    .floating-voice-guide-btn {
-      width: 72px;
-      height: 72px;
-    }
-  
-    .floating-timer-container {
-      bottom: 20px;
-      left: 20px;
-    }
-  
-    .floating-timer-btn {
-      width: 72px;
-      height: 72px;
-    }
-  
-    .floating-voice-guide-btn img {
-      width: 54px;
-      height: 54px;
-    }
-  
-    .step-number {
-      font-size: 1.2rem;
-    }
-  
-    .step-subtitle {
-      font-size: 1.2rem;
-    }
-  
-    /* KWS 비활성화 시 말풍선 패딩 조정 */
-    .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-      padding: 14px 18px !important;
-    }
-  }
-  
-  /* 모바일 미디어 쿼리 */
-  @media (max-width: 768px) {
-    .floating-voice-guide-container {
-      bottom: 16px;
-      right: var(--anchor-right);
-      --anchor-right: 16px;
-      --btn-size: 64px;
-    }
-  
-    .speech-bubble {
-      padding: 12px 16px;
-      border-radius: 12px;
-    }
-  
-    .speech-bubble-text {
-      font-size: 0.875rem;
-    }
-  
-    .speech-bubble-arrow {
-      right: -8px;
-      border-left: 8px solid var(--card);
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-    }
-  
-    .floating-voice-guide-btn {
-      width: 64px;
-      height: 64px;
-    }
-  
-    .floating-timer-container {
-      bottom: 16px;
-      left: 16px;
-    }
-  
-    .floating-timer-btn {
-      width: 64px;
-      height: 64px;
-    }
-  
-    .floating-voice-guide-btn img {
-      width: 48px;
-      height: 48px;
-    }
-  
-    .step-number {
-      font-size: 1.2rem;
-    }
-  
-    .step-subtitle {
-      font-size: 1.2rem;
-    }
-  
-    /* KWS 비활성화 시 말풍선 패딩 조정 */
-    .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-      padding: 12px 16px !important;
-    }
-  }
-  
+} */

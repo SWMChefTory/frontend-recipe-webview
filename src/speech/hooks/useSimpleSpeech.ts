@@ -344,7 +344,6 @@ export const useSimpleSpeech = ({
         const voiceThreshold = POS_TH;
         const vad = new VADInstance(module, hopSize, voiceThreshold);
         vadInstanceRef.current = vad;
-
         // 3) 마이크 오픈
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {

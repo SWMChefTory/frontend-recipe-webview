@@ -4,7 +4,7 @@
   width: calc(100% + 2.5rem);
   margin-left: -1.25rem;
   margin-right: -1.25rem;
-  
+  height: 100%;
 }
 
 .carousel-container-landscape {
@@ -18,19 +18,25 @@
 
 /* React Slick 기본 슬라이더 스타일 재정의 */
 .carousel-container .slick-slider {
+  height: 100% !important; /* React Slick 기본값 덮어쓰기 */
   position: relative;
   display: block;
   box-sizing: border-box;
   user-select: none;
   touch-action: pan-y;
+  flex: 1;
+  display: flex;
 }
 
 .carousel-container .slick-list {
+  height : 100% !important;
   position: relative;
   overflow: hidden;
   display: block;
   margin: 0;
   padding: 0;
+  flex:1;
+  display: flex;
 }
 
 .carousel-container .slick-track {
@@ -38,6 +44,7 @@
   left: 0;
   top: 0;
   display: flex;
+  flex: 1;
   margin: 0;
   padding: 0;
 }
@@ -50,5 +57,5 @@
   transform: scale(0.85);
 }
 
-.carousel { height: 100%; }
+.carousel { flex: 1; }
 

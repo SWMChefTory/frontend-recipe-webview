@@ -1,0 +1,16 @@
+.videoAspectLandscape {
+  --video-landscape-width: 65%;
+  position: relative; 
+  width: var(--video-landscape-width);
+  height: var(--video-landcape-height/16 * 9);
+}
+
+.videoAspectLandscape > div,
+.videoAspectLandscape iframe,
+.videoAspectLandscape > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

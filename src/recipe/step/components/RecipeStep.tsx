@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Slider from 'react-slick';
 
-import { YouTubePlayer } from '_common';
+import YouTubePlayer from 'recipe/step/components/video/YoutubePlayer';
 import Header, { HeaderRightSection } from '_common/components/Header/Header';
 import { sendBridgeMessage } from 'bridge';
 import { useAccessToken } from 'app/AccessTokenProvider';
@@ -13,7 +13,6 @@ import { BasicIntent } from 'speech/types/parseIntent';
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import { useStepController } from './hooks/useStepController';
 import { useStepInit } from './hooks/useStepInit';
-import { LoadingOverlay } from 'recipe/step/components/overlay/Overlay';
 import VoiceGuide from 'recipe/step/components/voice-guide/VoiceGuide';
 
 import Carousel from 'recipe/step/components/carousel/Carousel';
@@ -22,10 +21,9 @@ import 'recipe/step/components/RecipeStep.css';
 import { useSafeArea } from '_common/safe-area/useSafeArea';
 import { useOrientation } from '_common/orientation/useOrientation';
 import SafeArea from 'recipe/_common/SafeArea';
-import { TbCropLandscape } from "react-icons/tb";
-
-import 'recipe/step/VideoLandscape.module.css';
-
+import { MdOutlineScreenRotation } from 'react-icons/md';
+import videoStyles from 'recipe/step/components/video/Video.module.css';
+import videoLandscapeStyles from 'recipe/step/components/video/VideoLandscape.module.css';
 
 interface Props {
   recipeData: RecipeData;
@@ -50,23 +48,22 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     recipeData,
   );
 
-  const { isInitialized, handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
+  const { handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
     handleStepsFromVoice.byStep(0),
   );
 
   const { isPortrait, handleLandscape, handlePortrait } = useOrientation();
   const safeArea = useSafeArea();
 
-  console.log(isPortrait());
-
   useEffect(() => {
     return () => {
       handlePortrait();
     };
-  }, [currentStep]);
+  }, [handlePortrait]);
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
+    console.log('handleIntent');
 
     // WAKEWORD 처리: KWS가 비활성화 상태일 때만 활성화
     if (cmd === 'WAKEWORD') {
@@ -203,33 +200,45 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   // DONE : 삭제
 
   return (
-    <div className={isPortrait() ? `cooking-mode` : `cooking-mode-landscape`}>
-      {!isInitialized && <LoadingOverlay />}
-      <SafeArea isLandscape={!isPortrait()} isRightApplied={isPortrait()} >
+    <SafeArea
+      backgroundColor={isPortrait() ? 'white' : 'black'}
+      isLandscape={!isPortrait()}
+      isRightApplied={isPortrait()}
+    >
+      <div className={isPortrait() ? `cooking-mode` : `cooking-mode-landscape`}>
         {isPortrait() && (
           <Header
             title={recipeData.video_info.video_title}
             currentStep={currentStep + 1}
             totalSteps={recipeData.recipe_steps.length}
             onBack={onBackToRecipe}
-            rightSection={<HeaderRightSection childrens={[{ icon: TbCropLandscape, action: handleLandscape }]} />}
+            rightSection={
+              <HeaderRightSection
+                childrens={[{ icon: MdOutlineScreenRotation, action: handleLandscape }]}
+              />
+            }
           />
         )}
 
-        <div className={isPortrait() ? "video-aspect" : "video-aspect-landscape"}>
-        <YouTubePlayer
-          youtubeEmbedId={recipeData.video_info.video_id}
-          title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
-          autoplay
-          onPlayerReady={player => {
-            ytRef.current = player;
-            handleYtInitialized();
-          }}
-        />
+        <div
+          className={
+            isPortrait() ? videoStyles.videoAspect : videoLandscapeStyles.videoAspectLandscape
+          }
+        >
+          <YouTubePlayer
+            youtubeEmbedId={recipeData.video_info.video_id}
+            title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
+            autoplay
+            onPlayerReady={player => {
+              console.log('onPlayerReady');
+              ytRef.current = player;
+              handleYtInitialized();
+            }}
+          />
         </div>
 
         <section
-          className={isPortrait() ? `cooking-steps-container` : `cooking-steps-container-landscape`}
+          className={isPortrait() ? 'cooking-steps-container' : 'cooking-steps-container-landscape'}
         >
           <Carousel
             recipeData={recipeData}
@@ -275,8 +284,8 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         {isPortrait() && (
           <div className="safe-area-container" style={{ height: safeArea?.bottom }} />
         )}
-      </SafeArea>
-    </div>
+      </div>
+    </SafeArea>
   );
 };
 

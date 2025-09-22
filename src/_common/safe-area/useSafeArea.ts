@@ -56,10 +56,8 @@ export default function useInitSafeArea() {
         (msg as any).type === 'SAFE_AREA' &&
         (msg as any).safe_area
       ) {
-        console.log("!!!!!!!!!!!!11실행?");
         // const safeArea = JSON.parse((msg as any).safe_area);
         const safeArea = (msg as any).safe_area;
-        console.log("!!!!!!!!!!!!11safeArea",safeArea.top,safeArea.bottom,safeArea.left,safeArea.right);
         setSafeArea({
           top: safeArea.top || 0,
           bottom: safeArea.bottom || 0,
@@ -74,11 +72,10 @@ export default function useInitSafeArea() {
       window.removeEventListener('message', handleMessage);
       removeSafeArea();
     }
-  }, []);
+  }, [setSafeArea, removeSafeArea]);
 }
 
 export function useSafeArea() {
   const { safeArea } = useSafeAreaStore();
-  console.log("????????????safeArea",safeArea.bottom,safeArea.top,safeArea.left,safeArea.right);
   return safeArea;
 }

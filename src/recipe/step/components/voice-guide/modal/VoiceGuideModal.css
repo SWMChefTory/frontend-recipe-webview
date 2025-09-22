@@ -114,27 +114,6 @@
   flex-shrink: 0;
 }
 
-.step-content {
-  flex: 1;
-}
-
-.step-command {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.25rem;
-}
-
-.step-description {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.step-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
 /* Voice Commands List */
 .voice-commands-list {
   margin-bottom: 32px;

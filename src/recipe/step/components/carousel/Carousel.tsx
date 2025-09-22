@@ -25,7 +25,7 @@ export default function Carousel({
     centerPadding: isPortrait() ? '10%' : '0%',
     afterChange: afterChange,
     arrows: false,
-    adaptiveHeight: true, // 높이 적응 비활성화
+    adaptiveHeight: false, // 높이 적응 비활성화
     draggable: true,
     onInit: onInit,
   };

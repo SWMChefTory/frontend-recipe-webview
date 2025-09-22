@@ -1,8 +1,6 @@
 import type { YouTubeProps } from 'react-youtube';
 import YouTube from 'react-youtube';
 import { YouTubePlayerProps } from '../../types';
-import { useOrientation } from '_common/orientation/useOrientation';
-import 'recipe/styles/video.module.css';
 
 type YTOpts = NonNullable<YouTubeProps['opts']>;
 
@@ -21,7 +19,7 @@ const YouTubePlayer = ({
   onPlayerReady,
 }: Props): JSX.Element => {
 
-  const {isPortrait} = useOrientation();
+  // const {isPortrait} = useOrientation();
   /** iFrame API 파라미터 */
   const opts: YTOpts = {
     playerVars: {
@@ -40,17 +38,15 @@ const YouTubePlayer = ({
   };
 
   return (
-    <section className={isPortrait() ? `youtube-container` : `youtube-container-landscape`}>
-      <YouTube
-        key={youtubeKey ? `youtube-${youtubeKey}` : undefined}
-        videoId={youtubeEmbedId}
-        opts={opts}
-        onReady={handleReady}
-        title={title}
-        iframeClassName="border-none"
-      />
-    </section>
-  );
+    <YouTube
+          key={youtubeKey ? `youtube-${youtubeKey}` : undefined}
+          videoId={youtubeEmbedId}
+          opts={opts}
+          onReady={handleReady}
+          title={title}
+          iframeClassName="border-none"
+        />
+    );
 };
 
 export default YouTubePlayer;

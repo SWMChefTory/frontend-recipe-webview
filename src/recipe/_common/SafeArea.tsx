@@ -7,6 +7,7 @@ function SafeArea({
   isRightApplied = true,
   isBottomApplied = true,
   isLandscape = false,
+  backgroundColor = "white",
 }: {
   children: React.ReactNode;
   isTopApplied?: boolean;
@@ -14,12 +15,13 @@ function SafeArea({
   isRightApplied?: boolean;
   isBottomApplied?: boolean;
   isLandscape?: boolean;
+  backgroundColor?: string;
 }) {
   const safeArea = useSafeArea();
-  console.log(isLandscape,"isLandscape");
   return (
     <div
       style={{
+        backgroundColor: backgroundColor,
         paddingTop: isTopApplied ? safeArea?.top : 0,
         paddingLeft: isLeftApplied ? safeArea?.left : 0,
         paddingRight: isRightApplied ? safeArea?.right : 0,
