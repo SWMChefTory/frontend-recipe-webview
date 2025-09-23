@@ -30,6 +30,7 @@ function RotateButton(){
 
 const StepCard = ({ step, detail, index, }: StepCardProps) => {
   const { isPortrait } = useOrientation();
+  // const {bottom} = useSafeArea();
 
   return (
     <div className="carousel-slide">
@@ -41,8 +42,8 @@ const StepCard = ({ step, detail, index, }: StepCardProps) => {
           <div style={{ width: '0.5rem' }}></div>
           {!isPortrait() && <RotateButton />}
         </header>
-        <div style={{ paddingBottom: '2rem' }}></div>
-        <div className="step-content">
+        <div style={{ paddingBottom: '2rem'}}></div>
+        <div className="step-content" style={{paddingLeft: isPortrait() ? '0rem' : '0.5rem'}}>
           <span className="step-description-text">{detail}</span>
         </div>
       </article>

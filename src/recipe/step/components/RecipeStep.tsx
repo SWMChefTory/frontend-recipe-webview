@@ -169,6 +169,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
       recipe_id: recipeId ?? '',
       recipe_title: recipeData.video_info.video_title,
+      orientation: isPortrait() ? 'portrait' : 'landscape',
     });
   };
 

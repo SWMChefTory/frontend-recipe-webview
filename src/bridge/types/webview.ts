@@ -19,6 +19,7 @@ export interface BridgeMessage {
   recipe_id?: string;
   recipe_title?: string;
   timer_time?: string;
+  orientation?: string;
 }
 
 // Slick 캐러셀 설정 타입
