@@ -26,11 +26,9 @@ export interface VideoInfo {
 }
 
 // 재료 정보 타입
-export interface Analysis {
+export interface RecipeDetailMeta {
   id: string;
-  ingredients: Ingredient[];
   description: string;
-  tags: string[];
   servings: number;
   cook_time: number;
 }
@@ -43,16 +41,22 @@ export interface ViewStatus {
   created_at: string;
 }
 
+export interface RecipeTag {
+  name: string;
+}
+
+export interface RecipeBriefing {
+  content: string;
+}
+
 // 레시피 데이터 타입 (API 응답과 맵핑)
 export interface RecipeData {
   recipe_status: 'READY' | 'NOT_COOK_URL' | 'FAILED' | 'COMPLETED';
   video_info: VideoInfo;
-  analysis: Analysis;
-  recipe_steps: RecipeStep[];
   view_status: ViewStatus;
-}
-
-// Mock 레시피 데이터베이스 타입 (이제 사용되지 않을 수 있음)
-export interface MockRecipes {
-  [key: string]: RecipeData;
+  recipe_detail_meta: RecipeDetailMeta;
+  recipe_ingredient: Ingredient[];
+  recipe_steps: RecipeStep[];
+  recipe_tags: RecipeTag[];
+  recipe_briefings: RecipeBriefing[];
 }
