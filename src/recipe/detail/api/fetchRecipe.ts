@@ -1,6 +1,6 @@
 import { RecipeData } from '../types/recipe';
 
-const BASE_API_URL = 'https://dev.api.cheftories.com';
+const BASE_API_URL = process.env.API_URL as string;
 
 export const fetchRecipe = async (id: string, accessToken: string): Promise<RecipeData> => {
   const response = await fetch(`${BASE_API_URL}/api/v1/recipes/${id}`, {
@@ -9,7 +9,9 @@ export const fetchRecipe = async (id: string, accessToken: string): Promise<Reci
     },
   });
 
-  const apiResponse: RecipeData = await response.json();
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
 
-  return apiResponse;
+  return response.json();
 };
