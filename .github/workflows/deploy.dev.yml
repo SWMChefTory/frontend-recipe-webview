@@ -25,7 +25,7 @@ jobs:
       - name: Build app
         run: npm run build
         env:
-          API_URL: ${{ secrets.API_URL }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
