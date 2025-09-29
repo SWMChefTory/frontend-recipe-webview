@@ -165,13 +165,13 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   };
 
   //TODO : 버튼 컴포넌트로 캡슐화
-  const handleTimerClick = () => {
-    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
-      recipe_id: recipeId ?? '',
-      recipe_title: recipeData.video_info.video_title,
-      orientation: isPortrait() ? 'portrait' : 'landscape',
-    });
-  };
+  // const handleTimerClick = () => {
+  //   sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
+  //     recipe_id: recipeId ?? '',
+  //     recipe_title: recipeData.video_info.video_title,
+  //     orientation: isPortrait() ? 'portrait' : 'landscape',
+  //   });
+  // };
 
   useSimpleSpeech({
     accessToken,
@@ -251,10 +251,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
             onInit={handleSliderInitialized}
           />
         </section>
-
-        {/* 플로팅 음성 가이드 버튼 */}
-        {/* 왼쪽 하단 플로팅 타이머 버튼 */}
-        {/* TODO : 버튼 컴포넌트 분리 */}
+{/* 
         <div
           className={
             isPortrait() ? 'floating-timer-container' : 'floating-timer-container-landscape'
@@ -278,9 +275,8 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
               <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </button>
-        </div>
+        </div> */}
 
-        {/* TODO : 버튼 컴포넌트 분리 */}
         <VoiceGuide isKwsActive={isKwsActive} />
         {isPortrait() && (
           <div className="safe-area-container" style={{ height: safeArea?.bottom }} />
