@@ -1,7 +1,8 @@
 import { Header } from '_common';
-import { sendGoHome } from 'bridge/utils/webview';
+import { sendBackPressed } from 'bridge/utils/webview';
 import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import 'recipe/_common/SafeArea.css';
 import IngredientList from 'recipe/detail/components/IngredientList';
 import 'recipe/detail/components/IngredientList.css';
 import 'recipe/detail/components/RecipeHeader.css';
@@ -39,9 +40,9 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const [checkedCount, setCheckedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(recipe_ingredients.length);
 
-  const handleGoHome = (): void => {
+  const handleBackPressed = (): void => {
     if (window.ReactNativeWebView) {
-      sendGoHome();
+      sendBackPressed();
     } else {
       window.history.back();
     }
@@ -80,8 +81,8 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
 
   return (
     <>
-      <div className="recipe-info">
-        <Header title={video_info.video_title} onBack={handleGoHome} />
+      <div className="recipe-info safe-area safe-area-top safe-area-bottom">
+        <Header title={video_info.video_title} onBack={handleBackPressed} />
 
         <Video
           videoId={video_info.video_id}

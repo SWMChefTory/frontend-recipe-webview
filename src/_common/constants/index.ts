@@ -2,7 +2,7 @@ import { BridgeMessageType } from '../../bridge/types/webview';
 
 // React Native WebView 메시지 타입
 export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
-  GO_HOME: 'GO_HOME',
+  BACK_PRESSED: 'BACK_PRESSED',
   REFRESH_TOKEN: 'REFRESH_TOKEN',
   TIMER_START: 'TIMER_START',
   TIMER_STOP: 'TIMER_STOP',

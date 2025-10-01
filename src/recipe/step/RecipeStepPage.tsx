@@ -44,7 +44,7 @@ const RecipeStepPage = (): JSX.Element => {
         'type' in msg &&
         (msg as any).type === 'BACK_PRESSED'
       ) {
-        navigate(`/recipes/${id}`, { replace: true });
+        navigate(-1);
       }
     };
 
