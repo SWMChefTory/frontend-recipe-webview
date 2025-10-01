@@ -2,6 +2,7 @@ import { Header } from '_common';
 import { sendBackPressed } from 'bridge/utils/webview';
 import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import 'recipe/_common/SafeArea.css';
 import IngredientList from 'recipe/detail/components/IngredientList';
 import 'recipe/detail/components/IngredientList.css';
 import 'recipe/detail/components/RecipeHeader.css';
