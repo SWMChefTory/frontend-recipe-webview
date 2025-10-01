@@ -41,7 +41,7 @@ const RecipeDetailPage = (): JSX.Element => {
         'type' in msg &&
         (msg as any).type === 'BACK_PRESSED'
       ) {
-        bridgeActions.handleGoHome();
+        bridgeActions.handleBack();
       }
     };
 
@@ -62,7 +62,7 @@ const RecipeDetailPage = (): JSX.Element => {
         <RecipeInfo
           recipeData={recipeData}
           onStartRecipeStep={handleStartRecipeStep}
-          onBack={bridgeActions.handleGoHome}
+          onBack={bridgeActions.handleBack}
         />
       )}
     </div>
