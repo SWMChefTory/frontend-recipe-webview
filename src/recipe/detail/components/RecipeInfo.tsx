@@ -1,5 +1,5 @@
 import { Header } from '_common';
-import { sendGoHome } from 'bridge/utils/webview';
+import { sendBackPressed } from 'bridge/utils/webview';
 import { useRef } from 'react';
 import Video from 'recipe/detail/components/Video';
 import { Ingredient, RecipeBriefing, RecipeInfoProps, RecipeStep, RecipeTag } from 'recipe/detail/types';
@@ -17,9 +17,9 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
   const recipe_tags: RecipeTag[] = recipeData?.recipe_tags ?? [];
   const recipe_briefings: RecipeBriefing[] = recipeData?.recipe_briefings?? [];
 
-  const handleGoHome = (): void => {
+  const handleBackPressed = (): void => {
     if (window.ReactNativeWebView) {
-      sendGoHome();
+      sendBackPressed();
     } else {
       window.history.back();
     }
@@ -41,8 +41,8 @@ const RecipeInfo = ({ recipeData, onStartRecipeStep }: RecipeInfoProps): JSX.Ele
 
   return (
     <>
-      <div className="recipe-info">
-        <Header title={video_info.video_title} onBack={handleGoHome} />
+      <div className="recipe-info safe-area safe-area-top safe-area-bottom">
+        <Header title={video_info.video_title} onBack={handleBackPressed} />
 
         <Video
           videoId={video_info.video_id}

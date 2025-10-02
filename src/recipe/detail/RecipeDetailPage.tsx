@@ -57,7 +57,7 @@ const RecipeDetailContent = ({ recipeId }: RecipeDetailContentProps) => {
         'type' in msg &&
         (msg as any).type === 'BACK_PRESSED'
       ) {
-        bridgeActions.handleGoHome();
+        bridgeActions.handleBack();
       }
     };
 

@@ -2,7 +2,7 @@ import { RecipeData } from '../../recipe/detail/types/recipe';
 
 // Bridge 메시지 타입들
 export type BridgeMessageType =
-  | 'GO_HOME'
+  | 'BACK_PRESSED'
   | 'REFRESH_TOKEN'
   | 'TIMER_START'
   | 'TIMER_STOP'

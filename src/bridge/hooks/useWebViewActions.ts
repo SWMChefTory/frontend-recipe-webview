@@ -3,7 +3,7 @@ import { RecipeData } from '../../recipe/detail/types/recipe';
 import { sendBridgeMessage } from '../utils/webview';
 
 interface UseWebViewActionsResult {
-  handleGoHome: () => void;
+  handleBack: () => void;
 }
 
 /**
@@ -13,16 +13,16 @@ interface UseWebViewActionsResult {
  * @returns WebView 액션 핸들러들
  */
 export const useBridgeActions = (recipeData: RecipeData | null): UseWebViewActionsResult => {
-  const handleGoHome = (): void => {
+  const handleBack = (): void => {
     if (!recipeData) return;
     if (window.ReactNativeWebView) {
-      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.GO_HOME, recipeData);
+      sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, recipeData);
     } else {
       window.history.back(); // 웹 테스트용
     }
   };
 
   return {
-    handleGoHome,
+    handleBack,
   };
 };
