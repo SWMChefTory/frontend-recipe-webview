@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import './RecipeBottomSheet.css';
-import { Ingredient, RecipeStep, RecipeTag, RecipeBriefing, RecipeDetailMeta } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { Ingredient, RecipeBriefing, RecipeDetailMeta, RecipeStep, RecipeTag } from '../types';
+import './RecipeBottomSheet.css';
 
 interface RecipeBottomSheetProps {
   steps: RecipeStep[];
@@ -14,14 +14,14 @@ interface RecipeBottomSheetProps {
 }
 
 const RecipeBottomSheet = ({
-                             steps,
-                             ingredients,
-                             onTimeClick,
-                             onStartCooking,
-                             recipe_summary,
-                             tags = [],
-                             briefings = [],
-                           }: RecipeBottomSheetProps) => {
+  steps,
+  ingredients,
+  onTimeClick,
+  onStartCooking,
+  recipe_summary,
+  tags = [],
+  briefings = [],
+}: RecipeBottomSheetProps) => {
   const [activeTab, setActiveTab] = useState<'summary' | 'recipe' | 'ingredients'>('summary');
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
   const [selectedIngredients, setSelectedIngredients] = useState<Set<number>>(new Set());
@@ -34,7 +34,7 @@ const RecipeBottomSheet = ({
   const sheetRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  
+
   const overscrollStartY = useRef<number>(0);
   const overscrollActive = useRef<boolean>(false);
   const overscrollStartHeight = useRef<number>(0);
@@ -51,13 +51,13 @@ const RecipeBottomSheet = ({
 
   const [minHeight, setMinHeight] = useState(calculateMinHeight());
   const [sheetHeight, setSheetHeight] = useState(calculateMinHeight());
-  const maxHeight = (window.innerHeight) / 16;
+  const maxHeight = window.innerHeight / 16;
 
   useEffect(() => {
     const updateHeights = () => {
       const newMinHeight = calculateMinHeight();
       setMinHeight(newMinHeight);
-      if (sheetHeight < newMinHeight) setSheetHeight(newMinHeight);
+      setSheetHeight(prev => (prev < newMinHeight ? newMinHeight : prev));
     };
     updateHeights();
     window.addEventListener('resize', updateHeights);
@@ -241,8 +241,7 @@ const RecipeBottomSheet = ({
   const description = recipe_summary?.description ?? '';
   const servings = Math.max(0, Number(recipe_summary?.servings ?? 0));
 
-  const showBriefings =
-    Array.isArray(briefings) && briefings.length > 0;
+  const showBriefings = Array.isArray(briefings) && briefings.length > 0;
 
   return (
     <>
@@ -260,7 +259,7 @@ const RecipeBottomSheet = ({
           <div
             ref={handleRef}
             className="handle-area"
-            onMouseDown={(e) => {
+            onMouseDown={e => {
               e.preventDefault();
               setIsDragging(true);
               setStartY(e.clientY);
@@ -299,10 +298,22 @@ const RecipeBottomSheet = ({
           {activeTab === 'summary' && (
             <div className="summary-content-area">
               <div className="ai-disclaimer">
-                <svg className="ai-disclaimer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="ai-disclaimer-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                <span>이 레시피 정보는 AI로 생성되었으며 부정확할 수 있습니다. 조리 전 확인해주세요.</span>
+                <span>
+                  이 레시피 정보는 AI로 생성되었으며 부정확할 수 있습니다. 조리 전 확인해주세요.
+                </span>
               </div>
 
               {(!!description || cookingTime > 0 || servings > 0 || (tags?.length ?? 0) > 0) && (
@@ -314,9 +325,7 @@ const RecipeBottomSheet = ({
                       {cookingTime > 0 && (
                         <span className="meta-pill">⏱ {formatMinutes(cookingTime)}</span>
                       )}
-                      {servings > 0 && (
-                        <span className="meta-pill">{servings}인분 기준</span>
-                      )}
+                      {servings > 0 && <span className="meta-pill">{servings}인분 기준</span>}
                     </div>
                   )}
 
@@ -325,7 +334,11 @@ const RecipeBottomSheet = ({
                       {tags!.map((t, i) => {
                         const tagName = t?.name ?? '';
                         if (!tagName) return null;
-                        return <span key={`${tagName}-${i}`} className="tag-chip">#{tagName}</span>;
+                        return (
+                          <span key={`${tagName}-${i}`} className="tag-chip">
+                            #{tagName}
+                          </span>
+                        );
                       })}
                     </div>
                   )}
@@ -351,7 +364,6 @@ const RecipeBottomSheet = ({
               )}
             </div>
           )}
-
 
           {/* 레시피 탭 */}
           {activeTab === 'recipe' && (
@@ -391,7 +403,13 @@ const RecipeBottomSheet = ({
                             <span className="sub-step-number">{detailIndex + 1}</span>
                             <p className="sub-step-text">{detail.text}</p>
                           </div>
-                          <svg className="chevron-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <svg
+                            className="chevron-icon"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
                             <path d="M9 18L15 12L9 6" stroke="#7E7E7E" strokeWidth="2" />
                           </svg>
                         </button>
@@ -405,11 +423,15 @@ const RecipeBottomSheet = ({
 
           {/* 재료 탭 */}
           {activeTab === 'ingredients' && (
-            <div className={`ingredients-content-area ${selectedIngredients.size > 0 ? 'has-selection' : ''}`}>
+            <div
+              className={`ingredients-content-area ${selectedIngredients.size > 0 ? 'has-selection' : ''}`}
+            >
               {showTooltip && selectedIngredients.size === 0 && (
                 <div className="tooltip">
                   <div className="tooltip-tail"></div>
-                  <div className="tooltip-message"><span>재료를 준비했다면 눌러주세요</span></div>
+                  <div className="tooltip-message">
+                    <span>재료를 준비했다면 눌러주세요</span>
+                  </div>
                 </div>
               )}
               <div className="ingredients-title">
@@ -441,7 +463,10 @@ const RecipeBottomSheet = ({
                     onClick={() => toggleIngredient(index)}
                   >
                     <span className="ingredient-name">{ingredient.name}</span>
-                    <span className="ingredient-amount">{ingredient.amount}{ingredient.unit}</span>
+                    <span className="ingredient-amount">
+                      {ingredient.amount}
+                      {ingredient.unit}
+                    </span>
                   </button>
                 ))}
               </div>

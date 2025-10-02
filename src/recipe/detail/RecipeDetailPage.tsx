@@ -1,20 +1,19 @@
-import { Error, Loading } from '_common';
+import { Error as ErrorView, Loading } from '_common';
 import { useBridgeActions } from 'bridge';
 import { Suspense, useEffect } from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { useNavigate, useParams } from 'react-router-dom';
 import { RecipeInfo, useRecipeData } from 'recipe/detail';
 
-/**
- * 레시피 정보 페이지
- * URL: /recipes/:id
- */
 const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
 
   return (
     <ErrorBoundary
-      fallbackRender={({}: FallbackProps) => <Error error={'레시피를 불러오는 데 실패했습니다.'} />}
+      // ✅ 빈 객체 패턴 ({}) 대신 식별자 사용으로 ESLint 해결
+      fallbackRender={(_: FallbackProps) => (
+        <ErrorView error={'레시피를 불러오는 데 실패했습니다.'} />
+      )}
     >
       <Suspense fallback={<Loading />}>
         <RecipeDetailContent recipeId={id} />
@@ -23,19 +22,17 @@ const RecipeDetailPage = (): JSX.Element => {
   );
 };
 
-/**
- * 레시피 상세 내용 (Suspense 경계 내부)
- */
 interface RecipeDetailContentProps {
   recipeId: string | undefined;
 }
 
 const RecipeDetailContent = ({ recipeId }: RecipeDetailContentProps) => {
   const navigate = useNavigate();
+
   if (!recipeId) {
-    // @ts-ignore
-    throw new Error('레시피를 찾을 수 없습니다.');
+    throw new globalThis.Error('레시피를 찾을 수 없습니다.');
   }
+
   const { recipeData } = useRecipeData(recipeId);
 
   const handleStartRecipeStep = (): void => {
@@ -49,7 +46,7 @@ const RecipeDetailContent = ({ recipeId }: RecipeDetailContentProps) => {
       let msg: unknown;
       try {
         msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-      } catch (e) {
+      } catch {
         return;
       }
 
@@ -75,4 +72,5 @@ const RecipeDetailContent = ({ recipeId }: RecipeDetailContentProps) => {
     />
   );
 };
+
 export default RecipeDetailPage;
