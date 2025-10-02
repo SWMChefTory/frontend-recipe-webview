@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { useAccessToken } from 'bridge';
 import { sendRequestAccessTokenRefresh } from 'bridge/utils/webview';
-import { useEffect, useRef } from 'react';
 import { fetchRecipe } from '../api/fetchRecipe';
 import { RecipeData } from '../types/recipe';
 
@@ -9,14 +8,8 @@ interface UseRecipeDataResult {
   recipeData: RecipeData;
 }
 
-/**
- * 레시피 데이터 로딩을 담당하는 커스텀 훅 (React Query Suspense 버전)
- * @param recipeId - 레시피 ID
- * @returns 레시피 데이터
- */
 export const useRecipeData = (recipeId: string): UseRecipeDataResult => {
   const accessToken = useAccessToken();
-  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: recipeData } = useSuspenseQuery({
     queryKey: ['recipe', recipeId, accessToken],
@@ -27,43 +20,29 @@ export const useRecipeData = (recipeId: string): UseRecipeDataResult => {
 
       if (!accessToken || !accessToken.startsWith('Bearer ')) {
         sendRequestAccessTokenRefresh();
-
-        await new Promise((_, reject) => {
-          refreshTimeoutRef.current = setTimeout(() => {
-            reject(new Error('인증이 만료되었습니다.'));
-          }, 3000);
-        });
+        throw new Error('TOKEN_REQUIRED');
       }
 
-      const recipeResponse = await fetchRecipe(recipeId, accessToken!);
+      const recipeResponse = await fetchRecipe(recipeId, accessToken);
 
       if ((recipeResponse as any)?.errorCode === 'AUTH_001') {
         sendRequestAccessTokenRefresh();
-
-        await new Promise((_, reject) => {
-          refreshTimeoutRef.current = setTimeout(() => {
-            reject(new Error('인증이 만료되었습니다.'));
-          }, 3000);
-        });
+        throw new Error('TOKEN_EXPIRED');
       }
 
       return recipeResponse;
     },
-    retry: false,
+    retry: (failureCount, error) => {
+      const errorMessage = (error as Error).message;
+      return (
+        failureCount < 2 &&
+        (errorMessage === 'TOKEN_REQUIRED' || errorMessage === 'TOKEN_EXPIRED')
+      );
+    },
+    retryDelay: 300,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
 
-  useEffect(() => {
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-        refreshTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  return {
-    recipeData,
-  };
+  return { recipeData };
 };
