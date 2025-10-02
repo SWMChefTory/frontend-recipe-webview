@@ -1,17 +1,19 @@
-import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './MeasurementPage.css';
 import MeasurementSection from './components/MeasurementSection';
+import { Header } from '../../_common';
 
-const MeasurementPage = () => {
+type MeasurementCategory = 'dry' | 'liquid' | 'jang';
+
+export const MeasurementPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const [activeCategory, setActiveCategory] = useState<MeasurementCategory>('dry');
 
   const handleBack = (): void => {
-    navigate(`/recipes/${id}`, { replace: true });
+    navigate(-1);
   };
 
-  // 네이티브 BACK_PRESSED 처리
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       let msg: unknown;
@@ -33,76 +35,108 @@ const MeasurementPage = () => {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [id, navigate]);
+  }, [navigate]);
+
+  const measurementData = {
+    dry: [
+      {
+        categoryLabel: '1큰술',
+        images: [
+          { src: '/images/measurement/dry/tbsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/dry/tbsp/spoon.png', caption: '1숟가락 소복이' },
+        ],
+      },
+      {
+        categoryLabel: '1작은술',
+        images: [
+          { src: '/images/measurement/dry/tsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/dry/tsp/spoon.png', caption: '½ 숟가락' },
+        ],
+      },
+    ],
+    liquid: [
+      {
+        categoryLabel: '1큰술',
+        images: [
+          { src: '/images/measurement/liquid/tbsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/liquid/tbsp/spoon.png', caption: '1숟가락 가득' },
+        ],
+      },
+      {
+        categoryLabel: '1작은술',
+        images: [
+          { src: '/images/measurement/liquid/tsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/liquid/tsp/spoon.png', caption: '½ 숟가락' },
+        ],
+      },
+    ],
+    jang: [
+      {
+        categoryLabel: '1큰술',
+        images: [
+          { src: '/images/measurement/jang/tbsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/jang/tbsp/spoon.png', caption: '1+ 1/2숟가락 수북이' },
+        ],
+      },
+      {
+        categoryLabel: '1작은술',
+        images: [
+          { src: '/images/measurement/jang/tsp/measuring.png', caption: '계량스푼' },
+          { src: '/images/measurement/jang/tsp/spoon.png', caption: '2/3 숟가락' },
+        ],
+      },
+    ],
+  };
 
   return (
     <div className="measurement-page active">
-      <div className="overlay-content">
-        <button className="back-button" onClick={handleBack}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M15 18L9 12L15 6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+      <Header title={"계량법"} onBack={handleBack} />
 
-        <h1 className="guide-title">계량법</h1>
-        <div className="unit-table">
-          <div className="unit-row">
+      <div className="measurement-overlay-content">
+        <div className="measurement-unit-table">
+          <div className="measurement-unit-row">
             <span>1큰술 (1Tbsp)</span>
-            <span className="equal">=</span>
-            <span className="value">15ml</span>
+            <span className="measurement-equal">=</span>
+            <span className="measurement-value">15ml</span>
           </div>
-          <div className="unit-row">
+          <div className="measurement-unit-row">
             <span>1작은술 (1tsp)</span>
-            <span className="equal">=</span>
-            <span className="value">5ml</span>
+            <span className="measurement-equal">=</span>
+            <span className="measurement-value">5ml</span>
           </div>
-          <div className="unit-row">
+          <div className="measurement-unit-row">
             <span>1컵 (1cup)</span>
-            <span className="equal">=</span>
-            <span className="value">200ml</span>
+            <span className="measurement-equal">=</span>
+            <span className="measurement-value">200ml</span>
           </div>
         </div>
 
-        <MeasurementSection
-          title="가루류 계량"
-          groups={[
-            {
-              categoryLabel: '1큰술',
-              images: [
-                {
-                  src: '/images/measurement/dry/tbsp/measuring.png',
-                  caption: '계량스푼',
-                },
-                {
-                  src: '/images/measurement/dry/tbsp/spoon.png',
-                  caption: '1숟가락 소복이',
-                },
-              ],
-            },
-            {
-              categoryLabel: '1작은술',
-              images: [
-                {
-                  src: '/images/measurement/dry/tsp/measuring.png',
-                  caption: '계량스푼',
-                },
-                {
-                  src: '/images/measurement/dry/tsp/spoon.png',
-                  caption: '½ 숟가락',
-                },
-              ],
-            },
-          ]}
-        />
+        <div className="measurement-tabs">
+          <button
+            className={`measurement-tab ${activeCategory === 'dry' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('dry')}
+          >
+            가루류
+            {activeCategory === 'dry' && <div className="measurement-tab-indicator" />}
+          </button>
+          <button
+            className={`measurement-tab ${activeCategory === 'liquid' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('liquid')}
+          >
+            액체류
+            {activeCategory === 'liquid' && <div className="measurement-tab-indicator" />}
+          </button>
+          <button
+            className={`measurement-tab ${activeCategory === 'jang' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('jang')}
+          >
+            장류
+            {activeCategory === 'jang' && <div className="measurement-tab-indicator" />}
+          </button>
+        </div>
+
+        <MeasurementSection title="" groups={measurementData[activeCategory]} />
       </div>
     </div>
   );
 };
-
-export default MeasurementPage;

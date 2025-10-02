@@ -12,7 +12,7 @@ const MeasurementSection = ({ title, groups }: MeasurementSectionProps): JSX.Ele
   return (
     <>
       <h2 className="guide-section-title">{title}</h2>
-      <div className="image-category">
+      <div className="measurement-image-category">
         {groups.map((group, index) => (
           <MeasurementImageGroup
             key={index}
