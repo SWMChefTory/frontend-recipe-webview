@@ -10,7 +10,6 @@ const RecipeDetailPage = (): JSX.Element => {
 
   return (
     <ErrorBoundary
-      // ✅ 빈 객체 패턴 ({}) 대신 식별자 사용으로 ESLint 해결
       fallbackRender={(_: FallbackProps) => (
         <ErrorView error={'레시피를 불러오는 데 실패했습니다.'} />
       )}
