@@ -14,12 +14,12 @@ const MeasurementImageGroup = ({
 }: MeasurementImageGroupProps): JSX.Element => {
   return (
     <>
-      <div className="image-category-title">{categoryLabel}</div>
-      <div className="image-section">
+      <div className="measurement-image-category-title">{categoryLabel}</div>
+      <div className="measurement-image-section">
         {images.map((img, idx) => (
-          <div className="image-box" key={idx}>
-            <img src={img.src} alt={img.caption} className="image" />
-            <div className="caption">{img.caption}</div>
+          <div className="measurement-image-box" key={idx}>
+            <img src={img.src} alt={img.caption} className="measurement-image" />
+            <div className="measurement-caption">{img.caption}</div>
           </div>
         ))}
       </div>

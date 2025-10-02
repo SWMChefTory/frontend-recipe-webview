@@ -1,14 +1,14 @@
 .measurement-page {
   position: fixed;
   inset: 0;
-  background-color: white;
+  background-color: #ffffff;
   z-index: 999;
   opacity: 0;
   transform: translateY(20px);
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
 }
 
 .measurement-page.active {
@@ -17,116 +17,461 @@
   pointer-events: auto;
 }
 
-.overlay-content {
-  padding: 24px;
-  font-family: 'Noto Sans KR', sans-serif;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.back-button {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: none;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  color: #333;
-  padding: 0;
-  z-index: 1000;
-  transition: background-color 0.2s ease;
-}
-
-.guide-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 20px;
+.measurement-guide-title {
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 140%;
+  margin: 0;
   text-align: center;
+  color: #111111;
+  flex: 1;
 }
 
-.unit-table {
+.measurement-overlay-content {
+  padding: 1.5rem;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;
+  flex: 1;
+  overflow-y: auto;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.measurement-unit-table {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 40px;
+  gap: 0;
+  margin-bottom: 2rem;
+  background: #ffffff;
+  border: 1px solid #e4e4e4;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 1px 0 rgba(17, 17, 17, 0.02);
 }
 
-.unit-row {
+.measurement-unit-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  font-size: 16px;
-  color: #444;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 160%;
+  color: #111111;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f3f3;
 }
 
-.unit-row .value {
-  color: #b28b69;
-  font-weight: 600;
+.measurement-unit-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.measurement-unit-row:first-child {
+  padding-top: 0;
+}
+
+.measurement-unit-row .measurement-value {
+  color: #fb6836;
+  font-weight: 700;
   text-align: right;
+  font-size: 1.0625rem;
 }
 
-.unit-row .equal {
+.measurement-unit-row .measurement-equal {
   text-align: center;
-  font-weight: bold;
-  width: 24px;
+  font-weight: 400;
+  width: 2.5rem;
+  color: #7e7e7e;
 }
 
-.guide-section-title {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 48px 0 16px;
-  text-align: center;
-}
-
-.image {
+.measurement-tabs {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.image-category-title {
-  text-align: center;
-  font-weight: 600;
-  margin: 16px 0 8px;
-  font-size: 16px;
-}
-
-.image-section {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
+  padding: 0;
+  border-bottom: 1px solid #e4e4e4;
+  margin-bottom: 1.5rem;
+  gap: 0;
 }
 
-.image-box {
+.measurement-tab {
   flex: 1;
-  min-width: 45%;
-  text-align: center;
-}
-
-.image-placeholder {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  background-color: #eee;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #aaa;
-  font-size: 14px;
+  padding: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 135%;
+  color: #b1b1b1;
+  transition: color 0.2s;
 }
 
-.caption {
-  margin-top: 8px;
-  font-size: 14px;
-  color: #444;
+.measurement-tab.active {
+  color: #111111;
+  font-weight: 700;
+}
+
+.measurement-tab .measurement-tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #111111;
+}
+
+.measurement-guide-section-title {
+  display: none;
+}
+
+.measurement-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e4e4e4;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.measurement-image:hover {
+  transform: translateY(-0.125rem);
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.08);
+}
+
+.measurement-image-category-title {
+  text-align: center;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 140%;
+  margin: 2rem auto 1.25rem;
+  color: #111111;
+  background: #f3f3f3;
+  padding: 0.625rem 1.25rem;
+  border-radius: 999px;
+  display: block;
+  width: fit-content;
+  min-width: 7rem;
+}
+
+.measurement-image-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.measurement-image-box {
+  flex: 1;
+  min-width: calc(50% - 0.5rem);
+  text-align: center;
+}
+
+.measurement-image-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f3f3f3;
+  border: 1px solid #e4e4e4;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b1b1b1;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.measurement-caption {
+  margin-top: 0.625rem;
+  font-family: 'BM System Font', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 130%;
+  color: #7e7e7e;
+}
+
+.measurement-overlay-content::-webkit-scrollbar {
+  display: none;
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .measurement-overlay-content {
+    max-width: 700px;
+    padding: 1.5rem;
+  }
+
+  .measurement-unit-table {
+    margin-bottom: 1.75rem;
+  }
+
+  .measurement-tabs {
+    margin-bottom: 1.25rem;
+  }
+
+  .measurement-image-section {
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (max-width: 768px) and (min-width: 481px) {
+  .measurement-guide-title {
+    font-size: 1.0625rem;
+  }
+
+  .measurement-overlay-content {
+    padding: 1.25rem;
+  }
+
+  .measurement-unit-table {
+    padding: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .measurement-unit-row {
+    font-size: 0.9375rem;
+    padding: 0.625rem 0;
+  }
+
+  .measurement-unit-row .measurement-value {
+    font-size: 1rem;
+  }
+
+  .measurement-tabs {
+    margin-bottom: 1.25rem;
+  }
+
+  .measurement-tab {
+    font-size: 0.9375rem;
+    padding: 0.875rem;
+  }
+
+  .measurement-image-category-title {
+    font-size: 0.9375rem;
+    margin: 1.75rem auto 1rem;
+  }
+
+  .measurement-image-section {
+    gap: 0.875rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .measurement-caption {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) and (min-width: 376px) {
+  .measurement-guide-title {
+    font-size: 1rem;
+  }
+
+  .measurement-overlay-content {
+    padding: 1rem;
+    max-height: calc(100vh - 4rem);
+  }
+
+  .measurement-unit-table {
+    padding: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .measurement-unit-row {
+    font-size: 0.875rem;
+    padding: 0.5rem 0;
+  }
+
+  .measurement-unit-row .measurement-value {
+    font-size: 0.9375rem;
+  }
+
+  .measurement-tabs {
+    margin-bottom: 1rem;
+  }
+
+  .measurement-tab {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+
+  .measurement-image-category-title {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    margin: 1.25rem auto 0.875rem;
+    min-width: 6rem;
+  }
+
+  .measurement-image-section {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .measurement-image-box {
+    min-width: calc(50% - 0.375rem);
+  }
+
+  .measurement-caption {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 375px) and (min-width: 321px) {
+
+  .measurement-guide-title {
+    font-size: 0.9375rem;
+  }
+
+  .measurement-overlay-content {
+    padding: 0.875rem;
+    max-height: calc(100vh - 3.5rem);
+  }
+
+  .measurement-unit-table {
+    padding: 0.625rem;
+    margin-bottom: 1rem;
+  }
+
+  .measurement-unit-row {
+    font-size: 0.8125rem;
+    padding: 0.4375rem 0;
+  }
+
+  .measurement-unit-row .measurement-value {
+    font-size: 0.875rem;
+  }
+
+  .measurement-unit-row .measurement-equal {
+    width: 2rem;
+    font-size: 0.8125rem;
+  }
+
+  .measurement-tabs {
+    margin-bottom: 0.875rem;
+  }
+
+  .measurement-tab {
+    font-size: 0.8125rem;
+    padding: 0.625rem;
+  }
+
+  .measurement-image-category-title {
+    font-size: 0.8125rem;
+    padding: 0.4375rem 0.875rem;
+    margin: 1rem auto 0.75rem;
+    min-width: 5.5rem;
+  }
+
+  .measurement-image-section {
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+  }
+
+  .measurement-image-box {
+    min-width: calc(50% - 0.3125rem);
+  }
+
+  .measurement-image {
+    border-radius: 0.4375rem;
+  }
+
+  .measurement-image-placeholder {
+    border-radius: 0.4375rem;
+    font-size: 0.8125rem;
+  }
+
+  .measurement-caption {
+    font-size: 0.6875rem;
+    margin-top: 0.4375rem;
+  }
+}
+
+@media (max-width: 320px) {
+
+  .measurement-guide-title {
+    font-size: 0.875rem;
+  }
+
+  .measurement-overlay-content {
+    padding: 0.5rem;
+    max-height: calc(100vh - 2.75rem);
+  }
+
+  .measurement-unit-table {
+    padding: 0.4375rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+  }
+
+  .measurement-unit-row {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0;
+  }
+
+  .measurement-unit-row .measurement-value {
+    font-size: 0.75rem;
+  }
+
+  .measurement-unit-row .measurement-equal {
+    width: 1.5rem;
+    font-size: 0.6875rem;
+  }
+
+  .measurement-tabs {
+    margin-bottom: 0.5rem;
+  }
+
+  .measurement-tab {
+    font-size: 0.6875rem;
+    padding: 0.4375rem 0.5rem;
+  }
+
+  .measurement-image-category-title {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.625rem;
+    margin: 0.5rem auto 0.375rem;
+    min-width: 5rem;
+  }
+
+  .measurement-image-section {
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .measurement-image-box {
+    min-width: calc(50% - 0.1875rem);
+  }
+
+  .measurement-image,
+  .measurement-image-placeholder {
+    border-radius: 0.3125rem;
+  }
+
+  .measurement-image-placeholder {
+    font-size: 0.6875rem;
+  }
+
+  .measurement-caption {
+    font-size: 0.5625rem;
+    margin-top: 0.1875rem;
+    line-height: 120%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .measurement-page,
+  .measurement-image,
+  .measurement-tab {
+    transition: none !important;
+  }
 }
