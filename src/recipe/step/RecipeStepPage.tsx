@@ -22,7 +22,7 @@ const RecipeStepPage = (): JSX.Element => {
 
   // 레시피로 돌아가기 핸들러 - 라우터로 네비게이션
   const handleBackToRecipe = (): void => {
-    navigate(`/recipes/${id}`, { replace: true });
+    navigate(-1);
   };
 
   // 조리 모드일 때 body 스크롤 방지

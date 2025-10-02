@@ -1,6 +1,5 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Slider from 'react-slick';
 
 import { Header, YouTubePlayer } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
@@ -8,17 +7,105 @@ import { RecipeData } from 'recipe/detail/types/recipe';
 import VoiceGuide from 'recipe/step/components/VoiceGuide';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
-import StepCard from './StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import 'recipe/step/components/RecipeStep.css';
-import { useStepByVoiceController } from '../hooks/useStepController';
-import { useStepInit } from '../hooks/useStepInit';
+import { useRecipeStepNavigation } from '../hooks/useRecipeStepNavigation';
 import './Overlay.css';
 
 interface Props {
   recipeData: RecipeData;
   onBackToRecipe: () => void;
+}
+
+interface SegmentInfo {
+  startTime: number;
+  endTime: number;
+  isCompleted: boolean;
+  isCurrent: boolean;
+  progress: number; // 0-1 for current segment
+}
+
+function ProgressBar({
+  recipeData,
+  currentStep,
+  currentDetailIndex,
+  currentTime,
+}: {
+  recipeData: RecipeData;
+  currentStep: number;
+  currentDetailIndex: number;
+  currentTime: number;
+}) {
+  // 모든 세그먼트 정보를 계산
+  const calculateSegments = (): SegmentInfo[] => {
+    const segments: SegmentInfo[] = [];
+
+    recipeData.recipe_steps.forEach((step, stepIndex) => {
+      step.details.forEach((detail, detailIndex) => {
+        const startTime = detail.start;
+
+        // 다음 detail의 시작 시간을 찾기
+        let endTime: number;
+        if (detailIndex < step.details.length - 1) {
+          // 같은 step 내 다음 detail
+          endTime = step.details[detailIndex + 1].start;
+        } else if (stepIndex < recipeData.recipe_steps.length - 1) {
+          // 다음 step의 첫 번째 detail
+          endTime = recipeData.recipe_steps[stepIndex + 1].details[0].start;
+        } else {
+          // 마지막 detail인 경우 비디오 끝까지
+          endTime = recipeData.video_info.video_seconds || startTime + 10; // fallback
+        }
+
+        const isCurrent = stepIndex === currentStep && detailIndex === currentDetailIndex;
+        const isCompleted = currentTime > endTime;
+
+        let progress = 0;
+        if (isCurrent && currentTime >= startTime) {
+          progress = Math.min((currentTime - startTime) / (endTime - startTime), 1);
+        }
+
+        segments.push({
+          startTime,
+          endTime,
+          isCompleted,
+          isCurrent,
+          progress,
+        });
+      });
+    });
+
+    return segments;
+  };
+
+  const segments = calculateSegments();
+
+  return (
+    <div className="progress-bar-container">
+      <div className="progress-bar">
+        {segments.map((segment, index) => (
+          <div
+            key={index}
+            className={`progress-segment ${
+              segment.isCompleted ? 'completed' : segment.isCurrent ? 'current' : 'pending'
+            }`}
+          >
+            <div
+              className="progress-fill"
+              style={{
+                width: segment.isCompleted
+                  ? '100%'
+                  : segment.isCurrent
+                    ? `${segment.progress * 100}%`
+                    : '0%',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function LoadingOverlay() {
@@ -33,48 +120,108 @@ function LoadingOverlay() {
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
-  //TODO : useEffect의 무한루프 막기 위해서 이거 있는 거 같은데, useEffect 제거해서 이거 없어도 될듯?
-  //DONE : 삭제
-
-  // const is
-
   // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
   const [showVoiceGuide, setShowVoiceGuide] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
-  const [currentStep, setCurrentStep] = useState(0);
-
-  const sliderRef = useRef<Slider>(null);
   const ytRef = useRef<YT.Player | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const { handleStepsFromVoice, handleStepsFromSlider } = useStepByVoiceController(
-    sliderRef,
-    ytRef,
-    recipeData,
-  );
+  // Function to find the appropriate step based on current playback time
+  const findStepByTime = useCallback(
+    (currentTime: number) => {
+      // Get the first step's first detail start time
+      const firstStep = recipeData.recipe_steps[0];
+      const firstDetailStart = firstStep?.details[0]?.start || 0;
 
-  const { isInitialized, handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
-    handleStepsFromVoice.byStep(0),
-  );
+      // If current time is before the first step, return first step
+      if (currentTime < firstDetailStart) {
+        return { stepIndex: 0, detailIndex: 0 };
+      }
 
-  const slickSettings = {
-    dots: false,
-    infinite: false,
-    speed: 300,
-    centerMode: true,
-    centerPadding: '10%',
-    afterChange: (index: number) => {
-      setCurrentStep(index);
-      handleStepsFromSlider.byStep(index);
+      for (let stepIndex = 0; stepIndex < recipeData.recipe_steps.length; stepIndex++) {
+        const step = recipeData.recipe_steps[stepIndex];
+        for (let detailIndex = 0; detailIndex < step.details.length; detailIndex++) {
+          const detail = step.details[detailIndex];
+          if (currentTime >= detail.start) {
+            // Check if this is the last detail or if the next detail starts after current time
+            const isLastDetail = detailIndex === step.details.length - 1;
+            const nextDetail = !isLastDetail ? step.details[detailIndex + 1] : null;
+            const nextStep =
+              stepIndex < recipeData.recipe_steps.length - 1
+                ? recipeData.recipe_steps[stepIndex + 1]
+                : null;
+            const nextDetailStart = nextDetail?.start || nextStep?.details[0]?.start || Infinity;
+
+            if (currentTime < nextDetailStart) {
+              return { stepIndex, detailIndex };
+            }
+          }
+        }
+      }
+      // If no step found, return the last step's last detail
+      const lastStep = recipeData.recipe_steps[recipeData.recipe_steps.length - 1];
+      return {
+        stepIndex: recipeData.recipe_steps.length - 1,
+        detailIndex: lastStep.details.length - 1,
+      };
     },
-    arrows: false,
-    adaptiveHeight: false, // 높이 적응 비활성화
-    draggable: true,
-    onInit: () => handleSliderInitialized(),
-  };
+    [recipeData.recipe_steps],
+  );
+
+  const {
+    currentStep,
+    currentDetailIndex,
+    setCurrentStep,
+    setCurrentDetailIndex,
+    goToNextStep,
+    goToPreviousStep,
+    goToStep,
+    handleContainerClick,
+    getCurrentStepDisplay,
+    getNextStepDisplay,
+  } = useRecipeStepNavigation({
+    recipeData,
+    ytRef,
+    onTimeUpdate: () => {
+      // 단계 이동 시 시간만 업데이트
+      if (ytRef.current) {
+        const currentTime = ytRef.current.getCurrentTime();
+        setCurrentTime(currentTime);
+      }
+    },
+  });
+
+  // Handle YouTube time updates
+  const handleTimeUpdate = useCallback(() => {
+    if (!ytRef.current) return;
+
+    const currentTime = ytRef.current.getCurrentTime();
+    setCurrentTime(currentTime);
+
+    const { stepIndex, detailIndex } = findStepByTime(currentTime);
+
+    // Only update if the step or detail has changed
+    if (stepIndex !== currentStep || detailIndex !== currentDetailIndex) {
+      setCurrentStep(stepIndex);
+      setCurrentDetailIndex(detailIndex);
+    }
+  }, [currentStep, currentDetailIndex, setCurrentStep, setCurrentDetailIndex, findStepByTime]);
+
+  // Handle YouTube state changes (including seeking)
+  const handleStateChange = useCallback(
+    (event: YT.OnStateChangeEvent) => {
+      // 상태가 변경될 때마다 즉시 시간 업데이트
+      if (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED) {
+        handleTimeUpdate();
+      }
+    },
+    [handleTimeUpdate],
+  );
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
@@ -97,26 +244,25 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
     switch (cmd) {
       case 'NEXT':
-        handleStepsFromVoice.toNext(currentStep);
+        goToNextStep();
         commandExecuted = true;
         break;
       case 'PREV':
-        handleStepsFromVoice.toPrevious(currentStep);
+        goToPreviousStep();
         commandExecuted = true;
         break;
       case 'STEP': {
         const num = parseInt(arg1 ?? '', 10);
-        if (!Number.isNaN(num) && num >= 1) {
-          //외부로 오는 요청은 1부터 시작하기 때문에 -1 처리
-          handleStepsFromVoice.byStep(num - 1);
-          commandExecuted = true;
+        if (!Number.isNaN(num)) {
+          goToStep(num);
         }
+        commandExecuted = true;
         break;
       }
       case 'TIMESTAMP': {
         const secs = parseInt(arg1 ?? '', 10);
-        if (!Number.isNaN(secs)) {
-          handleStepsFromVoice.byTimestamp(secs);
+        if (!Number.isNaN(secs) && ytRef.current) {
+          ytRef.current.seekTo(secs, true);
           commandExecuted = true;
         }
         break;
@@ -212,16 +358,16 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     },
   });
 
-  // 캐러셀 단계 변경 시 해당 단계 시작 시간으로 YouTube를 시킹
-  // TODO : 이렇게 상태 변화일 때 유튜브를 이동시키는 것은 불일치가 발생할 가능성있음. 그냥 레시피 조작할 때 마다 제거.
-  // DONE : 삭제
+  // Set up YouTube time update listener
+  useEffect(() => {
+    if (!ytRef.current || !isInitialized) return;
 
-  // 재생 시간이 다음 스텝 시작 시간에 도달하면 현재 스텝의 시작으로 루프
-  // TODO : 이것도 단계 변환 시킬 때 그냥 버튼에서 처리하면 안될까, 그리고 사용자가 유튜브 영상의 초를 바꾸면, 기존 단계로 돌아오는데 step도 같이 바꿔줘야 하는거 아닌가
-  // TODO : 이런 방식으로 되면 사용자가 말한 '다음'이 도착해서 다음으로 넘어갔는데, seek가 실행되서 비디오는 이전에 있던 step의 영상 시간으로 가버릴 수 도 있음.
-  // DONE : 삭제
+    const interval = setInterval(handleTimeUpdate, 100); // Check every 100ms for smoother updates
 
-  let stepCount = 1;
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isInitialized, currentStep, currentDetailIndex, handleTimeUpdate]);
 
   return (
     <div className="cooking-mode safe-area safe-area-top safe-area-bottom">
@@ -239,26 +385,61 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         autoplay
         onPlayerReady={player => {
           ytRef.current = player;
-          handleYtInitialized();
+          setIsInitialized(true);
         }}
+        onStateChange={handleStateChange}
       />
 
-      <section className="cooking-steps-container">
-        <div className="carousel-container">
-          <Slider ref={sliderRef} {...slickSettings}>
-            {recipeData.recipe_steps.flatMap((step, idx) =>
-              step.details.map((detail, detailIdx) => (
-                <StepCard
-                  key={`step-${idx}-${detailIdx}`}
-                  step={`${step.subtitle}(${detailIdx + 1}/${step.details.length})`}
-                  detail={detail.text}
-                  index={stepCount++}
-                />
-              )),
-            )}
-          </Slider>
-        </div>
-      </section>
+      <div className="cooking-steps-wrapper">
+        <ProgressBar
+          recipeData={recipeData}
+          currentStep={currentStep}
+          currentDetailIndex={currentDetailIndex}
+          currentTime={currentTime}
+        />
+        <section className="cooking-steps-container" onClick={handleContainerClick}>
+          {(() => {
+            const currentDisplay = getCurrentStepDisplay();
+            const nextDisplay = getNextStepDisplay();
+
+            return (
+              <>
+                <div className="steps-header">
+                  <h2 className="steps-title">
+                    {currentDisplay.alphabetPrefix}. {currentDisplay.subtitle}
+                  </h2>
+                </div>
+
+                <div className="current-step">
+                  <>
+                    <span className="step-number">{currentDisplay.globalStepNumber}.</span>
+                    <span className="step-text">{currentDisplay.detailText}</span>
+                  </>
+                </div>
+
+                {nextDisplay.subtitle && (
+                  <div className="steps-header">
+                    <span className="steps-title">
+                      {nextDisplay.alphabetPrefix}. {nextDisplay.subtitle}
+                    </span>
+                  </div>
+                )}
+
+                <div className="next-step">
+                  {nextDisplay.isRecipeEnd ? (
+                    <span className="next-step-text">{nextDisplay.detailText}</span>
+                  ) : (
+                    <>
+                      <span className="next-step-number">{nextDisplay.globalStepNumber}.</span>
+                      <span className="next-step-text">{nextDisplay.detailText}</span>
+                    </>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </section>
+      </div>
 
       {/* 플로팅 음성 가이드 버튼 */}
       {/* 왼쪽 하단 플로팅 타이머 버튼 */}
