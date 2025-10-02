@@ -46,7 +46,6 @@ const sendAudioData = (ws: WebSocket, audioData: ArrayBuffer, isFinal: boolean =
 };
 
 interface Params {
-  selectedSttModel?: string;
   accessToken?: string | null;
   recipeId?: string;
   onVoiceStart?: () => void;
@@ -59,7 +58,6 @@ interface Params {
 }
 
 export const useSimpleSpeech = ({
-  selectedSttModel = 'CLOVA',
   accessToken,
   recipeId,
   onVoiceStart,
@@ -71,6 +69,8 @@ export const useSimpleSpeech = ({
   onKwsDeactivate,
 }: Params) => {
   const [error, setError] = useState<string | null>(null);
+
+  const STT_MODEL = 'CLOVA';
 
   // WS
   const wsRef = useRef<WebSocket | null>(null);
@@ -103,12 +103,12 @@ export const useSimpleSpeech = ({
   const speechActiveRef = useRef(false);
   const lastOnRef = useRef(0);
   const lastOffRef = useRef(0);
+  const kwsInferringRef = useRef<boolean>(false);
 
   // 최신 값 refs
   const accessTokenRef = useRef(accessToken);
   const recipeIdRef = useRef(recipeId);
   const onIntentRef = useRef(onIntent);
-  const selectedSttModelRef = useRef(selectedSttModel);
   const onVoiceStartRef = useRef(onVoiceStart);
   const onVoiceEndRef = useRef(onVoiceEnd);
   const onVolumeRef = useRef(onVolume);
@@ -125,9 +125,6 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     onIntentRef.current = onIntent;
   }, [onIntent]);
-  useEffect(() => {
-    selectedSttModelRef.current = selectedSttModel;
-  }, [selectedSttModel]);
   useEffect(() => {
     onVoiceStartRef.current = onVoiceStart;
   }, [onVoiceStart]);
@@ -154,7 +151,7 @@ export const useSimpleSpeech = ({
     TARGET_SR: 16000,
     WINDOW_SAMPLES: 16000, // 1s
     HOP_SAMPLES: 1600, // 100ms @16k
-    threshold: 0.45,
+    threshold: 0.5,
     minSustainMs: 200,
     alpha: 0.4,
     timeoutMs: 2000, // 1초 타임아웃
@@ -175,14 +172,25 @@ export const useSimpleSpeech = ({
       const session = await ort.InferenceSession.create(arrayBuffer, options);
       kwsSessionRef.current = session;
     } catch (err: any) {
+      console.error('[KWS] 모델 로드 실패:', err.message);
       setError(`KWS 모델 로드 실패: ${err.message}`);
     }
   };
 
   const predictKws = async (audioChunk: Float32Array) => {
     try {
+      // 이미 추론 중이면 건너뛰기
+      if (kwsInferringRef.current) {
+        return null;
+      }
+
+      kwsInferringRef.current = true; // 추론 시작 플래그
+
       const session = kwsSessionRef.current;
-      if (!session) return null;
+      if (!session) {
+        kwsInferringRef.current = false;
+        return null;
+      }
 
       const inputTensor = new ort.Tensor('float32', audioChunk, [1, audioChunk.length]);
       const feeds = { [session.inputNames[0]]: inputTensor };
@@ -193,8 +201,12 @@ export const useSimpleSpeech = ({
       const m = Math.max(logits[0], logits[1]);
       const e0 = Math.exp(logits[0] - m);
       const e1 = Math.exp(logits[1] - m);
+
+      kwsInferringRef.current = false; // 추론 완료
       return e1 / (e0 + e1);
     } catch (err: any) {
+      kwsInferringRef.current = false; // 오류 시에도 플래그 해제
+      console.error('[KWS] 추론 오류:', err.message);
       return null;
     }
   };
@@ -266,7 +278,7 @@ export const useSimpleSpeech = ({
   useEffect(() => {
     const openWS = () => {
       const url = new URL(STT_URL);
-      url.searchParams.append('provider', selectedSttModelRef.current ?? 'VITO');
+      url.searchParams.append('provider', STT_MODEL);
       const token = accessTokenRef.current;
       if (token) url.searchParams.append('token', token.replace(/^Bearer\s/i, ''));
       if (recipeIdRef.current) url.searchParams.append('recipe_id', recipeIdRef.current);
@@ -332,7 +344,6 @@ export const useSimpleSpeech = ({
         const voiceThreshold = POS_TH;
         const vad = new VADInstance(module, hopSize, voiceThreshold);
         vadInstanceRef.current = vad;
-
         // 3) 마이크 오픈
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -520,6 +531,7 @@ export const useSimpleSpeech = ({
 
         src.connect(vadWorklet).connect(ctx.destination);
       } catch (e: any) {
+        console.error('[VAD] 초기화 실패:', e);
         setError(e?.message ?? '오디오 초기화 실패');
       }
     };
