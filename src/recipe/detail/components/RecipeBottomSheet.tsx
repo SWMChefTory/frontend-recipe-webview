@@ -370,12 +370,12 @@ const RecipeBottomSheet = ({
             <div className="recipe-content-area">
               {steps.map((step, stepIndex) => (
                 <div key={step.id} className="recipe-section">
-                  <div className="section-title">
+                  <div className="section-title clickable" onClick={() => toggleStep(stepIndex)}>
                     <div className="step-badge">{String.fromCharCode(65 + stepIndex)}</div>
                     <div className="title-text">
                       <h3>{step.subtitle}</h3>
                     </div>
-                    <button className="toggle-button" onClick={() => toggleStep(stepIndex)}>
+                    <button className="toggle-button" onClick={(e) => { e.stopPropagation(); toggleStep(stepIndex); }}>
                       <svg
                         className={expandedSteps.has(stepIndex) ? 'rotated' : ''}
                         width="24"
