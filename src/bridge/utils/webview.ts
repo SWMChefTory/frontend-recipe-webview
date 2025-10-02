@@ -36,8 +36,8 @@ export const sendBridgeMessage = (
  * 뒤로가기 메시지 전송
  * @param recipeData - 레시피 데이터
  */
-export const sendGoHome = (): void => {
-  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.GO_HOME, null);
+export const sendBackPressed = (): void => {
+  sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.BACK_PRESSED, null);
 };
 
 /**

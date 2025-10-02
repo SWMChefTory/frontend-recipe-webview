@@ -1,17 +1,12 @@
 import '_common/components/Header/Header.css';
 import { HeaderProps } from '_common/types';
-import { useMemo } from 'react';
 
 /**
  * 헤더 컴포넌트
  * @param props - 헤더 컴포넌트 props
  * @returns JSX 엘리먼트
  */
-const Header = ({ title, currentStep, totalSteps, onBack }: HeaderProps): JSX.Element => {
-  const displayTitle = useMemo(() => {
-    return currentStep && totalSteps ? `${title}(${currentStep}/${totalSteps})` : title;
-  }, [title, currentStep, totalSteps]);
-
+const Header = ({ title, onBack }: HeaderProps): JSX.Element => {
   return (
     <header className="header">
       <button className="header-back-btn" onClick={onBack} aria-label="뒤로 가기" type="button">
@@ -25,7 +20,7 @@ const Header = ({ title, currentStep, totalSteps, onBack }: HeaderProps): JSX.El
           />
         </svg>
       </button>
-      <h1 className="header-title">{displayTitle}</h1>
+      <h1 className="header-title">{title}</h1>
     </header>
   );
 };

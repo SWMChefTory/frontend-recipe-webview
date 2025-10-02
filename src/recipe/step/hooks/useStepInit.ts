@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef, useState } from 'react';
 
 // 스텝 초기화 훅
-export const useStepInit = ( onInit: () => void) => {
+export const useStepInit = (onInit: () => void) => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const isSliderInitialized = useRef(false);
@@ -27,5 +27,5 @@ export const useStepInit = ( onInit: () => void) => {
     isInitialized,
     handleYtInitialized,
     handleSliderInitialized,
-  }
-}
+  };
+};

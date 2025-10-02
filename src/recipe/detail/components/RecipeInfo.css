@@ -1,99 +1,24 @@
-/* ===========================
-   페이지 레이아웃 (공통)
-   =========================== */
-.recipe-info {
-  background: var(--bg);
-  min-height: 100vh;
-}
-.recipe-content {
-  flex: 1;
-  padding: var(--space-lg);
-  padding-bottom: calc(var(--space-lg) + var(--bottom-bar-h));
+body:has(.recipe-info) {
+    overflow: hidden;
+    height: 100vh;
+    overscroll-behavior: none;
 }
 
-/* 공통 아이콘 상태 */
+html:has(.recipe-info) {
+    overflow: hidden;
+    height: 100vh;
+    overscroll-behavior: none;
+}
+
+.recipe-info {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
 .chevron-icon {
   transition: transform 0.3s ease;
   color: var(--muted);
-}
-.chevron-icon.is-open {
-  transform: rotate(180deg);
-}
-
-/* 페이지 공통 텍스트 안전 처리 */
-.ingredient-card,
-.recipe-step-card,
-.step {
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: anywhere;
-}
-
-/* 접근성/모션은 개별 컴포넌트 CSS로 이동 */
-/* 모달 배경 (반투명 어두운 오버레이) */
-.modal-backdrop {
-  position: fixed;
-  inset: 0; /* top, right, bottom, left = 0 */
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* 모달 본체 */
-.modal {
-  background: #fff;
-  border-radius: 12px;
-  max-width: 400px;
-  width: 90%;
-  padding: 24px 20px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  text-align: center;
-  animation: modal-fade-in 0.25s ease-out;
-}
-
-/* 제목 */
-.modal h2 {
-  margin: 0 0 12px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827; /* Tailwind slate-900 느낌 */
-}
-
-/* 본문 텍스트 */
-.modal p {
-  font-size: 14px;
-  color: #374151; /* slate-700 */
-  margin-bottom: 20px;
-  line-height: 1.5;
-}
-
-/* 버튼 */
-.modal button {
-  background: var(--brand, #f97316); /* 프로젝트에 있는 brand 컬러 활용 */
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.modal button:hover {
-  background: var(--brand-dark, #ea580c);
-}
-
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }

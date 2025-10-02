@@ -170,7 +170,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
-      
     }
 
     // 명령이 실행되었으면 KWS 비활성화
@@ -225,7 +224,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   let stepCount = 1;
 
   return (
-    <div className="cooking-mode">
+    <div className="cooking-mode safe-area safe-area-top safe-area-bottom">
       {!isInitialized && <LoadingOverlay />}
       <Header
         title={recipeData.video_info.video_title}

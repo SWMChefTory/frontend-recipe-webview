@@ -30,7 +30,7 @@ export interface RecipeDetailMeta {
   id: string;
   description: string;
   servings: number;
-  cook_time: number;
+  cookingTime: number;
 }
 
 // 시청 상태 정보 타입
