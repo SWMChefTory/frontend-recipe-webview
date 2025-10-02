@@ -1,8 +1,8 @@
+import { Error, Loading } from '_common';
+import { useBridgeActions } from 'bridge';
 import { Suspense, useEffect } from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Error, Loading } from '_common';
-import { useBridgeActions } from 'bridge';
 import { RecipeInfo, useRecipeData } from 'recipe/detail';
 
 /**
@@ -12,13 +12,15 @@ import { RecipeInfo, useRecipeData } from 'recipe/detail';
 const RecipeDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
 
-  return <ErrorBoundary
-    fallbackRender={({}: FallbackProps) => <Error error={'레시피를 불러오는 데 실패했습니다.'} />}
-  >
-    <Suspense fallback={<Loading />}>
-      <RecipeDetailContent recipeId={id} />
-    </Suspense>
-  </ErrorBoundary>;
+  return (
+    <ErrorBoundary
+      fallbackRender={({}: FallbackProps) => <Error error={'레시피를 불러오는 데 실패했습니다.'} />}
+    >
+      <Suspense fallback={<Loading />}>
+        <RecipeDetailContent recipeId={id} />
+      </Suspense>
+    </ErrorBoundary>
+  );
 };
 
 /**
@@ -69,7 +71,7 @@ const RecipeDetailContent = ({ recipeId }: RecipeDetailContentProps) => {
     <RecipeInfo
       recipeData={recipeData}
       onStartRecipeStep={handleStartRecipeStep}
-      onBack={bridgeActions.handleGoHome}
+      onBack={bridgeActions.handleBack}
     />
   );
 };
