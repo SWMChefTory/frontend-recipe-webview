@@ -147,7 +147,6 @@ export const useSimpleSpeech = ({
     onKwsDeactivateRef.current = onKwsDeactivate;
   }, [onKwsDeactivate]);
 
-
   // ------------------------
   // KWS Configuration
   // ------------------------
@@ -175,9 +174,7 @@ export const useSimpleSpeech = ({
 
       const session = await ort.InferenceSession.create(arrayBuffer, options);
       kwsSessionRef.current = session;
-      alert ('[KWS] 모델 로드 성공');
     } catch (err: any) {
-      alert('[KWS] 모델 로드 실패:' + err.message);
       setError(`KWS 모델 로드 실패: ${err.message}`);
     }
   };
@@ -198,7 +195,6 @@ export const useSimpleSpeech = ({
       const e1 = Math.exp(logits[1] - m);
       return e1 / (e0 + e1);
     } catch (err: any) {
-      alert('[KWS] 추론 오류: ' + err.message);
       return null;
     }
   };
@@ -397,7 +393,7 @@ export const useSimpleSpeech = ({
                 if (kwsBufferRef.current.length >= KWS_CONFIG.WINDOW_SAMPLES) {
                   const window = kwsBufferRef.current.slice(0, KWS_CONFIG.WINDOW_SAMPLES);
                   kwsBufferRef.current = kwsBufferRef.current.slice(KWS_CONFIG.HOP_SAMPLES);
-                  
+
                   const kwsProb = await predictKws(window);
                   handleKwsDetection(kwsProb);
                 }
@@ -524,7 +520,6 @@ export const useSimpleSpeech = ({
 
         src.connect(vadWorklet).connect(ctx.destination);
       } catch (e: any) {
-        alert('[VAD] 초기화 실패:' + e);
         setError(e?.message ?? '오디오 초기화 실패');
       }
     };
