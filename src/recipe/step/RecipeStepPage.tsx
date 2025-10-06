@@ -25,7 +25,7 @@ const RecipeStepPage = (): JSX.Element => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.LOCK_TO_PORTRAIT_UP, null);
     setTimeout(() => {
       navigate(-1);
-    }, 100);
+    }, 200);
   };
 
   useBodyScrollLock(true);
@@ -52,7 +52,7 @@ const RecipeStepPage = (): JSX.Element => {
         sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.LOCK_TO_PORTRAIT_UP, null);
         setTimeout(() => {
           navigate(-1);
-        }, 100);
+        }, 200);
       }
     };
 
