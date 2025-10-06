@@ -1,24 +1,93 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Slider from 'react-slick';
 
-import { Header, YouTubePlayer } from '_common';
+import { Header, YouTubePlayer, useOrientation } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
 import VoiceGuide from 'recipe/step/components/VoiceGuide';
 import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
-import StepCard from './StepCard';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
-import 'recipe/step/components/RecipeStep.css';
-import { useStepByVoiceController } from '../hooks/useStepController';
-import { useStepInit } from '../hooks/useStepInit';
+import { useRecipeStepNavigation } from '../hooks/useRecipeStepNavigation';
+import './RecipeStep.css';
 import './Overlay.css';
 
 interface Props {
   recipeData: RecipeData;
   onBackToRecipe: () => void;
+}
+
+interface SegmentInfo {
+  startTime: number;
+  endTime: number;
+  isCompleted: boolean;
+  isCurrent: boolean;
+  progress: number;
+}
+
+interface FlatDetail {
+  stepIndex: number;
+  detailIndex: number;
+  start: number;
+}
+
+function ProgressBar({
+  recipeData,
+  currentStep,
+  currentTime,
+}: {
+  recipeData: RecipeData;
+  currentStep: number;
+  currentDetailIndex: number;
+  currentTime: number;
+}) {
+  const segments = useMemo((): SegmentInfo[] => {
+    return recipeData.recipe_steps.map((step, stepIndex) => {
+      const startTime = step.details[0]?.start || 0;
+      
+      const endTime =
+        stepIndex < recipeData.recipe_steps.length - 1
+          ? recipeData.recipe_steps[stepIndex + 1].details[0]?.start || startTime + 10
+          : recipeData.video_info.video_seconds || startTime + 10;
+
+      const isCurrent = stepIndex === currentStep;
+      const isCompleted = stepIndex < currentStep;
+      
+      let progress = 0;
+      if (isCurrent && currentTime >= startTime) {
+        progress = Math.min((currentTime - startTime) / (endTime - startTime), 1);
+      }
+
+      return { startTime, endTime, isCompleted, isCurrent, progress };
+    });
+  }, [recipeData, currentStep, currentTime]);
+
+  return (
+    <div className="progress-bar-container">
+      <div className="progress-bar">
+        {segments.map((segment, index) => (
+          <div
+            key={index}
+            className={`progress-segment ${
+              segment.isCompleted ? 'completed' : segment.isCurrent ? 'current' : 'pending'
+            }`}
+          >
+            <div
+              className="progress-fill"
+              style={{
+                width: segment.isCompleted
+                  ? '100%'
+                  : segment.isCurrent
+                    ? `${segment.progress * 100}%`
+                    : '0%',
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function LoadingOverlay() {
@@ -33,53 +102,106 @@ function LoadingOverlay() {
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
-  //TODO : useEffect의 무한루프 막기 위해서 이거 있는 거 같은데, useEffect 제거해서 이거 없어도 될듯?
-  //DONE : 삭제
-
-  // const is
-
-  // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
   const [showVoiceGuide, setShowVoiceGuide] = useState(false);
-
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  const isLandscape = useOrientation();
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
-  const [currentStep, setCurrentStep] = useState(0);
-
-  const sliderRef = useRef<Slider>(null);
   const ytRef = useRef<YT.Player | null>(null);
+  const currentStepRef = useRef<HTMLDivElement>(null);
 
-  const { handleStepsFromVoice, handleStepsFromSlider } = useStepByVoiceController(
-    sliderRef,
-    ytRef,
-    recipeData,
-  );
+  const allDetails = useMemo((): FlatDetail[] => {
+    const flat: FlatDetail[] = [];
+    recipeData.recipe_steps.forEach((step, stepIndex) => {
+      step.details.forEach((detail, detailIndex) => {
+        flat.push({ stepIndex, detailIndex, start: detail.start });
+      });
+    });
+    return flat;
+  }, [recipeData.recipe_steps]);
 
-  const { isInitialized, handleYtInitialized, handleSliderInitialized } = useStepInit(() =>
-    handleStepsFromVoice.byStep(0),
-  );
+  const findStepByTime = useCallback(
+    (currentTime: number): { stepIndex: number; detailIndex: number } => {
+      if (allDetails.length === 0) {
+        return { stepIndex: 0, detailIndex: 0 };
+      }
 
-  const slickSettings = {
-    dots: false,
-    infinite: false,
-    speed: 300,
-    centerMode: true,
-    centerPadding: '10%',
-    afterChange: (index: number) => {
-      setCurrentStep(index);
-      handleStepsFromSlider.byStep(index);
+      const firstStart = allDetails[0].start;
+      if (currentTime < firstStart) {
+        return { stepIndex: 0, detailIndex: 0 };
+      }
+
+      for (let i = allDetails.length - 1; i >= 0; i--) {
+        if (currentTime >= allDetails[i].start) {
+          return {
+            stepIndex: allDetails[i].stepIndex,
+            detailIndex: allDetails[i].detailIndex,
+          };
+        }
+      }
+
+      const last = allDetails[allDetails.length - 1];
+      return { stepIndex: last.stepIndex, detailIndex: last.detailIndex };
     },
-    arrows: false,
-    adaptiveHeight: false, // 높이 적응 비활성화
-    draggable: true,
-    onInit: () => handleSliderInitialized(),
-  };
+    [allDetails],
+  );
+
+  const {
+    currentStep,
+    currentDetailIndex,
+    setCurrentStep,
+    setCurrentDetailIndex,
+    goToNextStep,
+    goToPreviousStep,
+    goToStep,
+    goToSpecificDetail,
+    getCurrentStepDisplay,
+    getNextStepsPreview,
+    getAllPreviousSteps,
+  } = useRecipeStepNavigation({
+    recipeData,
+    ytRef,
+    onTimeUpdate: () => {
+      if (ytRef.current) {
+        setCurrentTime(ytRef.current.getCurrentTime());
+      }
+    },
+  });
+
+  const handleTimeUpdate = useCallback(() => {
+    if (!ytRef.current) return;
+
+    const currentTime = ytRef.current.getCurrentTime();
+    setCurrentTime(currentTime);
+
+    const { stepIndex, detailIndex } = findStepByTime(currentTime);
+
+    if (stepIndex !== currentStep || detailIndex !== currentDetailIndex) {
+      setCurrentStep(stepIndex);
+      setCurrentDetailIndex(detailIndex);
+    }
+  }, [currentStep, currentDetailIndex, setCurrentStep, setCurrentDetailIndex, findStepByTime]);
+
+  const handleStateChange = useCallback(
+    (event: YT.OnStateChangeEvent) => {
+      if (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED) {
+        handleTimeUpdate();
+      }
+    },
+    [handleTimeUpdate],
+  );
 
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
 
-    // WAKEWORD 처리: KWS가 비활성화 상태일 때만 활성화
     if (cmd === 'WAKEWORD') {
       if (!isKwsActive) {
         setIsKwsActive(true);
@@ -87,98 +209,80 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       return;
     }
 
-    // 다른 명령들은 KWS가 활성화된 상태에서만 실행
-    if (!isKwsActive) {
-      return;
-    }
+    if (!isKwsActive) return;
 
-    // 유효한 명령이 실행되면 KWS 비활성화
     let commandExecuted = false;
 
     switch (cmd) {
       case 'NEXT':
-        handleStepsFromVoice.toNext(currentStep);
+        goToNextStep();
         commandExecuted = true;
         break;
       case 'PREV':
-        handleStepsFromVoice.toPrevious(currentStep);
+        goToPreviousStep();
         commandExecuted = true;
         break;
       case 'STEP': {
         const num = parseInt(arg1 ?? '', 10);
-        if (!Number.isNaN(num) && num >= 1) {
-          //외부로 오는 요청은 1부터 시작하기 때문에 -1 처리
-          handleStepsFromVoice.byStep(num - 1);
-          commandExecuted = true;
+        if (!Number.isNaN(num)) {
+          goToStep(num);
         }
+        commandExecuted = true;
         break;
       }
       case 'TIMESTAMP': {
         const secs = parseInt(arg1 ?? '', 10);
-        if (!Number.isNaN(secs)) {
-          handleStepsFromVoice.byTimestamp(secs);
+        if (!Number.isNaN(secs) && ytRef.current) {
+          ytRef.current.seekTo(secs, true);
           commandExecuted = true;
         }
         break;
       }
-      case 'VIDEO': {
-        switch (arg1) {
-          case 'PLAY':
-            ytRef.current?.playVideo();
-            commandExecuted = true;
-            break;
-          case 'STOP':
-            ytRef.current?.pauseVideo();
-            commandExecuted = true;
-            break;
+      case 'VIDEO':
+        if (arg1 === 'PLAY') {
+          ytRef.current?.playVideo();
+          commandExecuted = true;
+        } else if (arg1 === 'STOP') {
+          ytRef.current?.pauseVideo();
+          commandExecuted = true;
         }
         break;
-      }
-      //TODO : 버튼 컴포넌트로 캡슐화
       case 'TIMER': {
+        const timerData = {
+          recipe_id: recipeId ?? '',
+          recipe_title: recipeData.video_info.video_title,
+        };
+
         switch (arg1) {
           case 'START':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, null, timerData);
             commandExecuted = true;
             break;
           case 'STOP':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, timerData);
             commandExecuted = true;
             break;
           case 'CHECK':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, timerData);
             commandExecuted = true;
             break;
-          case 'SET': {
+          case 'SET':
             sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
+              ...timerData,
               timer_time: arg2 ?? '0',
             });
             commandExecuted = true;
             break;
-          }
         }
         break;
       }
     }
 
-    // 명령이 실행되었으면 KWS 비활성화
     if (commandExecuted) {
       setIsKwsActive(false);
     }
   };
 
-  //TODO : 버튼 컴포넌트로 캡슐화
   const handleTimerClick = () => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
       recipe_id: recipeId ?? '',
@@ -186,83 +290,265 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     });
   };
 
-  const handleVoiceGuideOpen = () => {
-    setShowVoiceGuide(true);
-  };
+  const handleHeaderDragStart = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isLandscape) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragStartY(clientY);
+  }, [isLandscape]);
 
-  const handleVoiceGuideClose = () => {
-    setShowVoiceGuide(false);
-  };
+  const handleHeaderDragMove = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isDragging || !isLandscape) return;
+    
+    e.preventDefault();
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - dragStartY;
+    
+    if (deltaY > 30) {
+      setIsHeaderVisible(true);
+      setIsDragging(false);
+    } else if (deltaY < -30) {
+      setIsHeaderVisible(false);
+      setIsDragging(false);
+    }
+  }, [isDragging, isLandscape, dragStartY]);
+
+  const handleHeaderDragEnd = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isLandscape) return;
+    e.preventDefault();
+    setIsDragging(false);
+  }, [isLandscape]);
 
   useSimpleSpeech({
     accessToken,
     recipeId: recipeId!,
     onIntent: handleIntent,
     onKwsDetection: probability => {
-      // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
       if (probability > 0.1) {
-        // 노이즈 필터링
       }
     },
-    onKwsActivate: () => {
-      setIsKwsActive(true);
-    },
-    onKwsDeactivate: () => {
-      setIsKwsActive(false);
-    },
+    onKwsActivate: () => setIsKwsActive(true),
+    onKwsDeactivate: () => setIsKwsActive(false),
   });
 
-  // 캐러셀 단계 변경 시 해당 단계 시작 시간으로 YouTube를 시킹
-  // TODO : 이렇게 상태 변화일 때 유튜브를 이동시키는 것은 불일치가 발생할 가능성있음. 그냥 레시피 조작할 때 마다 제거.
-  // DONE : 삭제
+  
+  useEffect(() => {
+    if (!ytRef.current || !isInitialized) return;
 
-  // 재생 시간이 다음 스텝 시작 시간에 도달하면 현재 스텝의 시작으로 루프
-  // TODO : 이것도 단계 변환 시킬 때 그냥 버튼에서 처리하면 안될까, 그리고 사용자가 유튜브 영상의 초를 바꾸면, 기존 단계로 돌아오는데 step도 같이 바꿔줘야 하는거 아닌가
-  // TODO : 이런 방식으로 되면 사용자가 말한 '다음'이 도착해서 다음으로 넘어갔는데, seek가 실행되서 비디오는 이전에 있던 step의 영상 시간으로 가버릴 수 도 있음.
-  // DONE : 삭제
+    const interval = setInterval(handleTimeUpdate, 200);
+    return () => clearInterval(interval);
+  }, [isInitialized, handleTimeUpdate]);
 
-  let stepCount = 1;
+  useEffect(() => {
+    if (!isLandscape) {
+      setIsHeaderVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY;
+      
+      if (scrollDelta > 15 && currentScrollY > 50) {
+        setIsHeaderVisible(true);
+      } else if (scrollDelta < -15) {
+        setIsHeaderVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLandscape, lastScrollY]);
+
+  useEffect(() => {
+    if (!isLandscape) return;
+
+    const headerHandle = document.querySelector('.header-handle');
+    if (!headerHandle) return;
+
+    const listeners = [
+      { type: 'touchstart', handler: handleHeaderDragStart },
+      { type: 'touchmove', handler: handleHeaderDragMove },
+      { type: 'touchend', handler: handleHeaderDragEnd },
+      { type: 'mousedown', handler: handleHeaderDragStart },
+      { type: 'mousemove', handler: handleHeaderDragMove },
+      { type: 'mouseup', handler: handleHeaderDragEnd },
+    ];
+
+    listeners.forEach(({ type, handler }) => {
+      headerHandle.addEventListener(type, handler as EventListener, 
+        type.startsWith('touch') ? { passive: false } : undefined
+      );
+    });
+
+    return () => {
+      listeners.forEach(({ type, handler }) => {
+        headerHandle.removeEventListener(type, handler as EventListener);
+      });
+    };
+  }, [isLandscape, handleHeaderDragStart, handleHeaderDragMove, handleHeaderDragEnd]);
+
+  useEffect(() => {
+    if (!isLandscape) return;
+
+    const handleTopTouch = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      if (touchY < 50 && !isHeaderVisible) {
+        setIsHeaderVisible(true);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTopTouch, { passive: true });
+    return () => document.removeEventListener('touchstart', handleTopTouch);
+  }, [isLandscape, isHeaderVisible]);
+
+  useEffect(() => {
+    if (!isLandscape || !isHeaderVisible) return;
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const header = document.querySelector('.header');
+      
+      if (header && !header.contains(target)) {
+        setIsHeaderVisible(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('touchend', handleClickOutside as EventListener);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('touchend', handleClickOutside as EventListener);
+    };
+  }, [isLandscape, isHeaderVisible]);
+
+  useEffect(() => {
+    if (!currentStepRef.current) return;
+
+    currentStepRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [currentStep, currentDetailIndex]);
+
+  const renderSteps = () => {
+    const currentDisplay = getCurrentStepDisplay();
+    const nextSteps = getNextStepsPreview();
+    const previousSteps = getAllPreviousSteps();
+
+    return (
+      <>
+        {previousSteps.map((prevStep, index) => (
+          <div key={`prev-${index}`}>
+            {prevStep.subtitle && (
+              <div className="steps-header">
+                <span className="steps-title">
+                  {prevStep.alphabetPrefix}. {prevStep.subtitle}
+                </span>
+              </div>
+            )}
+
+            <div 
+              className="previous-step clickable"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSpecificDetail(prevStep.stepIndex, prevStep.detailIndex);
+              }}
+            >
+              <span className="previous-step-number">{prevStep.globalStepNumber}.</span>
+              <span className="previous-step-text">{prevStep.detailText}</span>
+            </div>
+          </div>
+        ))}
+
+        <div className="steps-header">
+          <h2 className="steps-title">
+            {currentDisplay.alphabetPrefix}. {currentDisplay.subtitle}
+          </h2>
+        </div>
+
+        <div className="current-step" ref={currentStepRef}>
+          <span className="step-number">{currentDisplay.globalStepNumber}.</span>
+          <span className="step-text">{currentDisplay.detailText}</span>
+        </div>
+
+        {nextSteps.map((nextStep, index) => (
+          <div key={`next-${index}`}>
+            {nextStep.subtitle && (
+              <div className="steps-header">
+                <span className="steps-title">
+                  {nextStep.alphabetPrefix}. {nextStep.subtitle}
+                </span>
+              </div>
+            )}
+
+            <div 
+              className={`next-step next-step-${index + 1} clickable`}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSpecificDetail(nextStep.stepIndex, nextStep.detailIndex);
+              }}
+            >
+              <span className="next-step-number">{nextStep.globalStepNumber}.</span>
+              <span className="next-step-text">{nextStep.detailText}</span>
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  };
 
   return (
-    <div className="cooking-mode safe-area safe-area-top safe-area-bottom">
+    <div className={`cooking-mode safe-area safe-area-top safe-area-bottom ${isLandscape ? 'landscape' : 'portrait'}`}>
       {!isInitialized && <LoadingOverlay />}
+      
       <Header
         title={recipeData.video_info.video_title}
-        currentStep={currentStep + 1}
         totalSteps={recipeData.recipe_steps.length}
         onBack={onBackToRecipe}
+        darkMode
+        isVisible={isHeaderVisible}
+        className={isLandscape ? 'landscape' : ''}
+        onHeaderToggle={() => setIsHeaderVisible(true)}
       />
 
-      <YouTubePlayer
-        youtubeEmbedId={recipeData.video_info.video_id}
-        title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
-        autoplay
-        onPlayerReady={player => {
-          ytRef.current = player;
-          handleYtInitialized();
-        }}
-      />
+      <div className="youtube-wrapper" style={{ position: 'relative' }}>
+        <YouTubePlayer
+          youtubeEmbedId={recipeData.video_info.video_id}
+          title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
+          autoplay
+          onPlayerReady={player => {
+            ytRef.current = player;
+            setIsInitialized(true);
+          }}
+          onStateChange={handleStateChange}
+        />
+        {isLandscape && isHeaderVisible && (
+          <div 
+            className="youtube-overlay" 
+            onClick={() => setIsHeaderVisible(false)}
+            onTouchEnd={() => setIsHeaderVisible(false)}
+          />
+        )}
+      </div>
 
-      <section className="cooking-steps-container">
-        <div className="carousel-container">
-          <Slider ref={sliderRef} {...slickSettings}>
-            {recipeData.recipe_steps.flatMap((step, idx) =>
-              step.details.map((detail, detailIdx) => (
-                <StepCard
-                  key={`step-${idx}-${detailIdx}`}
-                  step={`${step.subtitle}(${detailIdx + 1}/${step.details.length})`}
-                  detail={detail.text}
-                  index={stepCount++}
-                />
-              )),
-            )}
-          </Slider>
-        </div>
-      </section>
+      <div className="cooking-steps-wrapper">
+        <ProgressBar
+          recipeData={recipeData}
+          currentStep={currentStep}
+          currentDetailIndex={currentDetailIndex}
+          currentTime={currentTime}
+        />
+        <section className="cooking-steps-container">
+          {renderSteps()}
+        </section>
+      </div>
 
-      {/* 플로팅 음성 가이드 버튼 */}
-      {/* 왼쪽 하단 플로팅 타이머 버튼 */}
-      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className="floating-timer-container">
         <button
           className="floating-timer-btn"
@@ -270,21 +556,20 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
           aria-label="타이머"
           type="button"
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="13" r="8" stroke="#ff4500" strokeWidth="2" />
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="13" r="8" stroke="#FFFFFF" strokeWidth="2" />
             <path
               d="M12 9v4l3 2"
-              stroke="#ff4500"
+              stroke="#FFFFFF"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
+            <path d="M9 3h6" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
       </div>
 
-      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
         <div className="speech-bubble">
           <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
@@ -292,7 +577,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         </div>
         <button
           className="floating-voice-guide-btn"
-          onClick={handleVoiceGuideOpen}
+          onClick={() => setShowVoiceGuide(true)}
           aria-label="음성 명령 가이드"
           type="button"
         >
@@ -303,7 +588,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         </button>
       </div>
 
-      <VoiceGuide isVisible={showVoiceGuide} onClose={handleVoiceGuideClose} />
+      <VoiceGuide isVisible={showVoiceGuide} onClose={() => setShowVoiceGuide(false)} />
     </div>
   );
 };

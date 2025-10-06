@@ -1,6 +1,5 @@
 import { BridgeMessageType } from '../../bridge/types/webview';
 
-// React Native WebView 메시지 타입
 export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
   BACK_PRESSED: 'BACK_PRESSED',
   REFRESH_TOKEN: 'REFRESH_TOKEN',
@@ -8,9 +7,10 @@ export const WEBVIEW_MESSAGE_TYPES: Record<string, BridgeMessageType> = {
   TIMER_STOP: 'TIMER_STOP',
   TIMER_CHECK: 'TIMER_CHECK',
   TIMER_SET: 'TIMER_SET',
+  UNLOCK_ORIENTATION: 'UNLOCK_ORIENTATION',
+  LOCK_TO_PORTRAIT_UP: 'LOCK_TO_PORTRAIT_UP',
 } as const;
 
-// YouTube 설정
 export const YOUTUBE_CONFIG = {
   BASE_PARAMS: [
     'enablejsapi=1',
