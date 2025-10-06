@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Header, YouTubePlayer } from '_common';
+import { Header, YouTubePlayer, useOrientation } from '_common';
 import { sendBridgeMessage, useAccessToken } from 'bridge';
 import { RecipeData } from 'recipe/detail/types/recipe';
 import VoiceGuide from 'recipe/step/components/VoiceGuide';
@@ -9,8 +9,8 @@ import { useSimpleSpeech } from 'speech/hooks/useSimpleSpeech';
 import { BasicIntent } from 'speech/types/parseIntent';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
-import 'recipe/step/components/RecipeStep.css';
 import { useRecipeStepNavigation } from '../hooks/useRecipeStepNavigation';
+import './RecipeStep.css';
 import './Overlay.css';
 
 interface Props {
@@ -23,13 +23,18 @@ interface SegmentInfo {
   endTime: number;
   isCompleted: boolean;
   isCurrent: boolean;
-  progress: number; // 0-1 for current segment
+  progress: number;
+}
+
+interface FlatDetail {
+  stepIndex: number;
+  detailIndex: number;
+  start: number;
 }
 
 function ProgressBar({
   recipeData,
   currentStep,
-  currentDetailIndex,
   currentTime,
 }: {
   recipeData: RecipeData;
@@ -37,49 +42,26 @@ function ProgressBar({
   currentDetailIndex: number;
   currentTime: number;
 }) {
-  // 모든 세그먼트 정보를 계산
-  const calculateSegments = (): SegmentInfo[] => {
-    const segments: SegmentInfo[] = [];
+  const segments = useMemo((): SegmentInfo[] => {
+    return recipeData.recipe_steps.map((step, stepIndex) => {
+      const startTime = step.details[0]?.start || 0;
+      
+      const endTime =
+        stepIndex < recipeData.recipe_steps.length - 1
+          ? recipeData.recipe_steps[stepIndex + 1].details[0]?.start || startTime + 10
+          : recipeData.video_info.video_seconds || startTime + 10;
 
-    recipeData.recipe_steps.forEach((step, stepIndex) => {
-      step.details.forEach((detail, detailIndex) => {
-        const startTime = detail.start;
+      const isCurrent = stepIndex === currentStep;
+      const isCompleted = stepIndex < currentStep;
+      
+      let progress = 0;
+      if (isCurrent && currentTime >= startTime) {
+        progress = Math.min((currentTime - startTime) / (endTime - startTime), 1);
+      }
 
-        // 다음 detail의 시작 시간을 찾기
-        let endTime: number;
-        if (detailIndex < step.details.length - 1) {
-          // 같은 step 내 다음 detail
-          endTime = step.details[detailIndex + 1].start;
-        } else if (stepIndex < recipeData.recipe_steps.length - 1) {
-          // 다음 step의 첫 번째 detail
-          endTime = recipeData.recipe_steps[stepIndex + 1].details[0].start;
-        } else {
-          // 마지막 detail인 경우 비디오 끝까지
-          endTime = recipeData.video_info.video_seconds || startTime + 10; // fallback
-        }
-
-        const isCurrent = stepIndex === currentStep && detailIndex === currentDetailIndex;
-        const isCompleted = currentTime > endTime;
-
-        let progress = 0;
-        if (isCurrent && currentTime >= startTime) {
-          progress = Math.min((currentTime - startTime) / (endTime - startTime), 1);
-        }
-
-        segments.push({
-          startTime,
-          endTime,
-          isCompleted,
-          isCurrent,
-          progress,
-        });
-      });
+      return { startTime, endTime, isCompleted, isCurrent, progress };
     });
-
-    return segments;
-  };
-
-  const segments = calculateSegments();
+  }, [recipeData, currentStep, currentTime]);
 
   return (
     <div className="progress-bar-container">
@@ -120,57 +102,56 @@ function LoadingOverlay() {
 }
 
 const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
-  // 음성 가이드 관련 상태
   const [isKwsActive, setIsKwsActive] = useState(false);
   const [showVoiceGuide, setShowVoiceGuide] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  const isLandscape = useOrientation();
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
   const ytRef = useRef<YT.Player | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const currentStepRef = useRef<HTMLDivElement>(null);
 
-  // Function to find the appropriate step based on current playback time
+  const allDetails = useMemo((): FlatDetail[] => {
+    const flat: FlatDetail[] = [];
+    recipeData.recipe_steps.forEach((step, stepIndex) => {
+      step.details.forEach((detail, detailIndex) => {
+        flat.push({ stepIndex, detailIndex, start: detail.start });
+      });
+    });
+    return flat;
+  }, [recipeData.recipe_steps]);
+
   const findStepByTime = useCallback(
-    (currentTime: number) => {
-      // Get the first step's first detail start time
-      const firstStep = recipeData.recipe_steps[0];
-      const firstDetailStart = firstStep?.details[0]?.start || 0;
-
-      // If current time is before the first step, return first step
-      if (currentTime < firstDetailStart) {
+    (currentTime: number): { stepIndex: number; detailIndex: number } => {
+      if (allDetails.length === 0) {
         return { stepIndex: 0, detailIndex: 0 };
       }
 
-      for (let stepIndex = 0; stepIndex < recipeData.recipe_steps.length; stepIndex++) {
-        const step = recipeData.recipe_steps[stepIndex];
-        for (let detailIndex = 0; detailIndex < step.details.length; detailIndex++) {
-          const detail = step.details[detailIndex];
-          if (currentTime >= detail.start) {
-            // Check if this is the last detail or if the next detail starts after current time
-            const isLastDetail = detailIndex === step.details.length - 1;
-            const nextDetail = !isLastDetail ? step.details[detailIndex + 1] : null;
-            const nextStep =
-              stepIndex < recipeData.recipe_steps.length - 1
-                ? recipeData.recipe_steps[stepIndex + 1]
-                : null;
-            const nextDetailStart = nextDetail?.start || nextStep?.details[0]?.start || Infinity;
+      const firstStart = allDetails[0].start;
+      if (currentTime < firstStart) {
+        return { stepIndex: 0, detailIndex: 0 };
+      }
 
-            if (currentTime < nextDetailStart) {
-              return { stepIndex, detailIndex };
-            }
-          }
+      for (let i = allDetails.length - 1; i >= 0; i--) {
+        if (currentTime >= allDetails[i].start) {
+          return {
+            stepIndex: allDetails[i].stepIndex,
+            detailIndex: allDetails[i].detailIndex,
+          };
         }
       }
-      // If no step found, return the last step's last detail
-      const lastStep = recipeData.recipe_steps[recipeData.recipe_steps.length - 1];
-      return {
-        stepIndex: recipeData.recipe_steps.length - 1,
-        detailIndex: lastStep.details.length - 1,
-      };
+
+      const last = allDetails[allDetails.length - 1];
+      return { stepIndex: last.stepIndex, detailIndex: last.detailIndex };
     },
-    [recipeData.recipe_steps],
+    [allDetails],
   );
 
   const {
@@ -181,22 +162,20 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     goToNextStep,
     goToPreviousStep,
     goToStep,
-    handleContainerClick,
+    goToSpecificDetail,
     getCurrentStepDisplay,
-    getNextStepDisplay,
+    getNextStepsPreview,
+    getAllPreviousSteps,
   } = useRecipeStepNavigation({
     recipeData,
     ytRef,
     onTimeUpdate: () => {
-      // 단계 이동 시 시간만 업데이트
       if (ytRef.current) {
-        const currentTime = ytRef.current.getCurrentTime();
-        setCurrentTime(currentTime);
+        setCurrentTime(ytRef.current.getCurrentTime());
       }
     },
   });
 
-  // Handle YouTube time updates
   const handleTimeUpdate = useCallback(() => {
     if (!ytRef.current) return;
 
@@ -205,17 +184,14 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
     const { stepIndex, detailIndex } = findStepByTime(currentTime);
 
-    // Only update if the step or detail has changed
     if (stepIndex !== currentStep || detailIndex !== currentDetailIndex) {
       setCurrentStep(stepIndex);
       setCurrentDetailIndex(detailIndex);
     }
   }, [currentStep, currentDetailIndex, setCurrentStep, setCurrentDetailIndex, findStepByTime]);
 
-  // Handle YouTube state changes (including seeking)
   const handleStateChange = useCallback(
     (event: YT.OnStateChangeEvent) => {
-      // 상태가 변경될 때마다 즉시 시간 업데이트
       if (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED) {
         handleTimeUpdate();
       }
@@ -226,7 +202,6 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const handleIntent = (intent: BasicIntent) => {
     const [cmd, arg1, arg2] = intent.split(' ');
 
-    // WAKEWORD 처리: KWS가 비활성화 상태일 때만 활성화
     if (cmd === 'WAKEWORD') {
       if (!isKwsActive) {
         setIsKwsActive(true);
@@ -234,12 +209,8 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
       return;
     }
 
-    // 다른 명령들은 KWS가 활성화된 상태에서만 실행
-    if (!isKwsActive) {
-      return;
-    }
+    if (!isKwsActive) return;
 
-    // 유효한 명령이 실행되면 KWS 비활성화
     let commandExecuted = false;
 
     switch (cmd) {
@@ -267,64 +238,51 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         }
         break;
       }
-      case 'VIDEO': {
-        switch (arg1) {
-          case 'PLAY':
-            ytRef.current?.playVideo();
-            commandExecuted = true;
-            break;
-          case 'STOP':
-            ytRef.current?.pauseVideo();
-            commandExecuted = true;
-            break;
+      case 'VIDEO':
+        if (arg1 === 'PLAY') {
+          ytRef.current?.playVideo();
+          commandExecuted = true;
+        } else if (arg1 === 'STOP') {
+          ytRef.current?.pauseVideo();
+          commandExecuted = true;
         }
         break;
-      }
-      //TODO : 버튼 컴포넌트로 캡슐화
       case 'TIMER': {
+        const timerData = {
+          recipe_id: recipeId ?? '',
+          recipe_title: recipeData.video_info.video_title,
+        };
+
         switch (arg1) {
           case 'START':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_START, null, timerData);
             commandExecuted = true;
             break;
           case 'STOP':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_STOP, null, timerData);
             commandExecuted = true;
             break;
           case 'CHECK':
-            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
-            });
+            sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, timerData);
             commandExecuted = true;
             break;
-          case 'SET': {
+          case 'SET':
             sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_SET, null, {
-              recipe_id: recipeId ?? '',
-              recipe_title: recipeData.video_info.video_title,
+              ...timerData,
               timer_time: arg2 ?? '0',
             });
             commandExecuted = true;
             break;
-          }
         }
         break;
       }
     }
 
-    // 명령이 실행되었으면 KWS 비활성화
     if (commandExecuted) {
       setIsKwsActive(false);
     }
   };
 
-  //TODO : 버튼 컴포넌트로 캡슐화
   const handleTimerClick = () => {
     sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.TIMER_CHECK, null, {
       recipe_id: recipeId ?? '',
@@ -332,63 +290,252 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     });
   };
 
-  const handleVoiceGuideOpen = () => {
-    setShowVoiceGuide(true);
-  };
+  const handleHeaderDragStart = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isLandscape) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragStartY(clientY);
+  }, [isLandscape]);
 
-  const handleVoiceGuideClose = () => {
-    setShowVoiceGuide(false);
-  };
+  const handleHeaderDragMove = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isDragging || !isLandscape) return;
+    
+    e.preventDefault();
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - dragStartY;
+    
+    if (deltaY > 30) {
+      setIsHeaderVisible(true);
+      setIsDragging(false);
+    } else if (deltaY < -30) {
+      setIsHeaderVisible(false);
+      setIsDragging(false);
+    }
+  }, [isDragging, isLandscape, dragStartY]);
+
+  const handleHeaderDragEnd = useCallback((e: TouchEvent | MouseEvent) => {
+    if (!isLandscape) return;
+    e.preventDefault();
+    setIsDragging(false);
+  }, [isLandscape]);
 
   useSimpleSpeech({
     accessToken,
     recipeId: recipeId!,
     onIntent: handleIntent,
     onKwsDetection: probability => {
-      // KWS 확률은 로그로만 출력 (필요시 UI에 표시 가능)
       if (probability > 0.1) {
-        // 노이즈 필터링
       }
     },
-    onKwsActivate: () => {
-      setIsKwsActive(true);
-    },
-    onKwsDeactivate: () => {
-      setIsKwsActive(false);
-    },
+    onKwsActivate: () => setIsKwsActive(true),
+    onKwsDeactivate: () => setIsKwsActive(false),
   });
 
-  // Set up YouTube time update listener
+  
   useEffect(() => {
     if (!ytRef.current || !isInitialized) return;
 
-    const interval = setInterval(handleTimeUpdate, 100); // Check every 100ms for smoother updates
+    const interval = setInterval(handleTimeUpdate, 200);
+    return () => clearInterval(interval);
+  }, [isInitialized, handleTimeUpdate]);
+
+  useEffect(() => {
+    if (!isLandscape) {
+      setIsHeaderVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const scrollDelta = currentScrollY - lastScrollY;
+      
+      if (scrollDelta > 15 && currentScrollY > 50) {
+        setIsHeaderVisible(true);
+      } else if (scrollDelta < -15) {
+        setIsHeaderVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLandscape, lastScrollY]);
+
+  useEffect(() => {
+    if (!isLandscape) return;
+
+    const headerHandle = document.querySelector('.header-handle');
+    if (!headerHandle) return;
+
+    const listeners = [
+      { type: 'touchstart', handler: handleHeaderDragStart },
+      { type: 'touchmove', handler: handleHeaderDragMove },
+      { type: 'touchend', handler: handleHeaderDragEnd },
+      { type: 'mousedown', handler: handleHeaderDragStart },
+      { type: 'mousemove', handler: handleHeaderDragMove },
+      { type: 'mouseup', handler: handleHeaderDragEnd },
+    ];
+
+    listeners.forEach(({ type, handler }) => {
+      headerHandle.addEventListener(type, handler as EventListener, 
+        type.startsWith('touch') ? { passive: false } : undefined
+      );
+    });
 
     return () => {
-      clearInterval(interval);
+      listeners.forEach(({ type, handler }) => {
+        headerHandle.removeEventListener(type, handler as EventListener);
+      });
     };
-  }, [isInitialized, currentStep, currentDetailIndex, handleTimeUpdate]);
+  }, [isLandscape, handleHeaderDragStart, handleHeaderDragMove, handleHeaderDragEnd]);
+
+  useEffect(() => {
+    if (!isLandscape) return;
+
+    const handleTopTouch = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      if (touchY < 50 && !isHeaderVisible) {
+        setIsHeaderVisible(true);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTopTouch, { passive: true });
+    return () => document.removeEventListener('touchstart', handleTopTouch);
+  }, [isLandscape, isHeaderVisible]);
+
+  useEffect(() => {
+    if (!isLandscape || !isHeaderVisible) return;
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const header = document.querySelector('.header');
+      
+      if (header && !header.contains(target)) {
+        setIsHeaderVisible(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('touchend', handleClickOutside as EventListener);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('touchend', handleClickOutside as EventListener);
+    };
+  }, [isLandscape, isHeaderVisible]);
+
+  useEffect(() => {
+    if (!currentStepRef.current) return;
+
+    currentStepRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, [currentStep, currentDetailIndex]);
+
+  const renderSteps = () => {
+    const currentDisplay = getCurrentStepDisplay();
+    const nextSteps = getNextStepsPreview();
+    const previousSteps = getAllPreviousSteps();
+
+    return (
+      <>
+        {previousSteps.map((prevStep, index) => (
+          <div key={`prev-${index}`}>
+            {prevStep.subtitle && (
+              <div className="steps-header">
+                <span className="steps-title">
+                  {prevStep.alphabetPrefix}. {prevStep.subtitle}
+                </span>
+              </div>
+            )}
+
+            <div 
+              className="previous-step clickable"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSpecificDetail(prevStep.stepIndex, prevStep.detailIndex);
+              }}
+            >
+              <span className="previous-step-number">{prevStep.globalStepNumber}.</span>
+              <span className="previous-step-text">{prevStep.detailText}</span>
+            </div>
+          </div>
+        ))}
+
+        <div className="steps-header">
+          <h2 className="steps-title">
+            {currentDisplay.alphabetPrefix}. {currentDisplay.subtitle}
+          </h2>
+        </div>
+
+        <div className="current-step" ref={currentStepRef}>
+          <span className="step-number">{currentDisplay.globalStepNumber}.</span>
+          <span className="step-text">{currentDisplay.detailText}</span>
+        </div>
+
+        {nextSteps.map((nextStep, index) => (
+          <div key={`next-${index}`}>
+            {nextStep.subtitle && (
+              <div className="steps-header">
+                <span className="steps-title">
+                  {nextStep.alphabetPrefix}. {nextStep.subtitle}
+                </span>
+              </div>
+            )}
+
+            <div 
+              className={`next-step next-step-${index + 1} clickable`}
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSpecificDetail(nextStep.stepIndex, nextStep.detailIndex);
+              }}
+            >
+              <span className="next-step-number">{nextStep.globalStepNumber}.</span>
+              <span className="next-step-text">{nextStep.detailText}</span>
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  };
 
   return (
-    <div className="cooking-mode safe-area safe-area-top safe-area-bottom">
+    <div className={`cooking-mode safe-area safe-area-top safe-area-bottom ${isLandscape ? 'landscape' : 'portrait'}`}>
       {!isInitialized && <LoadingOverlay />}
+      
       <Header
         title={recipeData.video_info.video_title}
-        currentStep={currentStep + 1}
         totalSteps={recipeData.recipe_steps.length}
         onBack={onBackToRecipe}
+        darkMode
+        isVisible={isHeaderVisible}
+        className={isLandscape ? 'landscape' : ''}
+        onHeaderToggle={() => setIsHeaderVisible(true)}
       />
 
-      <YouTubePlayer
-        youtubeEmbedId={recipeData.video_info.video_id}
-        title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
-        autoplay
-        onPlayerReady={player => {
-          ytRef.current = player;
-          setIsInitialized(true);
-        }}
-        onStateChange={handleStateChange}
-      />
+      <div className="youtube-wrapper" style={{ position: 'relative' }}>
+        <YouTubePlayer
+          youtubeEmbedId={recipeData.video_info.video_id}
+          title={`${recipeData.video_info.video_title} - Step ${currentStep + 1}`}
+          autoplay
+          onPlayerReady={player => {
+            ytRef.current = player;
+            setIsInitialized(true);
+          }}
+          onStateChange={handleStateChange}
+        />
+        {isLandscape && isHeaderVisible && (
+          <div 
+            className="youtube-overlay" 
+            onClick={() => setIsHeaderVisible(false)}
+            onTouchEnd={() => setIsHeaderVisible(false)}
+          />
+        )}
+      </div>
 
       <div className="cooking-steps-wrapper">
         <ProgressBar
@@ -397,53 +544,11 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
           currentDetailIndex={currentDetailIndex}
           currentTime={currentTime}
         />
-        <section className="cooking-steps-container" onClick={handleContainerClick}>
-          {(() => {
-            const currentDisplay = getCurrentStepDisplay();
-            const nextDisplay = getNextStepDisplay();
-
-            return (
-              <>
-                <div className="steps-header">
-                  <h2 className="steps-title">
-                    {currentDisplay.alphabetPrefix}. {currentDisplay.subtitle}
-                  </h2>
-                </div>
-
-                <div className="current-step">
-                  <>
-                    <span className="step-number">{currentDisplay.globalStepNumber}.</span>
-                    <span className="step-text">{currentDisplay.detailText}</span>
-                  </>
-                </div>
-
-                {nextDisplay.subtitle && (
-                  <div className="steps-header">
-                    <span className="steps-title">
-                      {nextDisplay.alphabetPrefix}. {nextDisplay.subtitle}
-                    </span>
-                  </div>
-                )}
-
-                <div className="next-step">
-                  {nextDisplay.isRecipeEnd ? (
-                    <span className="next-step-text">{nextDisplay.detailText}</span>
-                  ) : (
-                    <>
-                      <span className="next-step-number">{nextDisplay.globalStepNumber}.</span>
-                      <span className="next-step-text">{nextDisplay.detailText}</span>
-                    </>
-                  )}
-                </div>
-              </>
-            );
-          })()}
+        <section className="cooking-steps-container">
+          {renderSteps()}
         </section>
       </div>
 
-      {/* 플로팅 음성 가이드 버튼 */}
-      {/* 왼쪽 하단 플로팅 타이머 버튼 */}
-      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className="floating-timer-container">
         <button
           className="floating-timer-btn"
@@ -451,21 +556,20 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
           aria-label="타이머"
           type="button"
         >
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="13" r="8" stroke="#ff4500" strokeWidth="2" />
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="13" r="8" stroke="#FFFFFF" strokeWidth="2" />
             <path
               d="M12 9v4l3 2"
-              stroke="#ff4500"
+              stroke="#FFFFFF"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            <path d="M9 3h6" stroke="#ff4500" strokeWidth="2" strokeLinecap="round" />
+            <path d="M9 3h6" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
       </div>
 
-      {/* TODO : 버튼 컴포넌트 분리 */}
       <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
         <div className="speech-bubble">
           <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
@@ -473,7 +577,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         </div>
         <button
           className="floating-voice-guide-btn"
-          onClick={handleVoiceGuideOpen}
+          onClick={() => setShowVoiceGuide(true)}
           aria-label="음성 명령 가이드"
           type="button"
         >
@@ -484,7 +588,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
         </button>
       </div>
 
-      <VoiceGuide isVisible={showVoiceGuide} onClose={handleVoiceGuideClose} />
+      <VoiceGuide isVisible={showVoiceGuide} onClose={() => setShowVoiceGuide(false)} />
     </div>
   );
 };

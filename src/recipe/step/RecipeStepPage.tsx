@@ -1,4 +1,6 @@
 import { useBodyScrollLock, useTransition } from '_common';
+import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
+import { sendBridgeMessage } from 'bridge';
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import RecipeStep from 'recipe/step/components/RecipeStep';
@@ -17,18 +19,21 @@ const RecipeStepPage = (): JSX.Element => {
     recipeData: any;
   };
 
-  // 화면 전환 애니메이션
   const { transitioning, fadeIn } = useTransition();
 
-  // 레시피로 돌아가기 핸들러 - 라우터로 네비게이션
   const handleBackToRecipe = (): void => {
-    navigate(-1);
+    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.LOCK_TO_PORTRAIT_UP, null);
+    setTimeout(() => {
+      navigate(-1);
+    }, 100);
   };
 
-  // 조리 모드일 때 body 스크롤 방지
   useBodyScrollLock(true);
 
-  // 네이티브 BACK_PRESSED 처리
+  useEffect(() => {
+    sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.UNLOCK_ORIENTATION, null);
+  }, []);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       let msg: unknown;
@@ -44,7 +49,10 @@ const RecipeStepPage = (): JSX.Element => {
         'type' in msg &&
         (msg as any).type === 'BACK_PRESSED'
       ) {
-        navigate(-1);
+        sendBridgeMessage(WEBVIEW_MESSAGE_TYPES.LOCK_TO_PORTRAIT_UP, null);
+        setTimeout(() => {
+          navigate(-1);
+        }, 100);
       }
     };
 
