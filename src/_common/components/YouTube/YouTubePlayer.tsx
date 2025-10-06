@@ -7,6 +7,8 @@ type YTOpts = NonNullable<YouTubeProps['opts']>;
 interface Props extends YouTubePlayerProps {
   /** 부모가 플레이어 인스턴스를 받을 때 호출 */
   onPlayerReady?: (player: YT.Player) => void;
+  /** 플레이어 상태가 변경될 때 호출 */
+  onStateChange?: (event: YT.OnStateChangeEvent) => void;
 }
 
 const YouTubePlayer = ({
@@ -15,6 +17,7 @@ const YouTubePlayer = ({
   autoplay = false,
   youtubeKey,
   onPlayerReady,
+  onStateChange,
 }: Props): JSX.Element => {
   /** iFrame API 파라미터 */
   const opts: YTOpts = {
@@ -37,6 +40,7 @@ const YouTubePlayer = ({
         videoId={youtubeEmbedId}
         opts={opts}
         onReady={handleReady}
+        onStateChange={onStateChange}
         title={title}
         iframeClassName="border-none"
       />

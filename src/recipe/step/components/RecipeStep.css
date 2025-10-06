@@ -1,182 +1,284 @@
 .cooking-mode {
-  background-color: var(--bg);
+  background-color: #000000;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* 조리 단계 컨테이너 */
-.cooking-steps-container {
-  flex: 1;
-  background-color: var(--bg);
-  margin: 0;
-  position: relative;
-  margin-top: 0.5rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem;
-}
-
-.carousel-container {
-  position: relative;
-  margin-bottom: 1.25rem;
-  width: calc(100% + 2.5rem);
-  margin-left: -1.25rem;
-  margin-right: -1.25rem;
-}
-
-/* React Slick 기본 슬라이더 스타일 재정의 */
-.carousel-container .slick-slider {
-  position: relative;
-  display: block;
-  box-sizing: border-box;
-  user-select: none;
-  touch-action: pan-y;
-}
-
-.carousel-container .slick-list {
-  position: relative;
-  overflow: hidden;
-  display: block;
-  margin: 0;
-  padding: 0;
-}
-
-.carousel-container .slick-track {
-  position: relative;
-  left: 0;
+.progress-bar-container {
+  position: sticky;
   top: 0;
-  display: flex;
-  margin: 0;
-  padding: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: transparent;
 }
 
-/* 슬라이드 스타일 */
-.carousel-slide {
+.progress-bar {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80vw;
-  height: 40vh;
-}
-
-/* 카드 스타일 */
-.step-card {
+  gap: 0.25rem;
+  height: 0.1875rem;
   width: 100%;
-  height: 40vh;
-  background: var(--card);
-  border-radius: 0.625rem;
-  box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  transition: box-shadow 0.2s ease;
+}
+
+.progress-segment {
+  flex: 1;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 62.4375rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 62.4375rem;
+  transition: width 0.05s ease-out;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.progress-segment.completed .progress-fill {
+  width: 100% !important;
+  transition: none;
+}
+
+.progress-segment.current .progress-fill {
+  background-color: #ffffff;
+}
+
+.progress-segment.pending .progress-fill {
+  width: 0%;
+}
+
+.cooking-steps-wrapper {
+  position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  transition: all 0.3s ease;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-.carousel-container .slick-slide:not(.slick-center) .step-card {
-  background: var(--text);
-  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2); /* 0 2px 8px */
-  opacity: 0.75;
-  transform: scale(0.85);
+.cooking-steps-wrapper::after {
+  content: '';
+  position: fixed;
+  width: 100%;
+  height: 17.125rem;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, #000000 80%);
+  pointer-events: none;
+  z-index: 10;
 }
 
-/* 헤더 */
-.step-header {
+.cooking-steps-container {
+  background-color: #000000;
+  margin: 0;
+  position: relative;
+  overflow-y: auto;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.4rem;
+  flex-direction: column;
+  padding: 1.25rem 1rem;
+  padding-top: 3rem;
+  padding-bottom: 100vh;
+  flex: 1;
+  min-height: 0;
+  gap: 0.75rem;
+  overscroll-behavior: contain;
+}
+
+.steps-header {
+  margin-bottom: 1rem;
+}
+
+.steps-header:not(:first-child) {
+  margin-top: 1rem;
+}
+
+.steps-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #7E7E7E;
+  margin: 0;
+  text-align: left;
+}
+
+.previous-step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  opacity: 0.3;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.previous-step:active {
+  transform: scale(0.98);
+}
+
+.previous-step-number {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-right: 0.5rem;
+}
+
+.previous-step-text {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #ffffff;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+.current-step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  scroll-margin-top: 4rem;
+}
+
+.step-arrow {
+  width: 0;
+  height: 0;
+  border-left: 0.75rem solid #ff69b4;
+  border-top: 0.5rem solid transparent;
+  border-bottom: 0.5rem solid transparent;
+  flex-shrink: 0;
 }
 
 .step-number {
-  background: var(--brand);
-  color: var(--card);
-  border-radius: 3.125rem;
-  padding: 0.25rem 0.75rem;
-  font-weight: 500;
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-right: 0.5rem;
 }
 
-.step-subtitle {
-  font-weight: 500;
-  color: var(--muted);
-}
-
-/* 내용 */
-.step-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: break-word;
-}
-
-.step-description-text {
-  font-size: 1.4rem;
-  font-weight: 400;
-  color: var(--text);
+.step-text {
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: #ffffff;
   line-height: 1.5;
+  word-break: keep-all;
 }
 
-/* 플로팅 음성 가이드 컨테이너 */
+.next-step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.next-step:active {
+  transform: scale(0.98);
+}
+
+.next-step-1 {
+  opacity: 0.6;
+}
+
+.next-step-2 {
+  opacity: 0.5;
+}
+
+.next-step-3 {
+  opacity: 0.4;
+}
+
+.next-step:not(.next-step-1):not(.next-step-2):not(.next-step-3) {
+  opacity: 0.3;
+}
+
+.next-step-number {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-right: 0.5rem;
+}
+
+.next-step-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  line-height: 1.4;
+  word-break: keep-all;
+  flex: 1;
+}
+
+.ingredients-section {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.ingredients-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  text-align: center;
+  display: block;
+}
+
 .floating-voice-guide-container {
   position: fixed;
-  bottom: 24px;
+  bottom: 1.25rem;
   right: var(--anchor-right);
-  z-index: 999;
-  /* 버튼만 레이아웃에 참여하도록 하고 말풍선은 절대 배치로 분리 */
+  z-index: 1000;
   display: inline-block;
-  /* 버튼 기준 고정 위치값을 변수로 관리 */
-  --anchor-right: 24px;
-  --btn-size: 80px;
+  --anchor-right: 1.25rem;
+  --btn-size: 3.75rem;
   transform: translateX(0);
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0s;
   will-change: transform;
 }
 
-/* 말풍선 */
 .speech-bubble {
   position: absolute;
   top: 50%;
-  right: calc(100% + 12px); /* 버튼 왼쪽에 고정 배치 */
-  transform: translateY(-50%) translateX(10px);
-  background: var(--card);
-  padding: 16px 20px;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  right: calc(100% + 0.75rem);
+  transform: translateY(-50%) translateX(0.625rem);
+  background: #FB6836;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.15);
   opacity: 0;
   transition:
     opacity 0.4s ease,
     transform 0.4s ease;
   white-space: nowrap;
-  animation: speechBubbleAppear 0.5s ease-out 1s forwards;
+  animation: speechBubbleRepeat 21s ease-in-out infinite;
 }
 
 .speech-bubble-text {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--text);
+  color: #FFFFFF;
   line-height: 1.2;
 }
 
 .speech-bubble-arrow {
   position: absolute;
-  right: -10px;
+  right: -0.625rem;
   top: 50%;
   transform: translateY(-50%);
   width: 0;
   height: 0;
-  border-left: 10px solid var(--card);
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
+  border-left: 0.625rem solid #FB6836;
+  border-top: 0.625rem solid transparent;
+  border-bottom: 0.625rem solid transparent;
 }
 
 @keyframes speechBubbleAppear {
   0% {
     opacity: 0;
-    transform: translateY(-50%) translateX(10px);
+    transform: translateY(-50%) translateX(0.625rem);
   }
   100% {
     opacity: 1;
@@ -184,230 +286,326 @@
   }
 }
 
-/* 초기 애니메이션 완료 후 말풍선 상태 유지 */
+@keyframes speechBubbleRepeat {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(0.625rem);
+  }
+  2.38% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  4.76% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  7.14% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(0.625rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(0.625rem);
+  }
+}
+
 .speech-bubble.appeared {
-  animation: none !important;
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
+  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
+  opacity: 0;
+  transform: translateY(-50%) translateX(0.625rem);
 }
 
-/* KWS 비활성화 시 버튼 이동 완료 후 말풍선 다시 보이기 */
 .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-  opacity: 1 !important;
-  transform: translateY(-50%) translateX(0) !important;
-  animation: none !important; /* 기존 애니메이션 중단하여 중복 방지 */
-  transition:
-    opacity 0.3s ease 0.55s,
-    transform 0.3s ease 0.55s; /* 버튼 복귀 후 나타남 */
+  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
 }
 
-/* 플로팅 음성 가이드 버튼 */
 .floating-voice-guide-btn {
-  width: 80px;
-  height: 80px;
-  background: var(--card);
+  width: 3.75rem;
+  height: 3.75rem;
+  background: #FB6836;
   border: none;
-  border-radius: 50%;
+  border-radius: 62.4375rem;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0rem 0.125rem 1rem rgba(0, 0, 0, 0.32);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 0.625rem;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .floating-voice-guide-btn img {
-  width: 60px;
-  height: 60px;
   object-fit: contain;
-  border-radius: 50%;
+  width: 2rem !important;
+  height: 2rem !important;
   transition: all 0.3s ease;
 }
 
-/* 왼쪽 하단 플로팅 타이머 버튼 */
 .floating-timer-container {
   position: fixed;
-  bottom: 24px;
-  left: 24px;
-  z-index: 999;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  z-index: 1000;
 }
 
 .floating-timer-btn {
-  width: 80px;
-  height: 80px;
-  background: var(--card);
+  width: 3.75rem;
+  height: 3.75rem;
+  background: #FB6836;
   border: none;
-  border-radius: 50%;
+  border-radius: 62.4375rem;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0rem 0.125rem 1rem rgba(0, 0, 0, 0.32);
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 0.625rem;
 }
 
-/* KWS 활성화 상태 - 말풍선과 버튼이 동시에 스무스하게 이동 */
+.floating-timer-btn svg {
+  width: 2rem !important;
+  height: 2rem !important;
+  color: #FFFFFF;
+}
+
 .floating-voice-guide-container.kws-active {
-  /* 버튼을 기준으로만 이동: 우측 고정에서 화면 중앙까지 transform만 변경 */
-  /* 이동은 말풍선이 사라진 뒤 시작하도록 약간의 지연 적용 */
-  transform: translateX(calc((var(--anchor-right) + (var(--btn-size) / 2)) - 50vw));
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.32s;
+  transform: translateX(0);
 }
 
-/* KWS 활성화 시 말풍선을 부드럽게 제거하며 동시에 이동 */
 .floating-voice-guide-container.kws-active .speech-bubble {
   opacity: 0 !important;
-  transform: translateY(-50%) translateX(-10px) !important;
+  transform: translateY(-50%) translateX(-0.625rem) !important;
   transition:
     opacity 0.3s ease,
     transform 0.3s ease !important;
-  animation: none !important; /* 기존 애니메이션 중단 */
-  pointer-events: none; /* KWS 활성화 시 클릭 방지 */
+  animation: none !important;
+  pointer-events: none;
 }
 
-/* KWS 활성화 상태 - 버튼 이동과 동시에 펄스 효과 */
 .floating-voice-guide-container.kws-active .floating-voice-guide-btn {
-  /* 버튼 이동 완료 후 펄스 효과 시작 (0.5초 지연) */
-  animation: kwsPulse 2s ease-in-out 0.5s infinite;
+  animation: kwsImpact 1.5s ease-in-out infinite;
 }
 
-/* 펄스 효과 */
-@keyframes kwsPulse {
-  0%,
-  100% {
+@keyframes kwsImpact {
+  0% {
+    transform: scale(1);
     box-shadow:
-      0 8px 24px rgba(255, 69, 0, 0.3),
-      0 0 0 0 rgba(255, 69, 0, 0.4);
+      0 0.125rem 1rem rgba(0, 0, 0, 0.32),
+      0 0 0 0 rgba(251, 104, 54, 0.7);
   }
   50% {
+    transform: scale(1.1);
     box-shadow:
-      0 8px 24px rgba(255, 69, 0, 0.4),
-      0 0 0 20px rgba(255, 69, 0, 0);
+      0 0.5rem 2rem rgba(251, 104, 54, 0.5),
+      0 0 0 1.5rem rgba(251, 104, 54, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0.125rem 1rem rgba(0, 0, 0, 0.32),
+      0 0 0 0 rgba(251, 104, 54, 0.7);
   }
 }
 
-.floating-voice-guide-container.kws-active .floating-voice-guide-btn:hover {
-  transform: none; /* KWS 활성화 시 호버 효과 비활성화 */
+.youtube-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  cursor: pointer;
+  background: transparent;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 태블릿 미디어 쿼리 */
-@media (max-width: 1024px) {
-  .floating-voice-guide-container {
-    bottom: 20px;
-    right: var(--anchor-right);
-    --anchor-right: 20px;
-    --btn-size: 72px;
+
+@media (max-width: 30rem) {
+  .progress-bar-container {
+    padding: 0.375rem 0.75rem;
   }
 
-  .speech-bubble {
-    padding: 14px 18px;
-    border-radius: 14px;
+  .progress-bar {
+    gap: 0.1875rem;
+    height: 0.125rem;
   }
 
-  .speech-bubble-text {
-    font-size: 0.9375rem;
+  .progress-segment {
+    border-radius: 62.4375rem;
   }
 
-  .speech-bubble-arrow {
-    right: -9px;
-    border-left: 9px solid var(--card);
-    border-top: 9px solid transparent;
-    border-bottom: 9px solid transparent;
-  }
-
-  .floating-voice-guide-btn {
-    width: 72px;
-    height: 72px;
-  }
-
-  .floating-timer-container {
-    bottom: 20px;
-    left: 20px;
-  }
-
-  .floating-timer-btn {
-    width: 72px;
-    height: 72px;
-  }
-
-  .floating-voice-guide-btn img {
-    width: 54px;
-    height: 54px;
-  }
-
-  .step-number {
-    font-size: 1.2rem;
-  }
-
-  .step-subtitle {
-    font-size: 1.2rem;
-  }
-
-  /* KWS 비활성화 시 말풍선 패딩 조정 */
-  .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-    padding: 14px 18px !important;
+  .progress-fill {
+    border-radius: 62.4375rem;
   }
 }
 
-/* 모바일 미디어 쿼리 */
-@media (max-width: 768px) {
-  .floating-voice-guide-container {
-    bottom: 16px;
-    right: var(--anchor-right);
-    --anchor-right: 16px;
-    --btn-size: 64px;
+@media (max-width: 23.4375rem) and (max-height: 41.6875rem) {
+  .step-number,
+  .step-text {
+    font-size: 1.25rem;
   }
 
-  .speech-bubble {
-    padding: 12px 16px;
-    border-radius: 12px;
+  .previous-step-number,
+  .previous-step-text {
+    font-size: 1rem;
+  }
+
+  .next-step-number,
+  .next-step-text {
+    font-size: 1rem;
+  }
+
+  .steps-title {
+    font-size: 0.875rem;
+  }
+
+  .ingredients-text {
+    font-size: 0.875rem;
   }
 
   .speech-bubble-text {
     font-size: 0.875rem;
   }
 
-  .speech-bubble-arrow {
-    right: -8px;
-    border-left: 8px solid var(--card);
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-  }
-
   .floating-voice-guide-btn {
-    width: 64px;
-    height: 64px;
-  }
-
-  .floating-timer-container {
-    bottom: 16px;
-    left: 16px;
-  }
-
-  .floating-timer-btn {
-    width: 64px;
-    height: 64px;
+    width: 3.75rem;
+    height: 3.75rem;
   }
 
   .floating-voice-guide-btn img {
-    width: 48px;
-    height: 48px;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
-  .step-number {
-    font-size: 1.2rem;
+  .floating-timer-btn {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+}
+
+@media (max-width: 767px) and (orientation: landscape) {
+  .cooking-mode.landscape {
+    flex-direction: column;
+  }
+  
+  .cooking-mode.landscape .cooking-steps-container {
+    padding-top: 2rem;
+    padding-bottom: 50vh;
+  }
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+  .cooking-mode.landscape {
+    flex-direction: row;
   }
 
-  .step-subtitle {
-    font-size: 1.2rem;
+  .cooking-mode.landscape .cooking-steps-wrapper {
+    width: 30%;
+    height: 100vh;
+    overflow-y: auto;
+    touch-action: pan-y;
+    position: relative;
+    z-index: 1;
   }
 
-  /* KWS 비활성화 시 말풍선 패딩 조정 */
-  .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-    padding: 12px 16px !important;
+  .cooking-mode.landscape > .youtube-wrapper {
+    width: 70%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+  }
+
+  .cooking-mode.landscape .youtube-wrapper .youtube-container {
+    width: 100%;
+    height: 100%;
+    padding-bottom: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cooking-mode.landscape .youtube-container > div {
+    width: 100%;
+    padding-bottom: 56.25%;
+    position: relative;
+    height: 0;
+  }
+
+  .cooking-mode.landscape .youtube-container iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+  }
+
+  .cooking-mode.landscape .progress-bar-container {
+    position: sticky;
+    top: 0;
+    left: 30%;
+    right: 0;
+    padding-top: 2rem;
+  }
+
+  .cooking-mode.landscape .floating-voice-guide-container {
+    bottom: 1.25rem;
+    right: 2rem;
+    left: auto;
+  }
+
+  .cooking-mode.landscape .speech-bubble {
+    display: none !important;
+  }
+
+  .cooking-mode.landscape .floating-timer-container {
+    bottom: 1.25rem;
+    left: auto;
+    right: calc(30% - 2rem - 3.75rem);
+  }
+
+  .cooking-mode.landscape .cooking-steps-container {
+    padding: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 80vh;
+  }
+
+  .cooking-mode.landscape .steps-title {
+    font-size: 1rem;
+  }
+
+  .cooking-mode.landscape .step-number,
+  .cooking-mode.landscape .step-text {
+    font-size: 1.3rem;
+  }
+
+  .cooking-mode.landscape .previous-step-number,
+  .cooking-mode.landscape .previous-step-text {
+    font-size: 1rem;
+  }
+
+  .cooking-mode.landscape .next-step-number,
+  .cooking-mode.landscape .next-step-text {
+    font-size: 1rem;
+  }
+
+  .cooking-mode.landscape .floating-voice-guide-container.kws-active {
+    transform: translateX(0);
+  }
+
+  .cooking-mode.landscape .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
   }
 }
