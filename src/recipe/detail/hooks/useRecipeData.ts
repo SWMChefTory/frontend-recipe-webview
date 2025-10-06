@@ -39,7 +39,7 @@ export const useRecipeData = (recipeId: string): UseRecipeDataResult => {
         (errorMessage === 'TOKEN_REQUIRED' || errorMessage === 'TOKEN_EXPIRED')
       );
     },
-    retryDelay: 1000,
+    retryDelay: 300,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
