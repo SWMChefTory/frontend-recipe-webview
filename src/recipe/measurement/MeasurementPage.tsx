@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Header } from '../../_common';
 import './MeasurementPage.css';
 import MeasurementSection from './components/MeasurementSection';
-import { Header } from '../../_common';
 
 type MeasurementCategory = 'dry' | 'liquid' | 'jang';
 
@@ -59,14 +59,14 @@ export const MeasurementPage = () => {
         categoryLabel: '1큰술',
         images: [
           { src: '/images/measurement/liquid/tbsp/measuring.png', caption: '계량스푼' },
-          { src: '/images/measurement/liquid/tbsp/spoon.png', caption: '1숟가락 가득' },
+          { src: '/images/measurement/liquid/tbsp/spoon.png', caption: '1+½ 숟가락' },
         ],
       },
       {
         categoryLabel: '1작은술',
         images: [
           { src: '/images/measurement/liquid/tsp/measuring.png', caption: '계량스푼' },
-          { src: '/images/measurement/liquid/tsp/spoon.png', caption: '½ 숟가락' },
+          { src: '/images/measurement/liquid/tsp/spoon.png', caption: '⅔ 숟가락' },
         ],
       },
     ],
@@ -75,14 +75,14 @@ export const MeasurementPage = () => {
         categoryLabel: '1큰술',
         images: [
           { src: '/images/measurement/jang/tbsp/measuring.png', caption: '계량스푼' },
-          { src: '/images/measurement/jang/tbsp/spoon.png', caption: '1+ 1/2숟가락 수북이' },
+          { src: '/images/measurement/jang/tbsp/spoon.png', caption: '1숟가락 소복이' },
         ],
       },
       {
         categoryLabel: '1작은술',
         images: [
           { src: '/images/measurement/jang/tsp/measuring.png', caption: '계량스푼' },
-          { src: '/images/measurement/jang/tsp/spoon.png', caption: '2/3 숟가락' },
+          { src: '/images/measurement/jang/tsp/spoon.png', caption: '½ 숟가락' },
         ],
       },
     ],
@@ -90,7 +90,7 @@ export const MeasurementPage = () => {
 
   return (
     <div className="measurement-page active">
-      <Header title={"계량법"} onBack={handleBack} />
+      <Header title={'계량법'} onBack={handleBack} />
 
       <div className="measurement-overlay-content">
         <div className="measurement-unit-table">
