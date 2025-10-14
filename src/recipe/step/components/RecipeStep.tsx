@@ -10,8 +10,8 @@ import { BasicIntent } from 'speech/types/parseIntent';
 
 import { WEBVIEW_MESSAGE_TYPES } from '_common/constants';
 import { useRecipeStepNavigation } from '../hooks/useRecipeStepNavigation';
-import './RecipeStep.css';
 import './Overlay.css';
+import './RecipeStep.css';
 
 interface Props {
   recipeData: RecipeData;
@@ -45,7 +45,7 @@ function ProgressBar({
   const segments = useMemo((): SegmentInfo[] => {
     return recipeData.recipe_steps.map((step, stepIndex) => {
       const startTime = step.details[0]?.start || 0;
-      
+
       const endTime =
         stepIndex < recipeData.recipe_steps.length - 1
           ? recipeData.recipe_steps[stepIndex + 1].details[0]?.start || startTime + 10
@@ -53,7 +53,7 @@ function ProgressBar({
 
       const isCurrent = stepIndex === currentStep;
       const isCompleted = stepIndex < currentStep;
-      
+
       let progress = 0;
       if (isCurrent && currentTime >= startTime) {
         progress = Math.min((currentTime - startTime) / (endTime - startTime), 1);
@@ -110,13 +110,15 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
-  
+
   const isLandscape = useOrientation();
   const accessToken = useAccessToken();
   const { id: recipeId } = useParams<{ id: string }>();
 
   const ytRef = useRef<YT.Player | null>(null);
   const currentStepRef = useRef<HTMLDivElement>(null);
+  const activationSoundRef = useRef<HTMLAudioElement | null>(null);
+  const prevKwsRef = useRef(false);
 
   const allDetails = useMemo((): FlatDetail[] => {
     const flat: FlatDetail[] = [];
@@ -290,36 +292,45 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     });
   };
 
-  const handleHeaderDragStart = useCallback((e: TouchEvent | MouseEvent) => {
-    if (!isLandscape) return;
-    
-    e.preventDefault();
-    setIsDragging(true);
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    setDragStartY(clientY);
-  }, [isLandscape]);
+  const handleHeaderDragStart = useCallback(
+    (e: TouchEvent | MouseEvent) => {
+      if (!isLandscape) return;
 
-  const handleHeaderDragMove = useCallback((e: TouchEvent | MouseEvent) => {
-    if (!isDragging || !isLandscape) return;
-    
-    e.preventDefault();
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    const deltaY = clientY - dragStartY;
-    
-    if (deltaY > 30) {
-      setIsHeaderVisible(true);
-      setIsDragging(false);
-    } else if (deltaY < -30) {
-      setIsHeaderVisible(false);
-      setIsDragging(false);
-    }
-  }, [isDragging, isLandscape, dragStartY]);
+      e.preventDefault();
+      setIsDragging(true);
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      setDragStartY(clientY);
+    },
+    [isLandscape],
+  );
 
-  const handleHeaderDragEnd = useCallback((e: TouchEvent | MouseEvent) => {
-    if (!isLandscape) return;
-    e.preventDefault();
-    setIsDragging(false);
-  }, [isLandscape]);
+  const handleHeaderDragMove = useCallback(
+    (e: TouchEvent | MouseEvent) => {
+      if (!isDragging || !isLandscape) return;
+
+      e.preventDefault();
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const deltaY = clientY - dragStartY;
+
+      if (deltaY > 30) {
+        setIsHeaderVisible(true);
+        setIsDragging(false);
+      } else if (deltaY < -30) {
+        setIsHeaderVisible(false);
+        setIsDragging(false);
+      }
+    },
+    [isDragging, isLandscape, dragStartY],
+  );
+
+  const handleHeaderDragEnd = useCallback(
+    (e: TouchEvent | MouseEvent) => {
+      if (!isLandscape) return;
+      e.preventDefault();
+      setIsDragging(false);
+    },
+    [isLandscape],
+  );
 
   useSimpleSpeech({
     accessToken,
@@ -333,7 +344,22 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     onKwsDeactivate: () => setIsKwsActive(false),
   });
 
-  
+  useEffect(() => {
+    activationSoundRef.current = new Audio('/sounds/kws-activation.mp3');
+    activationSoundRef.current.volume = 0.5;
+  }, []);
+
+  useEffect(() => {
+    if (isKwsActive && !prevKwsRef.current) {
+      const audio = activationSoundRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      }
+    }
+    prevKwsRef.current = isKwsActive;
+  }, [isKwsActive]);
+
   useEffect(() => {
     if (!ytRef.current || !isInitialized) return;
 
@@ -350,13 +376,13 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const scrollDelta = currentScrollY - lastScrollY;
-      
+
       if (scrollDelta > 15 && currentScrollY > 50) {
         setIsHeaderVisible(true);
       } else if (scrollDelta < -15) {
         setIsHeaderVisible(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -380,8 +406,10 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     ];
 
     listeners.forEach(({ type, handler }) => {
-      headerHandle.addEventListener(type, handler as EventListener, 
-        type.startsWith('touch') ? { passive: false } : undefined
+      headerHandle.addEventListener(
+        type,
+        handler as EventListener,
+        type.startsWith('touch') ? { passive: false } : undefined,
       );
     });
 
@@ -412,7 +440,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
       const header = document.querySelector('.header');
-      
+
       if (header && !header.contains(target)) {
         setIsHeaderVisible(false);
       }
@@ -453,9 +481,9 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
               </div>
             )}
 
-            <div 
+            <div
               className="previous-step clickable"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 goToSpecificDetail(prevStep.stepIndex, prevStep.detailIndex);
               }}
@@ -487,9 +515,9 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
               </div>
             )}
 
-            <div 
+            <div
               className={`next-step next-step-${index + 1} clickable`}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 goToSpecificDetail(nextStep.stepIndex, nextStep.detailIndex);
               }}
@@ -504,9 +532,11 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   };
 
   return (
-    <div className={`cooking-mode safe-area safe-area-top safe-area-bottom ${isLandscape ? 'landscape' : 'portrait'}`}>
+    <div
+      className={`cooking-mode safe-area safe-area-top safe-area-bottom ${isLandscape ? 'landscape' : 'portrait'}`}
+    >
       {!isInitialized && <LoadingOverlay />}
-      
+
       <Header
         title={recipeData.video_info.video_title}
         totalSteps={recipeData.recipe_steps.length}
@@ -529,8 +559,8 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
           onStateChange={handleStateChange}
         />
         {isLandscape && isHeaderVisible && (
-          <div 
-            className="youtube-overlay" 
+          <div
+            className="youtube-overlay"
             onClick={() => setIsHeaderVisible(false)}
             onTouchEnd={() => setIsHeaderVisible(false)}
           />
@@ -544,9 +574,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
           currentDetailIndex={currentDetailIndex}
           currentTime={currentTime}
         />
-        <section className="cooking-steps-container">
-          {renderSteps()}
-        </section>
+        <section className="cooking-steps-container">{renderSteps()}</section>
       </div>
 
       <div className="floating-timer-container">
