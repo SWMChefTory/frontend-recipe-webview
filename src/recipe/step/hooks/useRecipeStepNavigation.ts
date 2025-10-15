@@ -57,14 +57,14 @@ export const useRecipeStepNavigation = ({
   };
 
   const goToNextStep = () => {
-    const nextStepInfo = getNextStepInfo();
-    if (nextStepInfo) {
-      setCurrentStep(nextStepInfo.stepIndex);
-      setCurrentDetailIndex(nextStepInfo.detailIndex);
-      const nextStep = recipeData.recipe_steps[nextStepInfo.stepIndex];
-      const nextDetail = nextStep?.details[nextStepInfo.detailIndex];
-      if (nextDetail && ytRef.current) {
-        ytRef.current.seekTo(nextDetail.start, true);
+    if (currentStep + 1 < recipeData.recipe_steps.length) {
+      const nextStep = recipeData.recipe_steps[currentStep + 1];
+      setCurrentStep(currentStep + 1);
+      setCurrentDetailIndex(0);
+
+      const firstDetail = nextStep?.details[0];
+      if (firstDetail && ytRef.current) {
+        ytRef.current.seekTo(firstDetail.start, true);
         setTimeout(() => {
           onTimeUpdate?.();
         }, 100);
@@ -73,27 +73,14 @@ export const useRecipeStepNavigation = ({
   };
 
   const goToPreviousStep = () => {
-    const currentDetailIdx = getCurrentDetailIndex();
-
-    if (currentDetailIdx > 0) {
-      setCurrentDetailIndex(currentDetailIdx - 1);
-      const currentStepData = recipeData.recipe_steps[currentStep];
-      const prevDetail = currentStepData?.details[currentDetailIdx - 1];
-      if (prevDetail && ytRef.current) {
-        ytRef.current.seekTo(prevDetail.start, true);
-        setTimeout(() => {
-          onTimeUpdate?.();
-        }, 100);
-      }
-    } else if (currentStep > 0) {
+    if (currentStep > 0) {
       const prevStep = recipeData.recipe_steps[currentStep - 1];
-      const prevStepDetailsLength = prevStep?.details.length || 0;
       setCurrentStep(currentStep - 1);
-      setCurrentDetailIndex(prevStepDetailsLength - 1);
+      setCurrentDetailIndex(0);
 
-      const prevDetail = prevStep?.details[prevStepDetailsLength - 1];
-      if (prevDetail && ytRef.current) {
-        ytRef.current.seekTo(prevDetail.start, true);
+      const firstDetail = prevStep?.details[0];
+      if (firstDetail && ytRef.current) {
+        ytRef.current.seekTo(firstDetail.start, true);
         setTimeout(() => {
           onTimeUpdate?.();
         }, 100);
@@ -121,11 +108,11 @@ export const useRecipeStepNavigation = ({
     if (stepIndex >= 0 && stepIndex < recipeData.recipe_steps.length) {
       const targetStep = recipeData.recipe_steps[stepIndex];
       const targetDetails = targetStep?.details || [];
-      
+
       if (detailIndex >= 0 && detailIndex < targetDetails.length) {
         setCurrentStep(stepIndex);
         setCurrentDetailIndex(detailIndex);
-        
+
         const targetDetail = targetDetails[detailIndex];
         if (targetDetail && ytRef.current) {
           ytRef.current.seekTo(targetDetail.start, true);
@@ -144,8 +131,7 @@ export const useRecipeStepNavigation = ({
 
     if (clickX < containerWidth / 3) {
       goToPreviousStep();
-    }
-    else if (clickX > (containerWidth * 2) / 3) {
+    } else if (clickX > (containerWidth * 2) / 3) {
       goToNextStep();
     }
   };
@@ -193,7 +179,7 @@ export const useRecipeStepNavigation = ({
     while (count === undefined || previews.length < count) {
       const currentStepData = recipeData.recipe_steps[stepIndex];
       const currentStepDetails = currentStepData?.details || [];
-      
+
       if (detailIndex < currentStepDetails.length) {
         previews.push({
           stepIndex,
@@ -233,7 +219,10 @@ export const useRecipeStepNavigation = ({
     let stepIndex = 0;
     let detailIndex = 0;
 
-    while (stepIndex < currentStep || (stepIndex === currentStep && detailIndex < currentDetailIndex)) {
+    while (
+      stepIndex < currentStep ||
+      (stepIndex === currentStep && detailIndex < currentDetailIndex)
+    ) {
       const stepData = recipeData.recipe_steps[stepIndex];
       const stepDetails = stepData?.details || [];
 

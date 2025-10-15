@@ -110,6 +110,7 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [speechBubbleIndex, setSpeechBubbleIndex] = useState(0);
 
   const isLandscape = useOrientation();
   const accessToken = useAccessToken();
@@ -347,6 +348,14 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
   useEffect(() => {
     activationSoundRef.current = new Audio('/sounds/kws-activation.mp3');
     activationSoundRef.current.volume = 0.5;
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpeechBubbleIndex(prev => (prev === 0 ? 1 : 0));
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -600,7 +609,9 @@ const RecipeStep = ({ recipeData, onBackToRecipe }: Props) => {
 
       <div className={`floating-voice-guide-container ${isKwsActive ? 'kws-active' : ''}`}>
         <div className="speech-bubble">
-          <div className="speech-bubble-text">"토리야"라고 말해보세요</div>
+          <div className="speech-bubble-text">
+            {speechBubbleIndex === 0 ? '"토리야"라고 말해보세요' : '잘 모르겠다면, 저를 터치!'}
+          </div>
           <div className="speech-bubble-arrow"></div>
         </div>
         <button

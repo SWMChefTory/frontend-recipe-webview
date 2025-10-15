@@ -10,7 +10,9 @@ import * as ort from 'onnxruntime-web';
 // Bridge utils for token refresh
 import { sendRequestAccessTokenRefresh } from 'bridge/utils/webview';
 
-const STT_URL = 'wss://api.cheftories.com/api/v1/voice-command/ws';
+const BASE_API_URL = process.env.REACT_APP_API_URL as string;
+
+const STT_URL = BASE_API_URL.replace(/^http/, 'ws') + '/api/v1/voice-command/ws';
 const SAMPLE_RATE = 16000;
 const CHUNK_SIZE = 160; // 10ms @ 16kHz
 const BUFFER_CHUNKS = 3; // 30ms 묶음
