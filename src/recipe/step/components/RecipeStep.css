@@ -257,7 +257,7 @@
     opacity 0.4s ease,
     transform 0.4s ease;
   white-space: nowrap;
-  animation: speechBubbleRepeat 21s ease-in-out infinite;
+  animation: speechBubbleRepeat 10s ease-in-out infinite;
 }
 
 .speech-bubble-text {
@@ -295,15 +295,15 @@
     opacity: 0;
     transform: translateY(-50%) translateX(0.625rem);
   }
-  2.38% {
+  5% {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
   }
-  4.76% {
+  60% {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
   }
-  7.14% {
+  65% {
     opacity: 0;
     transform: translateY(-50%) translateX(0.625rem);
   }
@@ -314,13 +314,13 @@
 }
 
 .speech-bubble.appeared {
-  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
+  animation: speechBubbleRepeat 10s ease-in-out infinite !important;
   opacity: 0;
   transform: translateY(-50%) translateX(0.625rem);
 }
 
 .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
+  animation: speechBubbleRepeat 10s ease-in-out infinite !important;
 }
 
 .floating-voice-guide-btn {
