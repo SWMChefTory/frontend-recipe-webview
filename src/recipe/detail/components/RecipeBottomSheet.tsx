@@ -375,7 +375,13 @@ const RecipeBottomSheet = ({
                     <div className="title-text">
                       <h3>{step.subtitle}</h3>
                     </div>
-                    <button className="toggle-button" onClick={(e) => { e.stopPropagation(); toggleStep(stepIndex); }}>
+                    <button
+                      className="toggle-button"
+                      onClick={e => {
+                        e.stopPropagation();
+                        toggleStep(stepIndex);
+                      }}
+                    >
                       <svg
                         className={expandedSteps.has(stepIndex) ? 'rotated' : ''}
                         width="24"
@@ -463,10 +469,12 @@ const RecipeBottomSheet = ({
                     onClick={() => toggleIngredient(index)}
                   >
                     <span className="ingredient-name">{ingredient.name}</span>
-                    <span className="ingredient-amount">
-                      {ingredient.amount}
-                      {ingredient.unit}
-                    </span>
+                    {ingredient.amount > 0 && (
+                      <span className="ingredient-amount">
+                        {ingredient.amount}
+                        {ingredient.unit}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

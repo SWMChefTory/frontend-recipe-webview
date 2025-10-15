@@ -31,14 +31,14 @@ const VoiceGuide: React.FC<VoiceGuideProps> = ({ isVisible, onClose }) => {
       icon: '🎯',
     },
     {
-      command: '"타이머 3분 시작"',
-      description: '요리 타이머를 시작합니다',
+      command: '"타이머 3분 시작/정지"',
+      description: '요리 타이머를 시작/정지합니다',
       icon: '⏰',
     },
     {
-      command: '"타이머 정지"',
-      description: '요리 타이머를 정지합니다',
-      icon: '⏹️',
+      command: '"동영상 정지/재생"',
+      description: '동영상을 정지/재생합니다',
+      icon: '⏯️',
     },
   ];
 
@@ -64,7 +64,7 @@ const VoiceGuide: React.FC<VoiceGuideProps> = ({ isVisible, onClose }) => {
           <div className="voice-guide-step-section">
             <div className="voice-guide-step-number">2</div>
             <div className="step-content">
-              <div className="step-command">우측 하단의 버튼이 중앙으로 이동해요</div>
+              <div className="step-command">효과음과 함께 우측 하단의 버튼이 활성화돼요</div>
               <div className="step-description">토리가 듣고 있다는 신호입니다</div>
             </div>
           </div>
@@ -92,8 +92,9 @@ const VoiceGuide: React.FC<VoiceGuideProps> = ({ isVisible, onClose }) => {
           <div className="voice-guide-tips">
             <h3>TIP</h3>
             <ul>
-              <li>크게 말하면, 정확도가 높아져요</li>
-              <li>토리가 중앙으로 이동하면 명령을 말해주세요</li>
+              <li>큰 목소리로 또박또박 말하면 인식률이 높아져요</li>
+              <li>"토리야" 대신 "소리야"라고 불러도 돼요</li>
+              <li>음성 버튼이 활성화되고 난 뒤에 명령을 말해주세요</li>
             </ul>
           </div>
         </div>
