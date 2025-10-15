@@ -257,7 +257,7 @@
     opacity 0.4s ease,
     transform 0.4s ease;
   white-space: nowrap;
-  animation: speechBubbleRepeat 10s ease-in-out infinite;
+  animation: speechBubbleRepeat 21s ease-in-out infinite;
 }
 
 .speech-bubble-text {
@@ -295,15 +295,15 @@
     opacity: 0;
     transform: translateY(-50%) translateX(0.625rem);
   }
-  5% {
+  2.38% {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
   }
-  60% {
+  4.76% {
     opacity: 1;
     transform: translateY(-50%) translateX(0);
   }
-  65% {
+  7.14% {
     opacity: 0;
     transform: translateY(-50%) translateX(0.625rem);
   }
@@ -314,13 +314,13 @@
 }
 
 .speech-bubble.appeared {
-  animation: speechBubbleRepeat 10s ease-in-out infinite !important;
+  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
   opacity: 0;
   transform: translateY(-50%) translateX(0.625rem);
 }
 
 .floating-voice-guide-container:not(.kws-active) .speech-bubble {
-  animation: speechBubbleRepeat 10s ease-in-out infinite !important;
+  animation: speechBubbleRepeat 21s ease-in-out infinite !important;
 }
 
 .floating-voice-guide-btn {
@@ -478,18 +478,11 @@
     width: 3.75rem;
     height: 3.75rem;
   }
-}
 
   .floating-voice-guide-btn img {
     width: 1.75rem;
     height: 1.75rem;
   }
-  
-  .cooking-mode.landscape .cooking-steps-container {
-    padding-top: 2rem;
-    padding-bottom: 50vh;
-  }
-}
 
   .floating-timer-btn {
     width: 3.75rem;
@@ -506,6 +499,7 @@
     padding-top: 2rem;
     padding-bottom: 50vh;
   }
+}
 
 @media (min-width: 768px) and (orientation: landscape) {
   .cooking-mode.landscape {
@@ -598,24 +592,6 @@
   .cooking-mode.landscape .previous-step-number,
   .cooking-mode.landscape .previous-step-text {
     font-size: 1rem;
-  }
-
-  .cooking-mode.landscape .next-step-number,
-  .cooking-mode.landscape .next-step-text {
-    font-size: 1rem;
-  }
-
-  .cooking-mode.landscape .floating-voice-guide-container.kws-active {
-    transform: translateX(0);
-  }
-
-  .cooking-mode.landscape .header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    transition: transform 0.3s ease-in-out;
   }
 
   .cooking-mode.landscape .next-step-number,
